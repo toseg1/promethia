@@ -32,7 +32,7 @@ INSTALLED_APPS = [
 
 
 DATABASES = {
-    'default': dj_database_url.parse(os.environ.get('postgresql://postgresql_promethia_user:ANnoF7OMtJKQhYJC4X3iWNtgASE75t0Y@dpg-d13hbk3uibrs7389cskg-a/postgresql_promethia'))
+    'default': dj_database_url.parse(os.environ.get('DATABASE_URL'))
 }
 
 MIDDLEWARE = [
