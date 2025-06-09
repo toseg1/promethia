@@ -12,7 +12,7 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 # Security settings
 SECRET_KEY = config('SECRET_KEY')  # Remove default for production
 DEBUG = config('DEBUG', default=False, cast=bool)
-ALLOWED_HOSTS = ['promathia.app', 'www.promathia.app', 'promethia.onrender.com', 'localhost']
+ALLOWED_HOSTS = ['promathia.app', 'www.promathia.app', '.onrender.com', 'localhost']
 
 # Application definition
 INSTALLED_APPS = [
