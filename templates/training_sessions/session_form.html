@@ -1,0 +1,179 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block page_title %}{{ title }}{% endblock %}
+
+{% block breadcrumb %}
+<li class="breadcrumb-item"><a href="{% url 'dashboard' %}">Home</a></li>
+<li class="breadcrumb-item"><a href="{% url 'calendar_view' %}">Calendar</a></li>
+<li class="breadcrumb-item active">{{ title }}</li>
+{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+  <div class="col-lg-10">
+    <div class="card card-primary card-outline">
+      <div class="card-header">
+        <h3 class="card-title">
+          <i class="fas fa-dumbbell mr-2"></i>
+          {{ title }}
+        </h3>
+      </div>
+      
+      <form method="post" novalidate>
+        {% csrf_token %}
+        <div class="card-body">
+          
+          <div class="row">
+            <!-- Athlete -->
+            <div class="col-md-4">
+              <div class="form-group">
+                <label for="{{ form.athlete.id_for_label }}">
+                  <i class="fas fa-user mr-1"></i>
+                  Athlete <span class="text-danger">*</span>
+                </label>
+                {{ form.athlete }}
+                {% if form.athlete.errors %}
+                  <div class="text-danger">{{ form.athlete.errors.0 }}</div>
+                {% endif %}
+              </div>
+            </div>
+            
+            <!-- Sport -->
+            <div class="col-md-4">
+              <div class="form-group">
+                <label for="{{ form.sport.id_for_label }}">
+                  <i class="fas fa-running mr-1"></i>
+                  Sport Type<span class="text-danger">*</span>
+                </label>
+                {{ form.sport }}
+                {% if form.sport.errors %}
+                  <div class="text-danger">{{ form.sport.errors.0 }}</div>
+                {% endif %}
+              </div>
+            </div>
+            
+            <!-- Status -->
+            <div class="col-md-4">
+              <div class="form-group">
+                <label for="{{ form.status.id_for_label }}">
+                  <i class="fas fa-flag mr-1"></i>
+                  Status <span class="text-danger">*</span>
+                </label>
+                {{ form.status }}
+                {% if form.status.errors %}
+                  <div class="text-danger">{{ form.status.errors.0 }}</div>
+                {% endif %}
+              </div>
+            </div>
+          </div>
+
+          <!-- Title -->
+          <div class="form-group">
+            <label for="{{ form.title.id_for_label }}">
+              <i class="fas fa-tag mr-1"></i>
+              Title <span class="text-danger">*</span>
+            </label>
+            {{ form.title }}
+            {% if form.title.errors %}
+              <div class="text-danger">{{ form.title.errors.0 }}</div>
+            {% endif %}
+          </div>
+
+          <!-- Description -->
+          <div class="form-group">
+            <label for="{{ form.description.id_for_label }}">
+              <i class="fas fa-align-left mr-1"></i>
+              Description
+            </label>
+            {{ form.description }}
+            {% if form.description.errors %}
+              <div class="text-danger">{{ form.description.errors.0 }}</div>
+            {% endif %}
+          </div>
+
+          <div class="row">
+            <!-- Date -->
+            <div class="col-md-4">
+              <div class="form-group">
+                <label for="{{ form.date.id_for_label }}">
+                  <i class="fas fa-calendar mr-1"></i>
+                  Date <span class="text-danger">*</span>
+                </label>
+                {{ form.date }}
+                {% if form.date.errors %}
+                  <div class="text-danger">{{ form.date.errors.0 }}</div>
+                {% endif %}
+              </div>
+            </div>
+            
+            <!-- Time -->
+            <div class="col-md-4">
+              <div class="form-group">
+                <label for="{{ form.time.id_for_label }}">
+                  <i class="fas fa-clock mr-1"></i>
+                  Time
+                </label>
+                {{ form.time }}
+                <small class="form-text text-muted">Optional session time</small>
+                {% if form.time.errors %}
+                  <div class="text-danger">{{ form.time.errors.0 }}</div>
+                {% endif %}
+              </div>
+            </div>
+            
+            <!-- Duration -->
+            <div class="col-md-4">
+              <div class="form-group">
+                <label for="{{ form.duration_minutes.id_for_label }}">
+                  <i class="fas fa-stopwatch mr-1"></i>
+                  Duration (minutes)
+                </label>
+                {{ form.duration_minutes }}
+                {% if form.duration_minutes.errors %}
+                  <div class="text-danger">{{ form.duration_minutes.errors.0 }}</div>
+                {% endif %}
+              </div>
+            </div>
+          </div>
+
+          <!-- Notes -->
+          <div class="form-group">
+            <label for="{{ form.notes.id_for_label }}">
+              <i class="fas fa-sticky-note mr-1"></i>
+              Additional Notes
+            </label>
+            {{ form.notes }}
+            {% if form.notes.errors %}
+              <div class="text-danger">{{ form.notes.errors.0 }}</div>
+            {% endif %}
+          </div>
+        </div>
+        
+        <div class="card-footer">
+          <button type="submit" class="btn btn-primary" >
+            <i class="fas fa-save mr-1"></i>
+            Save Session
+          </button>
+          <a href="{% url 'dashboard' %}" class="btn btn-secondary"onclick="goBack()">
+            <i class="fas fa-times mr-1"></i>
+            Cancel
+          </a>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+{% endblock %}
+{% block extra_js %}
+<script>
+function goBack() {
+    if (document.referrer) {
+        history.back();
+    } else {
+        // Fallback if no referrer (like if user came directly to the page)
+        window.location.href = "{% url 'dashboard' %}";
+    }
+}
+</script>
+{% endblock %}

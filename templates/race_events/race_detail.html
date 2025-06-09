@@ -1,0 +1,308 @@
+<!-- race_events/templates/race_events/race_detail.html -->
+{% extends 'base.html' %}
+{% load static %}
+
+{% block page_title %}Race Detail{% endblock %}
+
+{% block content %}
+<div class="row">
+  <div class="col-lg-8">
+    <!-- Race Information Card -->
+    <div class="card card-primary card-outline">
+      <div class="card-header">
+        <h3 class="card-title">
+          <i class="fas fa-trophy mr-2"></i>
+          {{ race.name }}
+        </h3>
+        <div class="card-tools">
+          <a href="{% url 'calendar_management:view' %}" class="btn btn-sm btn-secondary">
+            <i class="fas fa-arrow-left"></i> Back to Calendar
+          </a>
+          <a href="{% url 'dashboard' %}" class="btn btn-sm btn-secondary">
+            <i class="fas fa-arrow-left"></i> Back to Dashboard
+          </a>
+        </div>
+      </div>
+      
+      <div class="card-body">
+        <div class="row">
+          <!-- Basic Info -->
+          <div class="col-md-6">
+            <div class="info-box">
+              <span class="info-box-icon bg-primary">
+                <i class="fas fa-running"></i>
+              </span>
+              <div class="info-box-content">
+                <span class="info-box-text">Sport Type</span>
+                <span class="info-box-number">{{ race.get_sport_type_display }}</span>
+              </div>
+            </div>
+          </div>
+          
+          <div class="col-md-6">
+            <div class="info-box">
+              <span class="info-box-icon bg-info">
+                <i class="fas fa-calendar-alt"></i>
+              </span>
+              <div class="info-box-content">
+                <span class="info-box-text">Race Date</span>
+                <span class="info-box-number">{{ race.date|date:"F d, Y" }}</span>
+                {% if race.time %}
+                  <span class="info-box-more">at {{ race.time|time:"H:i" }}</span>
+                {% endif %}
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="row">
+          <!-- Location Info -->
+          <div class="col-md-6">
+            <div class="info-box">
+              <span class="info-box-icon bg-danger">
+                <i class="fas fa-map-marker-alt"></i>
+              </span>
+              <div class="info-box-content">
+                <span class="info-box-text">Location</span>
+                <span class="info-box-number">{{ race.location }}</span>
+                {% if race.venue %}
+                  <span class="info-box-more">{{ race.venue }}</span>
+                {% endif %}
+              </div>
+            </div>
+          </div>
+          
+          <div class="col-md-6">
+            <div class="info-box">
+              <span class="info-box-icon bg-warning">
+                <i class="fas fa-route"></i>
+              </span>
+              <div class="info-box-content">
+                <span class="info-box-text">Distance</span>
+                <span class="info-box-number">{{ race.distance }}</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Objective Section -->
+        <div class="row">
+          <div class="col-12">
+            <h5><i class="fas fa-target text-primary mr-2"></i>Race Objective</h5>
+          </div>
+          <div class="col-lg-6 col-md-6 col-6">
+            <div class="small-box bg-success">
+              <div class="inner">
+                <h3>{% if race.goal_time %}{{ race.goal_time }}{% else %}--{% endif %}</h3>
+                <p>Goal Time</p>
+              </div>
+              <div class="icon">
+                <i class="fas fa-stopwatch"></i>
+              </div>
+              <div class="small-box-footer">
+                {% if race.goal_time %}Target finish time{% else %}Not set{% endif %}
+              </div>
+            </div>
+          </div>
+          
+          <div class="col-lg-6 col-md-6 col-6">
+            <div class="small-box bg-purple">
+              <div class="inner">
+                <h3>{% if race.goal_type %}{{ race.get_goal_type_display }}{% else %}--{% endif %}</h3>
+                <p>Goal Type</p>
+              </div>
+              <div class="icon">
+                <i class="fas fa-bullseye"></i>
+              </div>
+              <div class="small-box-footer">
+                {% if race.goal_type %}Race objective{% else %}Not set{% endif %}
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Notes Section -->
+        <div class="row">
+          <div class="col-12">
+            <div class="card card-secondary card-outline">
+              <div class="card-header">
+                <h3 class="card-title">
+                  <i class="fas fa-sticky-note mr-2"></i>
+                  Notes
+                </h3>
+              </div>
+              <div class="card-body">
+                {% if race.notes %}
+                  <p>{{ race.notes|linebreaks }}</p>
+                {% else %}
+                  <p class="text-muted"><em>No notes added</em></p>
+                {% endif %}
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Sidebar -->
+  <div class="col-lg-4">
+    <!-- Quick Actions Card -->
+    <div class="card card-warning card-outline">
+      <div class="card-header">
+        <h3 class="card-title">
+          <i class="fas fa-bolt mr-2"></i>
+          Quick Actions
+        </h3>
+      </div>
+      
+      <div class="card-body">
+        {% if not race.result and race.is_past %}
+          <!-- Add Results Action -->
+          <a href="{% url 'race_events:race_result' race.id %}" class="btn btn-success btn-block mb-2">
+            <i class="fas fa-plus"></i> Add Race Results
+          </a>
+        {% endif %}
+        
+        <!-- Edit Race -->
+        <a href="{% url 'race_events:race_edit' race.id %}" class="btn btn-warning btn-block mb-2">
+          <i class="fas fa-edit"></i> Edit Race
+        </a>
+        
+        <!-- Delete Race -->
+        <a href="{% url 'race_events:race_delete' race.id %}" class="btn btn-danger btn-block mb-2">
+          <i class="fas fa-trash"></i> Delete Race
+        </a>
+      </div>
+    </div>
+
+    <!-- Results Section -->
+    <div class="card card-success card-outline">
+      <div class="card-header">
+        <h3 class="card-title">
+          <i class="fas fa-flag-checkered mr-2"></i>
+          Race Results
+        </h3>
+      </div>
+      
+      <div class="card-body">
+        {% if race.result %}
+          <!-- Results Available -->
+          <div class="row">
+            {% if race.result.finish_time %}
+            <div class="col-12 mb-3">
+              <div class="small-box bg-success">
+                <div class="inner">
+                  <h3>{{ race.result.finish_time }}</h3>
+                  <p>Finish Time</p>
+                </div>
+                <div class="icon">
+                  <i class="fas fa-trophy"></i>
+                </div>
+                <div class="small-box-footer">
+                  Race completed
+                </div>
+              </div>
+            </div>
+            {% endif %}
+
+            {% if race.result.overall_position %}
+            <div class="col-6">
+              <div class="small-box bg-warning">
+                <div class="inner">
+                  <h3>{{ race.result.overall_position }}</h3>
+                  <p>Overall</p>
+                </div>
+                <div class="icon">
+                  <i class="fas fa-medal"></i>
+                </div>
+                <div class="small-box-footer">
+                  {% if race.result.total_participants %}of {{ race.result.total_participants }}{% else %}Position{% endif %}
+                </div>
+              </div>
+            </div>
+            {% endif %}
+
+            {% if race.result.category_position %}
+            <div class="col-6">
+              <div class="small-box bg-info">
+                <div class="inner">
+                  <h3>{{ race.result.category_position }}</h3>
+                  <p>Category</p>
+                </div>
+                <div class="icon">
+                  <i class="fas fa-users"></i>
+                </div>
+                <div class="small-box-footer">
+                  Age group
+                </div>
+              </div>
+            </div>
+            {% endif %}
+
+            {% if race.result.satisfaction %}
+            <div class="col-12">
+              <div class="small-box bg-purple">
+                <div class="inner">
+                  <h3>
+                    {% for i in "12345" %}
+                      {% if forloop.counter <= race.result.satisfaction %}
+                        <i class="fas fa-star text-yellow"></i>
+                      {% else %}
+                        <i class="far fa-star text-white"></i>
+                      {% endif %}
+                    {% endfor %}
+                  </h3>
+                  <p>Satisfaction</p>
+                </div>
+                <div class="icon">
+                  <i class="fas fa-smile"></i>
+                </div>
+                <div class="small-box-footer">
+                  Personal rating
+                </div>
+              </div>
+            </div>
+            {% endif %}
+          </div>
+
+          <!-- Race Report -->
+          {% if race.result.race_report %}
+          <div class="card card-light">
+            <div class="card-header">
+              <h3 class="card-title">
+                <i class="fas fa-file-alt mr-2"></i>
+                Race Report
+              </h3>
+            </div>
+            <div class="card-body">
+              <p>{{ race.result.race_report|linebreaks }}</p>
+            </div>
+          </div>
+          {% endif %}
+
+        {% else %}
+          <!-- No Results Yet -->
+          <div class="text-center">
+            {% if race.is_past %}
+              <i class="fas fa-plus-circle fa-3x text-muted mb-3"></i>
+              <h5>No results yet</h5>
+              <p class="text-muted">Add your race results</p>
+              <a href="{% url 'race_events:race_result' race.id %}" class="btn btn-success">
+                <i class="fas fa-plus"></i> Add Results
+              </a>
+            {% else %}
+              <i class="fas fa-clock fa-3x text-muted mb-3"></i>
+              <h5>Race upcoming</h5>
+              <p class="text-muted">Results will be available after the race</p>
+              <div class="countdown">
+                <strong>{{ race.days_until_race }} days to go!</strong>
+              </div>
+            {% endif %}
+          </div>
+        {% endif %}
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

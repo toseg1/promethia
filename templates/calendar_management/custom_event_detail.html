@@ -1,0 +1,206 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block page_title %}Event Details{% endblock %}
+
+{% block breadcrumb %}
+<li class="breadcrumb-item"><a href="{% url 'dashboard' %}">Home</a></li>
+<li class="breadcrumb-item"><a href="{% url 'calendar_management:view' %}">Calendar</a></li>
+<li class="breadcrumb-item active">{{ event.title }}</li>
+{% endblock %}
+
+{% block content %}
+<div class="row">
+  <div class="col-lg-8">
+    <!-- Event Information Card -->
+    <div class="card card-primary card-outline">
+      <div class="card-header">
+        <h3 class="card-title">
+          <i class="fas fa-star mr-2"></i>
+          {{ event.title }}
+        </h3>
+        <div class="card-tools">
+          <a href="{% url 'calendar_management:view' %}" class="btn btn-sm btn-secondary">
+            <i class="fas fa-arrow-left"></i> Back to Calendar
+          </a>
+          <a href="{% url 'dashboard' %}" class="btn btn-sm btn-secondary">
+            <i class="fas fa-arrow-left"></i> Back to Dashboard
+          </a>
+        </div>
+      </div>
+      
+      <div class="card-body">
+        <div class="row">
+          
+          <!-- Event Type -->
+          <div class="col-md-6">
+            <div class="info-box">
+              <span class="info-box-icon bg-secondary">
+                <i class="fas fa-star"></i>
+              </span>
+              <div class="info-box-content">
+                <span class="info-box-text">Event Type</span>
+                <span class="info-box-number">Custom Event</span>
+              </div>
+            </div>
+          </div>
+          
+          <!-- Duration -->
+          <div class="col-md-6">
+            <div class="info-box">
+              <span class="info-box-icon bg-info">
+                <i class="fas fa-calendar-alt"></i>
+              </span>
+              <div class="info-box-content">
+                <span class="info-box-text">Duration</span>
+                <span class="info-box-number">
+                  {% if duration_days == 1 %}
+                    Single Day
+                  {% else %}
+                    {{ duration_days }} Days
+                  {% endif %}
+                </span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="row">
+          <!-- Start Date -->
+          <div class="col-md-6">
+            <div class="info-box">
+              <span class="info-box-icon bg-success">
+                <i class="fas fa-play"></i>
+              </span>
+              <div class="info-box-content">
+                <span class="info-box-text">Start Date</span>
+                <span class="info-box-number">{{ event.start_date|date:"F d, Y" }}</span>
+              </div>
+            </div>
+          </div>
+          
+          <!-- End Date -->
+          <div class="col-md-6">
+            <div class="info-box">
+              <span class="info-box-icon bg-warning">
+                <i class="fas fa-stop"></i>
+              </span>
+              <div class="info-box-content">
+                <span class="info-box-text">End Date</span>
+                <span class="info-box-number">{{ event.end_date|date:"F d, Y" }}</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+
+        <!-- Notes Section -->
+        <div class="row">
+          <div class="col-12">
+            <div class="card card-light card-outline">
+              <div class="card-header">
+                <h3 class="card-title">
+                  <i class="fas fa-sticky-note mr-2"></i>
+                  Notes
+                </h3>
+              </div>
+              <div class="card-body">
+                {% if event.note %}
+                  <p>{{ event.note|linebreaks }}</p>
+                {% else %}
+                  <p class="text-muted"><em>No notes added</em></p>
+                {% endif %}
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Event Actions -->
+  <div class="col-lg-4">
+    <div class="card card-success card-outline">
+      <div class="card-header">
+        <h3 class="card-title">
+          <i class="fas fa-tasks mr-2"></i>
+          Event Details
+        </h3>
+      </div>
+      
+      <div class="card-body">
+        <!-- Creation Info -->
+        <div class="row">
+          <div class="col-12 mb-3">
+            <div class="small-box bg-info">
+              <div class="inner">
+                <h3><i class="fas fa-star"></i></h3>
+                <p>Custom Event</p>
+              </div>
+              <div class="icon">
+                <i class="fas fa-calendar-plus"></i>
+              </div>
+              <div class="small-box-footer">
+                Created {{ event.created_at|date:"M d, Y" }}
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Quick Actions -->
+        <div class="mb-3">
+          <h5><i class="fas fa-bolt text-primary mr-2"></i>Quick Actions</h5>
+          
+          <!-- Edit Button -->
+          <a href="{% url 'calendar_management:edit_custom_event' event.id %}" class="btn btn-warning btn-block mb-2">
+            <i class="fas fa-edit"></i> Edit Event
+          </a>
+          
+          <!-- Delete Button -->
+          <button type="button" class="btn btn-danger btn-block" data-toggle="modal" data-target="#deleteModal">
+            <i class="fas fa-trash"></i> Delete Event
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Delete Confirmation Modal -->
+<div class="modal fade" id="deleteModal" tabindex="-1" role="dialog" aria-labelledby="deleteModalLabel" aria-hidden="true">
+  <div class="modal-dialog" role="document">
+    <div class="modal-content">
+      <div class="modal-header bg-danger text-white">
+        <h5 class="modal-title" id="deleteModalLabel">
+          <i class="fas fa-exclamation-triangle mr-2"></i>
+          Confirm Delete
+        </h5>
+        <button type="button" class="close text-white" data-dismiss="modal" aria-label="Close">
+          <span aria-hidden="true">&times;</span>
+        </button>
+      </div>
+      <div class="modal-body">
+        <div class="alert alert-warning">
+          <i class="fas fa-exclamation-triangle mr-2"></i>
+          <strong>Warning:</strong> This action cannot be undone.
+        </div>
+        <p>Are you sure you want to delete the custom event "<strong>{{ event.title }}</strong>"?</p>
+        <p class="text-muted">
+          <i class="fas fa-info-circle mr-1"></i>
+          This will permanently remove the event from your calendar.
+        </p>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-dismiss="modal">
+          <i class="fas fa-times mr-1"></i>
+          Cancel
+        </button>
+        <a href="{% url 'calendar_management:delete_custom_event' event.id %}" class="btn btn-danger">
+          <i class="fas fa-trash mr-1"></i>
+          Delete Event
+        </a>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

@@ -1,0 +1,73 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block page_title %}Add Athlete{% endblock %}
+
+{% block breadcrumb %}
+<li class="breadcrumb-item"><a href="{% url 'dashboard' %}">Home</a></li>
+<li class="breadcrumb-item active">Add Athlete</li>
+{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+  <div class="col-md-6">
+    <div class="card">
+      <div class="card-header">
+        <h3 class="card-title">
+          <i class="fas fa-user-plus mr-1"></i>
+          Add New Athlete
+        </h3>
+      </div>
+      <form method="post">
+        <div class="card-body">
+          {% csrf_token %}
+          
+          <div class="form-group">
+            <label for="email">Athlete's Email Address</label>
+            <input type="email" name="email" id="email" class="form-control" 
+                   placeholder="athlete@example.com" required>
+            <small class="form-text text-muted">
+              Enter the email address of the athlete you want to coach. 
+              They must already have an account as an athlete.
+            </small>
+          </div>
+          
+          <div class="alert alert-info">
+            <i class="fas fa-info-circle"></i>
+            <strong>How it works:</strong>
+            <ul class="mb-0 mt-2">
+              <li>Enter the athlete's email address</li>
+              <li>A coaching request will be sent to them</li>
+              <li>They can accept or decline your request</li>
+              <li>Once accepted, you can create training sessions for them</li>
+            </ul>
+          </div>
+        </div>
+        
+        <div class="card-footer">
+         <button type="button" class="btn btn-primary" onclick="goBack()">
+          <i class="fas fa-times mr-1"></i>
+           Send Request
+      </button>
+          <button type="button" class="btn btn-secondary" onclick="goBack()">
+              <i class="fas fa-times mr-1"></i>
+              Cancel
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+{% endblock %}
+{% block extra_js %}
+<script>
+function goBack() {
+    if (document.referrer) {
+        history.back();
+    } else {
+        // Fallback if no referrer (like if user came directly to the page)
+        window.location.href = "{% url 'dashboard' %}";
+    }
+}
+</script>
+{% endblock %}

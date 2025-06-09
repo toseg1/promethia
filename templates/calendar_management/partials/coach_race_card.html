@@ -1,0 +1,72 @@
+<!-- calendar_management/partials/coach_race_card.html -->
+<!-- Coach Race Card using existing calendar CSS -->
+
+{% load static %}
+
+<!-- Race card using your existing event-card styles -->
+<a href="{% url 'race_events:race_detail' event.id %}" 
+   class="event-card event-race coach-race-card"
+   data-event-id="{{ event.id }}"
+   data-event-type="race"
+   data-athlete-id="{{ event.athlete.id }}"
+   data-date="{{ event.date|date:'Y-m-d' }}"
+   {% if event.time %}data-time="{{ event.time|time:'H:i' }}"{% endif %}
+   title="{{ event.name }} - {{ event.athlete.get_full_name }}">
+    
+    <!-- Race Icon -->
+    <div class="event-icon">
+        <i class="fas fa-trophy"></i>
+    </div>
+    
+    <!-- Race Content -->
+    <div class="event-content">
+        <!-- Race Name -->
+        <div class="event-title">{{ event.name|truncatechars:20 }}</div>
+        
+        <!-- Athlete Name -->
+        <div class="event-athlete">
+            <i class="fas fa-user" style="font-size: 9px; margin-right: 2px;"></i>
+            {{ event.athlete.get_full_name|truncatechars:20 }}
+        </div>
+        
+    </div>
+    
+    <!-- Status Icon using your existing event-status -->
+    <div class="event-status 
+        {% if event.result and event.result.finish_time %}
+            status-completed
+        {% elif event.is_past %}
+            status-missed
+        {% else %}
+            status-scheduled
+        {% endif %}">
+        {% if event.result and event.result.finish_time %}
+            <i class="fas fa-check-circle" title="Completed"></i>
+        {% elif event.is_past %}
+            <i class="fas fa-clock" title="Past - No result"></i>
+        {% else %}
+            <i class="fas fa-calendar" title="Upcoming"></i>
+        {% endif %}
+    </div>
+</a>
+
+<script>
+// Coach Race Card JavaScript - using your existing patterns
+document.addEventListener('DOMContentLoaded', function() {
+    // Enhanced race card interactions
+    document.querySelectorAll('.coach-race-card').forEach(card => {
+        // Prevent event bubbling to day selection
+        card.addEventListener('click', function(e) {
+            e.stopPropagation();
+        });
+        
+        // Add keyboard navigation
+        card.addEventListener('keydown', function(e) {
+            if (e.key === 'Enter' || e.key === ' ') {
+                e.preventDefault();
+                this.click();
+            }
+        });
+    });
+});
+</script>

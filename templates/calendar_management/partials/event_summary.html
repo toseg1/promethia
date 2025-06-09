@@ -1,0 +1,80 @@
+<!-- calendar_management/partials/event_summary.html -->
+<div class="event-summary">
+  {% if total_count > 0 %}
+    <div class="summary-stats">
+      <span class="stat-item">
+        <i class="fas fa-calendar-check text-success"></i>
+        <strong>{{ total_count }}</strong> event{{ total_count|pluralize }}
+      </span>
+      
+      {% if session_count > 0 %}
+        <span class="stat-item">
+          <i class="fas fa-running text-primary"></i>
+          {{ session_count }} session{{ session_count|pluralize }}
+        </span>
+      {% endif %}
+      
+      {% if race_count > 0 %}
+        <span class="stat-item">
+          <i class="fas fa-trophy text-warning"></i>
+          {{ race_count }} race{{ race_count|pluralize }}
+        </span>
+      {% endif %}
+      
+      {% if custom_count > 0 %}
+        <span class="stat-item">
+          <i class="fas fa-star text-info"></i>
+          {{ custom_count }} custom event{{ custom_count|pluralize }}
+        </span>
+      {% endif %}
+    </div>
+  {% else %}
+    <div class="no-events">
+      <i class="fas fa-calendar text-muted"></i>
+      <span class="text-muted">No events</span>
+    </div>
+  {% endif %}
+</div>
+
+<style>
+.event-summary {
+  font-size: 0.875rem;
+  margin: 8px 0;
+}
+
+.summary-stats {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+
+.stat-item {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  white-space: nowrap;
+}
+
+.stat-item i {
+  font-size: 0.75rem;
+}
+
+.no-events {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  justify-content: center;
+  padding: 8px;
+}
+
+@media (max-width: 576px) {
+  .summary-stats {
+    flex-direction: column;
+    gap: 6px;
+  }
+  
+  .stat-item {
+    font-size: 0.75rem;
+  }
+}
+</style>

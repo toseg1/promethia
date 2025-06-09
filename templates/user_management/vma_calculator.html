@@ -1,0 +1,299 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block page_title %}MAS Calculator{% endblock %}
+
+{% block breadcrumb %}
+<li class="breadcrumb-item"><a href="{% url 'dashboard' %}">Home</a></li>
+<li class="breadcrumb-item active">MAS Calculator</li>
+{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'css/vma_calculator.css' %}">
+{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-12">
+        
+        <!-- User VMA Info Card -->
+        {% if user_vma %}
+        <div class="card card-info card-outline mb-3">
+            <div class="card-body">
+                <div class="d-flex align-items-center">
+                    <div class="info-icon mr-3">
+                        <i class="fas fa-user-check fa-2x text-info"></i>
+                    </div>
+                    <div class="flex-grow-1">
+                        <h5 class="mb-1">
+                                Your Current MAS
+                        </h5>
+                        <p class="text-muted mb-0">
+                            <strong class="text-info">{{ user_vma }} km/h</strong>
+                            {% if user.profile.vma_updated %}
+                                • Updated {{ user.profile.vma_updated|date:"M d, Y" }}
+                            {% endif %}
+                        </p>
+                    </div>
+                    <div>
+                        <button class="btn btn-info btn-sm" onclick="useMyVMA()">
+                            <i class="fas fa-arrow-down mr-1"></i>Update MAS
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+        {% endif %}
+
+        <!-- Main Calculator Card -->
+        <div class="card card-primary card-outline">
+            <div class="card-header">
+                <h3 class="card-title">
+                    <i class="fas fa-calculator mr-2"></i>MAS Calculator
+                </h3>
+                <div class="card-tools">
+                </div>
+            </div>
+
+            <div class="card-body">
+                <div class="alert alert-light border-left-primary">
+                    <i class="fas fa-info-circle mr-2 text-primary"></i>
+                    Calculate running times, speeds, and distances based on VMA (Maximal Aerobic Speed)
+                </div>
+
+                <form id="vmaCalculatorForm">
+                    <div class="row">
+                        <!-- VMA Input Section -->
+                        <div class="col-md-6">
+                            <div class="form-section">
+                                <h5 class="section-title">
+                                    <i class="fas fa-tachometer-alt mr-2 text-primary"></i>MAS Settings
+                                </h5>
+                                
+                                <div class="form-group">
+                                    <label for="vmaValue">MAS (km/h) <span class="text-danger">*</span></label>
+                                    <input type="number" class="form-control" id="vmaValue" 
+                                           placeholder="Enter VMA in km/h" step="0.1" min="5" max="30">
+                                    <small class="form-text text-muted">Typical range: 12-22 km/h for recreational runners</small>
+                                </div>
+
+                                <!-- VMA Presets -->
+                                <div class="form-group">
+                                    <label class="form-label">Quick MAS Presets:</label>
+                                    <div class="btn-group-toggle" data-toggle="buttons">
+                                        <button type="button" class="btn btn-outline-secondary btn-sm preset-btn" onclick="setVMA(14)">14</button>
+                                        <button type="button" class="btn btn-outline-secondary btn-sm preset-btn" onclick="setVMA(15)">15</button>
+                                        <button type="button" class="btn btn-outline-secondary btn-sm preset-btn" onclick="setVMA(16)">16</button>
+                                        <button type="button" class="btn btn-outline-secondary btn-sm preset-btn" onclick="setVMA(17)">17</button>
+                                        <button type="button" class="btn btn-outline-secondary btn-sm preset-btn" onclick="setVMA(18)">18</button>
+                                        <button type="button" class="btn btn-outline-secondary btn-sm preset-btn" onclick="setVMA(19)">19</button>
+                                        <button type="button" class="btn btn-outline-secondary btn-sm preset-btn" onclick="setVMA(20)">20</button>
+                                        <button type="button" class="btn btn-outline-secondary btn-sm preset-btn" onclick="setVMA(21)">21</button>
+                                        <button type="button" class="btn btn-outline-secondary btn-sm preset-btn" onclick="setVMA(22)">22</button>
+                                    </div>
+                                </div>
+
+                                <div class="form-group">
+                                    <label for="vmaPercentage">MAS Percentage (%) <span class="text-danger">*</span></label>
+                                    <div class="input-group">
+                                        <input type="number" class="form-control" id="vmaPercentage" 
+                                               placeholder="85" min="50" max="150">
+                                        <div class="input-group-append">
+                                            <span class="input-group-text">%</span>
+                                        </div>
+                                    </div>
+                                    <small class="form-text text-muted">Training intensity (70-105% typical)</small>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Distance/Time Input Section -->
+                        <div class="col-md-6">
+                            <div class="form-section">
+                                <h5 class="section-title">
+                                    <i class="fas fa-route mr-2 text-success"></i>Distance & Time
+                                </h5>
+                                
+                                <div class="form-group">
+                                    <label for="distance">Distance (optional)</label>
+                                    <div class="input-group">
+                                        <input type="number" class="form-control" id="distance" 
+                                               placeholder="Enter distance" step="0.01" min="0.1">
+                                        <div class="input-group-append">
+                                            <select class="form-control" id="distanceUnit">
+                                                <option value="m"  selected>m</option>
+                                                <option value="km">km</option>
+                                            </select>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <!-- Distance Presets -->
+                                <div class="form-group">
+                                    <label class="form-label">Common Distances:</label>
+                                    <div class="distance-presets">
+                                        <button type="button" class="btn btn-outline-success btn-sm preset-btn" onclick="setDistance(100, 'm')">100m</button>
+                                        <button type="button" class="btn btn-outline-success btn-sm preset-btn" onclick="setDistance(200, 'm')">200m</button>
+                                        <button type="button" class="btn btn-outline-success btn-sm preset-btn" onclick="setDistance(300, 'm')">300m</button>
+                                        <button type="button" class="btn btn-outline-success btn-sm preset-btn" onclick="setDistance(500, 'm')">500m</button>
+                                        <button type="button" class="btn btn-outline-success btn-sm preset-btn" onclick="setDistance(800, 'm')">800m</button>
+                                        <button type="button" class="btn btn-outline-success btn-sm preset-btn" onclick="setDistance(1000, 'm')">1km</button>
+                                        <button type="button" class="btn btn-outline-success btn-sm preset-btn" onclick="setDistance(2000, 'm')">2km</button>
+                                    </div>
+                                </div>
+                        <div class="form-group">
+                            <label for="targetTime">Target Time (optional)</label>
+                            <div class="row">
+                                <div class="col-4">
+                                    <input type="number" class="form-control" id="targetHours" placeholder="0" min="0" max="23">
+                                    <small class="form-text text-muted text-center">Hours</small>
+                                </div>
+                                <div class="col-4">
+                                    <input type="number" class="form-control" id="targetMinutes" placeholder="25" min="0" max="59">
+                                    <small class="form-text text-muted text-center">Minutes</small>
+                                </div>
+                                <div class="col-4">
+                                    <input type="number" class="form-control" id="targetSeconds" placeholder="30" min="0" max="59">
+                                    <small class="form-text text-muted text-center">Seconds</small>
+                                </div>
+                            </div>
+                            <small class="form-text text-muted">Leave hours empty or 0 for times under 1 hour</small>
+                        </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Action Buttons -->
+                    <div class="row">
+                        <div class="col-12">
+                            <div class="text-center mt-3">
+                                <button type="button" class="btn btn-primary mr-2" onclick="calculateVMA()">
+                                    <i class="fas fa-calculator mr-2"></i>Calculate
+                                </button>
+                                <button type="button" class="btn btn-outline-secondary mr-2" onclick="clearForm()">
+                                    <i class="fas fa-eraser mr-2"></i>Clear
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        <!-- Results Section -->
+        <div id="resultsSection" class="card card-success card-outline" style="display: none;">
+            <div class="card-header">
+                <h3 class="card-title">
+                    <i class="fas fa-chart-line mr-2"></i>Calculation Results
+                </h3>
+                <div class="card-tools">
+                </div>
+            </div>
+            <div class="card-body">
+                <div id="results" class="results-grid">
+                    <!-- Results will be populated here by JavaScript -->
+                </div>
+            </div>
+        </div>
+
+        <!-- Training Zones Reference -->
+        <div class="row">
+            <div class="col-md-6">
+                <div class="card card-warning card-outline">
+                    <div class="card-header">
+                        <h3 class="card-title">
+                            <i class="fas fa-layer-group mr-2"></i>Training Zones
+                        </h3>
+                    </div>
+                    <div class="card-body">
+                        <div class="training-zone" data-zone="aerobic">
+                            <span class="zone-badge badge-success">70-80%</span>
+                            <span class="zone-name">Aerobic Base</span>
+                            <small class="zone-description">Easy runs, recovery</small>
+                        </div>
+                        <div class="training-zone" data-zone="tempo">
+                            <span class="zone-badge badge-warning">80-90%</span>
+                            <span class="zone-name">Tempo/Threshold</span>
+                            <small class="zone-description">Comfortably hard pace</small>
+                        </div>
+                        <div class="training-zone" data-zone="vo2max">
+                            <span class="zone-badge badge-danger">90-95%</span>
+                            <span class="zone-name">VO2 Max</span>
+                            <small class="zone-description">Hard intervals</small>
+                        </div>
+                        <div class="training-zone" data-zone="neuromuscular">
+                            <span class="zone-badge badge-dark">95-105%</span>
+                            <span class="zone-name">Neuromuscular</span>
+                            <small class="zone-description">Sprint intervals</small>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-md-6">
+                <div class="card card-info card-outline">
+                    <div class="card-header">
+                        <h3 class="card-title">
+                            <i class="fas fa-trophy mr-2"></i>Race Pace Guide
+                        </h3>
+                    </div>
+                    <div class="card-body">
+                        <div class="race-pace" data-race="marathon">
+                            <span class="pace-badge badge-info">75-80%</span>
+                            <span class="pace-name">Marathon Pace</span>
+                        </div>
+                        <div class="race-pace" data-race="half">
+                            <span class="pace-badge badge-primary">85-90%</span>
+                            <span class="pace-name">Half Marathon</span>
+                        </div>
+                        <div class="race-pace" data-race="10k">
+                            <span class="pace-badge badge-warning">90-95%</span>
+                            <span class="pace-name">10K Pace</span>
+                        </div>
+                        <div class="race-pace" data-race="5k">
+                            <span class="pace-badge badge-danger">95-100%</span>
+                            <span class="pace-name">5K Pace</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<!-- Pass data via HTML data attributes instead of inline JavaScript -->
+<div id="vma-data" 
+     data-user-vma="{{ user_vma|default:'' }}"
+     data-current-view="{{ current_view }}"
+     {% if selected_athlete %}
+     data-selected-athlete-id="{{ selected_athlete.id }}"
+     data-selected-athlete-name="{{ selected_athlete.get_full_name }}"
+     {% endif %}
+     style="display: none;">
+</div>
+<script>
+// Temporary fix to ensure view state is correct on VMA calculator
+document.addEventListener('DOMContentLoaded', function() {
+    // Check if there's a mismatch between session view and displayed view
+    const vmaDataElement = document.getElementById('vma-data');
+    const currentViewFromTemplate = vmaDataElement.dataset.currentView;
+    const activeButton = document.querySelector('.view-toggle-btn.active');
+    const currentViewFromButton = activeButton ? activeButton.dataset.view : 'athlete';
+    
+    console.log('Template view:', currentViewFromTemplate, 'Button view:', currentViewFromButton);
+    
+    // If there's a mismatch, trust the button state (which comes from session)
+    if (currentViewFromTemplate !== currentViewFromButton && activeButton) {
+        console.log('View mismatch detected, updating template data');
+        vmaDataElement.dataset.currentView = currentViewFromButton;
+        
+        // Update navbar indicator to match
+        updateViewIndicator(currentViewFromButton);
+    }
+});
+</script>
+<script src="{% static 'js/vma_calculator.js' %}"></script>
+{% endblock %}

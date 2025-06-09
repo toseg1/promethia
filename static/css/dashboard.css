@@ -1,0 +1,615 @@
+/* Enhanced Calendar CSS with improved selection and multi-day events */
+
+/* Calendar Layout */
+.calendar-month {
+  width: 100%;
+  border: 1px solid #dee2e6;
+  border-radius: 0.375rem;
+  overflow: hidden;
+  background: #fff;
+}
+
+.calendar-header {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  background-color: #f8f9fa;
+  border-bottom: 2px solid #dee2e6;
+}
+
+.calendar-day-header {
+  padding: 15px 8px;
+  text-align: center;
+  font-weight: 600;
+  color: #495057;
+  border-right: 1px solid #dee2e6;
+  font-size: 0.875rem;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.calendar-day-header:last-child {
+  border-right: none;
+}
+
+.calendar-body {
+  display: flex;
+  flex-direction: column;
+}
+
+.calendar-week {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  min-height: 120px;
+}
+
+.calendar-day {
+  border-right: 1px solid #dee2e6;
+  border-bottom: 1px solid #dee2e6;
+  padding: 8px;
+  position: relative;
+  background-color: #fff;
+  min-height: 120px;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.calendar-day:hover {
+  background-color: #f8f9fa;
+}
+
+.calendar-day:last-child {
+  border-right: none;
+}
+
+.calendar-day-empty {
+  background-color: #f8f9fa;
+  cursor: default;
+}
+
+.calendar-day-empty:hover {
+  background-color: #f8f9fa;
+}
+
+/* Today indicator - now just a subtle background */
+.calendar-day-today {
+  background-color: #e3f2fd;
+}
+
+/* Selected day - bright blue border and background */
+.calendar-day-selected {
+  background-color: #e3f2fd !important;
+  border: 2px solid #2196f3 !important;
+  box-shadow: 0 0 10px rgba(33, 150, 243, 0.3);
+}
+
+.day-number {
+  font-weight: 600;
+  color: #495057;
+  margin-bottom: 4px;
+  font-size: 0.875rem;
+  text-align: center;
+  width: 20px;
+  height: 20px;
+  line-height: 20px;
+  border-radius: 50%;
+  transition: all 0.2s ease;
+}
+
+/* Today's number - subtle styling */
+.calendar-day-today .day-number {
+  background-color: #bbdefb;
+  color: #1976d2;
+}
+
+/* Selected day number - prominent styling */
+.calendar-day-selected .day-number {
+  background-color: #2196f3 !important;
+  color: white !important;
+  transform: scale(1.1);
+}
+
+.day-events {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  overflow-y: auto;
+  max-height: 90px;
+}
+
+/* Week View */
+.calendar-week-view {
+  display: flex;
+  height: 600px;
+  border: 1px solid #dee2e6;
+  border-radius: 0.375rem;
+  overflow: hidden;
+  background: #fff;
+}
+
+.time-labels {
+  width: 80px;
+  border-right: 1px solid #dee2e6;
+  background-color: #f8f9fa;
+  flex-shrink: 0;
+  display: grid;
+}
+
+.time-header {
+  height: 60px;
+  border-bottom: 1px solid #dee2e6;
+}
+
+.time-label {
+  height: 40px;
+  padding: 8px 4px;
+  text-align: center;
+  font-size: 0.75rem;
+  color: #6c757d;
+  border-bottom: 1px solid #e9ecef;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.week-days {
+  flex: 1;
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+}
+
+.week-day {
+  border-right: 1px solid #dee2e6;
+  display: flex;
+  flex-direction: column;
+  cursor: pointer;
+  transition: background-color 0.2s ease;
+}
+
+.week-day:hover {
+  background-color: #f8f9fa;
+}
+
+.week-day:last-child {
+  border-right: none;
+}
+
+.week-day-header {
+  height: 60px;
+  padding: 8px;
+  border-bottom: 1px solid #dee2e6;
+  background-color: #f8f9fa;
+  text-align: center;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  transition: all 0.2s ease;
+}
+
+/* Week view selection */
+.week-day-selected .week-day-header {
+  background-color: #2196f3 !important;
+  color: white !important;
+}
+
+.week-day-today .week-day-header {
+  background-color: #e3f2fd;
+  border-bottom: 2px solid #2196f3;
+}
+
+.day-name {
+  font-size: 0.75rem;
+  color: #6c757d;
+  margin-bottom: 2px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.week-day-selected .day-name {
+  color: white !important;
+}
+
+.day-number {
+  font-size: 1.25rem;
+  font-weight: 600;
+  color: #495057;
+}
+
+.week-day-selected .day-number {
+  color: white !important;
+}
+
+.day-number.today {
+  background-color: #bbdefb;
+  color: #1976d2;
+  border-radius: 50%;
+  width: 30px;
+  height: 30px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  margin: 0 auto;
+}
+
+.week-day-events {
+  flex: 1;
+  padding: 4px;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+/* Event Cards */
+.event-card {
+  background: #fff;
+  border: 1px solid #dee2e6;
+  border-radius: 4px;
+  padding: 4px 6px;
+  margin-bottom: 2px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  border-left: 3px solid;
+  font-size: 0.75rem;
+  line-height: 1.2;
+  position: relative;
+  display: flex;
+  align-items: flex-start;
+  gap: 4px;
+  min-height: 24px;
+  text-decoration: none;
+  color: inherit;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+}
+
+.event-card:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+  text-decoration: none;
+  color: inherit;
+  z-index: 10;
+}
+
+.event-icon {
+  font-size: 10px;
+  margin-top: 1px;
+  flex-shrink: 0;
+  width: 12px;
+  text-align: center;
+}
+
+.event-content {
+  flex: 1;
+  min-width: 0;
+}
+
+.event-title {
+  font-weight: 600;
+  color: #495057;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  line-height: 1.2;
+}
+
+.event-time, .event-duration, .event-distance {
+  font-size: 0.65rem;
+  color: #6c757d;
+  margin-top: 1px;
+  line-height: 1;
+}
+
+.event-athlete {
+  font-size: 0.65rem;
+  color: #28a745;
+  font-weight: 500;
+  margin-top: 1px;
+  line-height: 1;
+}
+
+.event-description {
+  font-size: 0.65rem;
+  color: #6c757d;
+  margin-top: 1px;
+  line-height: 1.1;
+}
+
+.event-status {
+  position: absolute;
+  top: 2px;
+  right: 2px;
+  font-size: 8px;
+}
+
+.event-actions {
+  display: none;
+  position: absolute;
+  top: 2px;
+  right: 2px;
+  gap: 2px;
+  z-index: 20;
+}
+
+.event-card:hover .event-actions {
+  display: flex;
+}
+
+.event-actions a {
+  padding: 2px 4px;
+  font-size: 10px;
+  line-height: 1;
+}
+
+.event-type {
+  position: absolute;
+  bottom: 2px;
+  right: 2px;
+  font-size: 8px;
+  color: #6c757d;
+}
+
+/* Multi-day event styling */
+.event-card.multi-day {
+  position: relative;
+  border-radius: 6px;
+  border-left: 4px solid;
+  background: linear-gradient(90deg, rgba(255,255,255,0.9) 0%, rgba(248,249,250,0.9) 100%);
+  margin: 1px 0;
+  min-height: 28px;
+  font-weight: 600;
+}
+
+.event-card.multi-day::before {
+  content: '';
+  position: absolute;
+  left: -1px;
+  top: 0;
+  bottom: 0;
+  width: 4px;
+  background: inherit;
+  background: var(--event-color);
+}
+
+.event-card.multi-day.first-day {
+  border-top-left-radius: 6px;
+  border-bottom-left-radius: 6px;
+}
+
+.event-card.multi-day.last-day {
+  border-top-right-radius: 6px;
+  border-bottom-right-radius: 6px;
+}
+
+.event-card.multi-day.middle-day {
+  border-radius: 0;
+}
+
+/* Sport-specific colors - CORRECTED */
+.event-card.sport-running {
+  border-left-color: #28a745 !important;
+  background-color: rgba(40, 167, 69, 0.05) !important;
+  --event-color: #28a745;
+}
+
+.event-card.sport-running .event-icon {
+  color: #28a745 !important;
+}
+
+.event-card.sport-cycling {
+  border-left-color: #007bff !important;
+  background-color: rgba(0, 123, 255, 0.05) !important;
+  --event-color: #007bff;
+}
+
+.event-card.sport-cycling .event-icon {
+  color: #007bff !important;
+}
+
+.event-card.sport-swimming {
+  border-left-color: #17a2b8 !important;
+  background-color: rgba(23, 162, 184, 0.05) !important;
+  --event-color: #17a2b8;
+}
+
+.event-card.sport-swimming .event-icon {
+  color: #17a2b8 !important;
+}
+
+.event-card.sport-trail_running {
+  border-left-color: #6f42c1 !important;
+  background-color: rgba(111, 66, 193, 0.05) !important;
+  --event-color: #6f42c1;
+}
+
+.event-card.sport-trail_running .event-icon {
+  color: #6f42c1 !important;
+}
+
+.event-card.sport-triathlon {
+  border-left-color: #fd7e14 !important;
+  background-color: rgba(253, 126, 20, 0.05) !important;
+  --event-color: #fd7e14;
+}
+
+.event-card.sport-triathlon .event-icon {
+  color: #fd7e14 !important;
+}
+
+.event-card.sport-duathlon {
+  border-left-color: #e83e8c !important;
+  background-color: rgba(232, 62, 140, 0.05) !important;
+  --event-color: #e83e8c;
+}
+
+.event-card.sport-duathlon .event-icon {
+  color: #e83e8c !important;
+}
+
+.event-card.sport-other {
+  border-left-color: #6c757d !important;
+  background-color: rgba(108, 117, 125, 0.05) !important;
+  --event-color: #6c757d;
+}
+
+.event-card.sport-other .event-icon {
+  color: #6c757d !important;
+}
+
+/* Race events */
+.event-card.event-race {
+  border-left-color: #ffc107 !important;
+  background-color: rgba(255, 193, 7, 0.1) !important;
+  --event-color: #ffc107;
+}
+
+.event-card.event-race .event-icon {
+  color: #ffc107 !important;
+}
+
+/* Custom events */
+.event-card.event-custom {
+  border-left-color: #6c757d !important;
+  background-color: rgba(108, 117, 125, 0.05) !important;
+  --event-color: #6c757d;
+}
+
+.event-card.event-custom .event-icon {
+  color: #6c757d !important;
+}
+
+/* Status indicators */
+.status-completed {
+  color: #28a745 !important;
+}
+
+.status-cancelled {
+  color: #dc3545 !important;
+}
+
+.status-missed {
+  color: #ffc107 !important;
+}
+
+.status-scheduled {
+  color: #007bff !important;
+}
+
+/* Pulse animation for selections */
+@keyframes pulse {
+  0% {
+    transform: scale(1);
+    box-shadow: 0 0 0 0 rgba(33, 150, 243, 0.4);
+  }
+  70% {
+    transform: scale(1.02);
+    box-shadow: 0 0 0 10px rgba(33, 150, 243, 0);
+  }
+  100% {
+    transform: scale(1);
+    box-shadow: 0 0 0 0 rgba(33, 150, 243, 0);
+  }
+}
+
+.calendar-day.pulse {
+  animation: pulse 0.6s ease-out;
+}
+
+.week-day.pulse {
+  animation: pulse 0.6s ease-out;
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+  .calendar-week {
+    min-height: 80px;
+  }
+  
+  .calendar-day {
+    min-height: 80px;
+    padding: 4px;
+  }
+  
+  .day-events {
+    max-height: 60px;
+  }
+  
+  .event-card {
+    font-size: 0.7rem;
+    padding: 2px 4px;
+    min-height: 20px;
+  }
+  
+  .event-title {
+    font-size: 0.65rem;
+  }
+  
+  .event-time, .event-duration, .event-distance, .event-athlete {
+    font-size: 0.6rem;
+  }
+  
+  .calendar-week-view {
+    height: 400px;
+  }
+  
+  .time-labels {
+    width: 60px;
+  }
+  
+  .time-label {
+    font-size: 0.65rem;
+    height: 30px;
+  }
+  
+  .week-day-header {
+    height: 40px;
+    padding: 4px;
+  }
+  
+  .day-name {
+    font-size: 0.65rem;
+  }
+  
+  .day-number {
+    font-size: 1rem;
+  }
+}
+
+@media (max-width: 576px) {
+  .calendar-day-header {
+    padding: 8px 4px;
+    font-size: 0.75rem;
+  }
+  
+  .calendar-week {
+    min-height: 60px;
+  }
+  
+  .calendar-day {
+    min-height: 60px;
+    padding: 2px;
+  }
+  
+  .day-number {
+    font-size: 0.75rem;
+    width: 16px;
+    height: 16px;
+    line-height: 16px;
+  }
+  
+  .event-card {
+    font-size: 0.65rem;
+    padding: 1px 3px;
+    min-height: 18px;
+  }
+  
+  .event-title {
+    font-size: 0.6rem;
+  }
+  
+  .event-icon {
+    font-size: 8px;
+  }
+}

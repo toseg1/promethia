@@ -1,0 +1,214 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block page_title %}{{ title|default:"Add New Race" }}{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+  <div class="col-lg-10">
+    <div class="card card-primary card-outline">
+      <div class="card-header">
+        <h3 class="card-title">
+          <i class="fas fa-trophy mr-2"></i>
+          {{ title|default:"Add New Race" }}
+        </h3>
+      </div>
+      
+      <form method="post" novalidate action="{% if race %}{% url 'race_events:race_edit' race.id %}{% else %}{% url 'race_events:race_create' %}{% endif %}">
+        {% csrf_token %}
+        <div class="card-body">
+          <div class="row">
+            <!-- Race Name -->
+            <div class="col-md-8">
+              <div class="form-group">
+                <label for="{{ form.name.id_for_label }}">
+                  <i class="fas fa-tag mr-1"></i>
+                  Race Name <span class="text-danger">*</span>
+                </label>
+                {{ form.name }}
+                {% if form.name.errors %}
+                  <div class="text-danger">{{ form.name.errors.0 }}</div>
+                {% endif %}
+              </div>
+            </div>
+            
+            <!-- Sport Type -->
+            <div class="col-md-4">
+              <div class="form-group">
+                <label for="{{ form.sport_type.id_for_label }}">
+                  <i class="fas fa-running mr-1"></i>
+                  Sport Type <span class="text-danger">*</span>
+                </label>
+                {{ form.sport_type }}
+                {% if form.sport_type.errors %}
+                  <div class="text-danger">{{ form.sport_type.errors.0 }}</div>
+                {% endif %}
+              </div>
+            </div>
+          </div>
+
+          <div class="row">
+            <!-- Date -->
+            <div class="col-md-4">
+              <div class="form-group">
+                <label for="{{ form.date.id_for_label }}">
+                  <i class="fas fa-calendar mr-1"></i>
+                  Date <span class="text-danger">*</span>
+                </label>
+                {{ form.date }}
+                {% if form.date.errors %}
+                  <div class="text-danger">{{ form.date.errors.0 }}</div>
+                {% endif %}
+              </div>
+            </div>
+            
+            <!-- Time -->
+            <div class="col-md-4">
+              <div class="form-group">
+                <label for="{{ form.time.id_for_label }}">
+                  <i class="fas fa-clock mr-1"></i>
+                  Start Time
+                </label>
+                {{ form.time }}
+                <small class="form-text text-muted">Optional start time</small>
+                {% if form.time.errors %}
+                  <div class="text-danger">{{ form.time.errors.0 }}</div>
+                {% endif %}
+              </div>
+            </div>
+            
+            <!-- Distance -->
+            <div class="col-md-4">
+              <div class="form-group">
+                <label for="{{ form.distance.id_for_label }}">
+                  <i class="fas fa-route mr-1"></i>
+                  Distance
+                </label>
+                {{ form.distance }}
+                {% if form.distance.errors %}
+                  <div class="text-danger">{{ form.distance.errors.0 }}</div>
+                {% endif %}
+              </div>
+            </div>
+          </div>
+
+          <div class="row">
+            <!-- Location -->
+            <div class="col-md-6">
+              <div class="form-group">
+                <label for="{{ form.location.id_for_label }}">
+                  <i class="fas fa-map-marker-alt mr-1"></i>
+                  Location <span class="text-danger">*</span>
+                </label>
+                {{ form.location }}
+                {% if form.location.errors %}
+                  <div class="text-danger">{{ form.location.errors.0 }}</div>
+                {% endif %}
+              </div>
+            </div>
+            
+            <!-- Venue -->
+            <div class="col-md-6">
+              <div class="form-group">
+                <label for="{{ form.venue.id_for_label }}">
+                  <i class="fas fa-building mr-1"></i>
+                  Venue
+                </label>
+                {{ form.venue }}
+                {% if form.venue.errors %}
+                  <div class="text-danger">{{ form.venue.errors.0 }}</div>
+                {% endif %}
+              </div>
+            </div>
+          </div>
+
+          <div class="row">
+            <!-- Goal Time -->
+            <div class="col-md-6">
+              <div class="form-group">
+                <label>
+                  <i class="fas fa-stopwatch mr-1"></i>
+                  Goal Time
+                </label>
+                
+                <div class="row">
+                  <div class="col-4">
+                    <input type="number" class="form-control" name="goal_hours" placeholder="3" min="0" max="23" 
+                           value="{% if race and race.goal_time %}{{ goal_hours }}{% endif %}">
+                    <small class="form-text text-muted text-center">Hours</small>
+                  </div>
+                  <div class="col-4">
+                    <input type="number" class="form-control" name="goal_minutes" placeholder="45" min="0" max="59"
+                           value="{% if race and race.goal_time %}{{ goal_minutes }}{% endif %}">
+                    <small class="form-text text-muted text-center">Minutes</small>
+                  </div>
+                  <div class="col-4">
+                    <input type="number" class="form-control" name="goal_seconds" placeholder="30" min="0" max="59"
+                           value="{% if race and race.goal_time %}{{ goal_seconds }}{% endif %}">
+                    <small class="form-text text-muted text-center">Seconds</small>
+                  </div>
+                </div>
+                
+                <small class="form-text text-muted mt-2">
+                  <i class="fas fa-info-circle mr-1"></i>
+                  Optional: Your target finish time
+                </small>
+              </div>
+            </div>
+            
+            <!-- Goal Type -->
+            <div class="col-md-6">
+              <div class="form-group">
+                <label for="{{ form.goal_type.id_for_label }}">
+                  <i class="fas fa-target mr-1"></i>
+                  Goal Type
+                </label>
+                {{ form.goal_type }}
+                {% if form.goal_type.errors %}
+                  <div class="text-danger">{{ form.goal_type.errors.0 }}</div>
+                {% endif %}
+              </div>
+            </div>
+          </div>
+
+          <!-- Notes -->
+          <div class="form-group">
+            <label for="{{ form.notes.id_for_label }}">
+              <i class="fas fa-sticky-note mr-1"></i>
+              Additional Notes
+            </label>
+            {{ form.notes }}
+            {% if form.notes.errors %}
+              <div class="text-danger">{{ form.notes.errors.0 }}</div>
+            {% endif %}
+          </div>
+        </div>
+
+        <div class="card-footer">
+          <button type="submit" class="btn btn-primary">
+          <i class="fas fa-save mr-1"></i>
+           {% if race %}Update Race{% else %}Save Race{% endif %}
+      </button>
+          <button type="button" class="btn btn-secondary" onclick="goBack()">
+              <i class="fas fa-times mr-1"></i>
+              Cancel
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+function goBack() {
+    if (document.referrer) {
+        history.back();
+    } else {
+        // Fallback if no referrer (like if user came directly to the page)
+        window.location.href = "{% url 'dashboard' %}";
+    }
+}
+</script>
+{% endblock %}

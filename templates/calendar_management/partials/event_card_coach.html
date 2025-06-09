@@ -1,0 +1,124 @@
+<!-- calendar_management/partials/event_card_coach.html -->
+
+{% load calendar_extras %}
+
+<!-- Event card with safe URL handling -->
+<a href="{% if event.event_type == 'training_session' %}{% url 'session_detail' event.id %}{% elif event.event_type == 'race' %}{% url 'race_events:race_detail' event.id %}{% elif event.event_type == 'custom' %}{% url 'calendar_management:custom_event_detail' event.id %}{% else %}#{% endif %}" 
+   class="event-card 
+    {% if event.event_type == 'training_session' or event.event_type == 'session' %}
+        sport-{{ event.sport|default:'other' }}
+    {% elif event.event_type == 'race' %}
+        event-race
+    {% elif event.event_type == 'custom' %}
+        event-custom
+    {% else %}
+        sport-{{ event.sport|default:'other' }}
+    {% endif %}
+    {% if event.duration_days > 1 %}multi-day{% endif %}"
+    {% if event.event_type == 'custom' and event.color %}
+    {% endif %}
+    data-event-id="{{ event.id }}"
+    data-sport="{{ event.sport|default:'other' }}"
+    data-event-type="{{ event.event_type }}"
+    {% if event.duration_days > 1 %}
+    data-event-duration="{{ event.duration_days }}"
+    data-start-date="{{ event.date|date:'Y-m-d' }}"
+    {% endif %}
+    data-date="{{ event.date|date:'Y-m-d' }}"
+    {% if event.start_time %}data-time="{{ event.start_time|time:'H:i' }}"{% endif %}
+    title="">
+
+    <div class="event-icon">
+        {% if event.event_type == 'training_session' or event.event_type == 'session' %}
+            {% if event.sport == 'running' %}
+                <i class="fas fa-running"></i>
+            {% elif event.sport == 'cycling' %}
+                <i class="fas fa-bicycle"></i>
+            {% elif event.sport == 'swimming' %}
+                <i class="fas fa-swimmer"></i>
+            {% elif event.sport == 'trail' %}
+                <i class="fas fa-mountain"></i>
+            {% elif event.sport == 'triathlon' %}
+                <i class="fas fa-medal"></i>
+            {% elif event.sport == 'duathlon' %}
+                <i class="fas fa-running"></i>
+            {% elif event.sport == 'strength' or event.sport == 'gym' %}
+                <i class="fas fa-dumbbell"></i>
+            {% elif event.sport == 'yoga' %}
+                <i class="fas fa-leaf"></i>
+            {% elif event.sport == 'crossfit' %}
+                <i class="fas fa-fire"></i>
+            {% else %}
+                <i class="fas fa-heartbeat"></i>
+            {% endif %}
+        {% elif event.event_type == 'race' %}
+            <i class="fas fa-trophy"></i>
+        {% elif event.event_type == 'custom' %}
+        <i class="fas fa-star" {% if event.color %}style="color: {{ event.color }} !important;"{% endif %}></i>
+        {% else %}
+        <i class="fas fa-calendar-check"></i>
+            <i class="fas fa-calendar-check"></i>
+        {% endif %}
+    </div>
+    
+    <div class="event-content">
+        <div class="event-title">{{ event.title }}</div>
+        
+
+        {% if event.athlete and event.athlete != request.user %}
+            <div class="event-athlete">
+                <i class="fas fa-user" style="font-size: 9px; margin-right: 2px;"></i>
+                {{ event.athlete.get_full_name|default:event.athlete.username|truncatechars:15 }}
+            </div>
+        {% endif %}
+        
+        {% if event.event_type == 'race' %}
+            {% if event.race_type %}
+                <div class="event-race-type" style="font-size: 0.6rem; color: #e67e22; font-weight: 600;">
+                    <i class="fas fa-flag-checkered" style="font-size: 8px; margin-right: 2px;"></i>
+                    {{ event.race_type|title }}
+                </div>
+            {% endif %}
+        {% endif %}
+    </div>
+    
+    {% if event.status %}
+        <div class="event-status status-{{ event.status }}">
+            {% if event.status == 'completed' %}
+                <i class="fas fa-check-circle"></i>
+            {% elif event.status == 'cancelled' %}
+                <i class="fas fa-times-circle"></i>
+            {% elif event.status == 'missed' %}
+                <i class="fas fa-exclamation-triangle"></i>
+            {% elif event.status == 'in_progress' %}
+                <i class="fas fa-play-circle"></i>
+            {% else %}
+                <i class="fas fa-clock"></i>
+            {% endif %}
+        </div>
+    {% endif %}
+</a>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Enhanced event card interactions for coach view
+    document.querySelectorAll('.event-card').forEach(card => {
+        // Prevent event bubbling to day selection
+        card.addEventListener('click', function(e) {
+            e.stopPropagation();
+            e.preventDefault();
+        });
+        
+        // Add hover effects
+        card.addEventListener('mouseenter', function() {
+            this.style.transform = 'scale(1.02) translateY(-1px)';
+            this.style.zIndex = '15';
+        });
+        
+        card.addEventListener('mouseleave', function() {
+            this.style.transform = 'scale(1) translateY(0)';
+            this.style.zIndex = '1';
+        });
+    });
+});
+</script>

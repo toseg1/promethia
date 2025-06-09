@@ -1,0 +1,183 @@
+<!-- race_events/templates/race_events/race_result.html -->
+{% extends 'base.html' %}
+{% load static %}
+
+{% block page_title %}{% if race.result %}Edit Results{% else %}Add Results{% endif %} - {{ race.name }}{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+  <div class="col-lg-8">
+    <div class="card card-success card-outline">
+      <div class="card-header">
+        <h3 class="card-title">
+          <i class="fas fa-stopwatch mr-2"></i>
+          {% if race.result %}Edit Results{% else %}Enter Results{% endif %}
+        </h3>
+        <div class="card-tools">
+        </div>
+      </div>
+      
+      <!-- Race Info Summary -->
+      <div class="card-body bg-light">
+        <div class="row">
+          <div class="col-md-6">
+            <h5><i class="fas fa-trophy text-primary mr-2"></i>{{ race.name }}</h5>
+            <p class="mb-1">
+              <i class="fas fa-calendar text-info mr-1"></i>
+              {{ race.date|date:"F d, Y" }}
+              {% if race.time %}at {{ race.time|time:"H:i" }}{% endif %}
+            </p>
+            <p class="mb-0">
+              <i class="fas fa-map-marker-alt text-danger mr-1"></i>
+              {{ race.location }}
+            </p>
+          </div>
+          <div class="col-md-6">
+            {% if race.goal_time %}
+            <p class="mb-1">
+              <i class="fas fa-target text-success mr-1"></i>
+              <strong>Goal:</strong> {{ race.goal_time }}
+            </p>
+            {% endif %}
+            {% if race.distance %}
+            <p class="mb-0">
+              <i class="fas fa-route text-warning mr-1"></i>
+              <strong>Distance:</strong> {{ race.distance }}
+            </p>
+            {% endif %}
+          </div>
+        </div>
+      </div>
+      
+      <form method="post">
+        {% csrf_token %}
+        <div class="card-body">
+          <!-- Performance Results -->
+          <h5 class="mb-3">
+            <i class="fas fa-chart-line text-primary mr-2"></i>
+            Performance Results
+          </h5>
+          
+          <div class="row">
+            <!-- Finish Time -->
+            <div class="col-md-6 mb-3">
+                <label>
+                <i class="fas fa-trophy text-success mr-1"></i>
+                Finish Time <span class="text-danger">*</span>
+                </label>
+                <div class="row">
+                    <div class="col-4">
+                      <input type="number" class="form-control" name="hours" placeholder="3" min="0" max="23" 
+                             value="{{ existing_hours }}">
+                      <small class="form-text text-muted text-center">Hours</small>
+                    </div>
+                    <div class="col-4">
+                      <input type="number" class="form-control" name="minutes" placeholder="45" min="0" max="59" required
+                             value="{{ existing_minutes }}">
+                      <small class="form-text text-muted text-center">Minutes</small>
+                    </div>
+                    <div class="col-4">
+                      <input type="number" class="form-control" name="seconds" placeholder="30" min="0" max="59"
+                             value="{{ existing_seconds }}">
+                      <small class="form-text text-muted text-center">Seconds</small>
+                    </div>
+                  </div>
+                <small class="form-text text-muted mt-2">
+                <i class="fas fa-info-circle mr-1"></i>
+                Example: 1 hours, 45 minutes, 30 seconds = 1:45:30
+                </small>
+            </div>
+            
+            <!-- Overall Position -->
+            <div class="col-md-3 mb-3">
+              <label for="id_overall_position">
+                <i class="fas fa-medal text-warning mr-1"></i>
+                Overall Position
+              </label>
+              <input type="number" class="form-control" id="id_overall_position" name="overall_position" 
+                     placeholder="e.g., 125" min="1"
+                     value="{% if race.result %}{{ race.result.overall_position }}{% endif %}">
+            </div>
+            
+            <!-- Total Participants -->
+            <div class="col-md-3 mb-3">
+              <label for="id_total_participants">
+                <i class="fas fa-users text-info mr-1"></i>
+                Total Finishers
+              </label>
+              <input type="number" class="form-control" id="id_total_participants" name="total_participants" 
+                     placeholder="e.g., 500" min="1"
+                     value="{% if race.result %}{{ race.result.total_participants }}{% endif %}">
+            </div>
+          </div>
+          
+          <div class="row">
+            <!-- Category Position -->
+            <div class="col-md-6 mb-3">
+              <label for="id_category_position">
+                <i class="fas fa-users text-secondary mr-1"></i>
+                Category Position
+              </label>
+              <input type="number" class="form-control" id="id_category_position" name="category_position" 
+                     placeholder="Position in age group" min="1"
+                     value="{% if race.result %}{{ race.result.category_position }}{% endif %}">
+              <small class="form-text text-muted">Your position in age/gender category</small>
+            </div>
+            
+            <!-- Satisfaction -->
+            <div class="col-md-6 mb-3">
+              <label for="id_satisfaction">
+                <i class="fas fa-smile text-purple mr-1"></i>
+                How satisfied are you?
+              </label>
+              <select class="form-control" id="id_satisfaction" name="satisfaction">
+                <option value="">Select satisfaction level</option>
+                <option value="1" {% if race.result and race.result.satisfaction == 1 %}selected{% endif %}>1 - Very Disappointed</option>
+                <option value="2" {% if race.result and race.result.satisfaction == 2 %}selected{% endif %}>2 - Disappointed</option>
+                <option value="3" {% if race.result and race.result.satisfaction == 3 %}selected{% endif %}>3 - Neutral</option>
+                <option value="4" {% if race.result and race.result.satisfaction == 4 %}selected{% endif %}>4 - Satisfied</option>
+                <option value="5" {% if race.result and race.result.satisfaction == 5 %}selected{% endif %}>5 - Very Satisfied</option>
+              </select>
+            </div>
+          </div>
+          
+          <!-- Race Report -->
+          <div class="mb-3">
+            <label for="id_race_report">
+              <i class="fas fa-file-alt text-secondary mr-1"></i>
+              Race Report
+            </label>
+            <textarea class="form-control" id="id_race_report" name="race_report" rows="4" 
+                      placeholder="How did the race go? Share your experience, what went well, what could be improved...">{% if race.result %}{{ race.result.race_report }}{% endif %}</textarea>
+            <small class="form-text text-muted">Optional: Describe your race experience</small>
+          </div>
+        </div>
+        
+        <div class="card-footer">
+            <button type="submit" class="btn btn-primary">
+              <i class="fas fa-save mr-1"></i>
+              {% if race.result %}Update Results{% else %}Save Results{% endif %}
+            </button>
+          <button type="button" class="btn btn-secondary" onclick="goBack()">
+              <i class="fas fa-times mr-1"></i>
+              Cancel
+          </button>
+          </div>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+{% endblock %}
+{% block extra_js %}
+<script>
+function goBack() {
+    if (document.referrer) {
+        history.back();
+    } else {
+        // Fallback if no referrer (like if user came directly to the page)
+        window.location.href = "{% url 'dashboard' %}";
+    }
+}
+</script>
+{% endblock %}

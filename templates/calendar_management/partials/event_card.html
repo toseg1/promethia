@@ -1,0 +1,275 @@
+<!-- calendar_management/partials/event_card.html -->
+<!-- CORRECTED event card template with error handling -->
+
+{% load calendar_extras %}
+
+<!-- Event card with safe URL handling -->
+<a href="{% if event.event_type == 'training_session' %}{% url 'session_detail' event.id %}{% elif event.event_type == 'race' %}{% url 'race_events:race_detail' event.id %}{% elif event.event_type == 'custom' %}{% url 'calendar_management:custom_event_detail' event.id %}{% else %}#{% endif %}" 
+   class="event-card 
+    {% if event.event_type == 'training_session' or event.event_type == 'session' %}
+        sport-{{ event.sport|default:'other' }}
+    {% elif event.event_type == 'race' %}
+        event-race
+    {% elif event.event_type == 'custom' %}
+        event-custom
+    {% else %}
+        sport-{{ event.sport|default:'other' }}
+    {% endif %}
+    {% if event.duration_days > 1 %}multi-day{% endif %}"
+    {% if event.event_type == 'custom' and event.color %}
+    {% endif %}
+    data-event-id="{{ event.id }}"
+    data-sport="{{ event.sport|default:'other' }}"
+    data-event-type="{{ event.event_type }}"
+    {% if event.duration_days > 1 %}
+    data-event-duration="{{ event.duration_days }}"
+    data-start-date="{{ event.date|date:'Y-m-d' }}"
+    {% endif %}
+    data-date="{{ event.date|date:'Y-m-d' }}"
+    {% if event.start_time %}data-time="{{ event.start_time|time:'H:i' }}"{% endif %}
+    title="">
+
+    <div class="event-icon">
+        {% if event.event_type == 'training_session' or event.event_type == 'session' %}
+            {% if event.sport == 'running' %}
+                <i class="fas fa-running"></i>
+            {% elif event.sport == 'cycling' %}
+                <i class="fas fa-bicycle"></i>
+            {% elif event.sport == 'swimming' %}
+                <i class="fas fa-swimmer"></i>
+            {% elif event.sport == 'trail' %}
+                <i class="fas fa-mountain"></i>
+            {% elif event.sport == 'triathlon' %}
+                <i class="fas fa-medal"></i>
+            {% elif event.sport == 'duathlon' %}
+                <i class="fas fa-running"></i>
+            {% elif event.sport == 'strength' or event.sport == 'gym' %}
+                <i class="fas fa-dumbbell"></i>
+            {% elif event.sport == 'yoga' %}
+                <i class="fas fa-leaf"></i>
+            {% elif event.sport == 'crossfit' %}
+                <i class="fas fa-fire"></i>
+            {% else %}
+                <i class="fas fa-heartbeat"></i>
+            {% endif %}
+        {% elif event.event_type == 'race' %}
+            <i class="fas fa-trophy"></i>
+        {% elif event.event_type == 'custom' %}
+        <i class="fas fa-star" {% if event.color %}style="color: {{ event.color }} !important;"{% endif %}></i>
+        {% else %}
+        <i class="fas fa-calendar-check"></i>
+            <i class="fas fa-calendar-check"></i>
+        {% endif %}
+    </div>
+    
+    <div class="event-content">
+        <div class="event-title">{{ event.title }}</div>
+        
+ {% if event.start_time and event.start_time|time:'H' != '00' and event.start_time|time:'H' != '01' %}
+            <div class="event-time">
+                <i class="fas fa-clock" style="font-size: 9px; margin-right: 2px;"></i>
+                {{ event.start_time|time:'H:i' }}
+            </div>
+        {% endif %}
+        
+{% if event.duration and event.event_type != 'custom' %}
+    <div class="event-duration">
+        <i class="fas fa-stopwatch" style="font-size: 9px; margin-right: 2px;"></i>
+        {{ event.duration|duration_format }}
+    </div>
+{% endif %}
+        
+        {% if event.distance and event.event_type != 'custom' %}
+            <div class="event-distance">
+                <i class="fas fa-route" style="font-size: 9px; margin-right: 2px;"></i>
+                {{ event.distance }} km
+            </div>
+        {% endif %}
+        
+        {% if event.description and event.event_type == 'custom' %}
+            <div class="event-description">{{ event.description|truncatechars:30 }}</div>
+        {% endif %}
+        
+        {% if event.event_type == 'race' %}
+            {% if event.race_type %}
+                <div class="event-race-type" style="font-size: 0.6rem; color: #e67e22; font-weight: 600;">
+                    <i class="fas fa-flag-checkered" style="font-size: 8px; margin-right: 2px;"></i>
+                    {{ event.race_type|title }}
+                </div>
+            {% endif %}
+            {% if event.location %}
+                <div class="event-location" style="font-size: 0.6rem; color: #6c757d;">
+                    <i class="fas fa-map-marker-alt" style="font-size: 8px; margin-right: 2px;"></i>
+                    {{ event.location|truncatechars:20 }}
+                </div>
+            {% endif %}
+        {% endif %}
+    </div>
+    
+    {% if event.status %}
+        <div class="event-status status-{{ event.status }}">
+            {% if event.status == 'completed' %}
+                <i class="fas fa-check-circle"></i>
+            {% elif event.status == 'cancelled' %}
+                <i class="fas fa-times-circle"></i>
+            {% elif event.status == 'missed' %}
+                <i class="fas fa-exclamation-triangle"></i>
+            {% elif event.status == 'in_progress' %}
+                <i class="fas fa-play-circle"></i>
+            {% else %}
+                <i class="fas fa-clock"></i>
+            {% endif %}
+        </div>
+    {% endif %}
+</a>
+
+<!-- JavaScript for handling event clicks and multi-day events -->
+<script>
+// Safe event click handler
+function handleEventClick(eventType, eventId) {
+    console.log('Event clicked:', eventType, eventId);
+    
+    // Try to navigate to event detail, with fallbacks
+    let url = '#';
+    
+    try {
+        if (eventType === 'training_session') {
+            // Try to build URL for training session
+            url = `/sessions/${eventId}/`;
+        } else if (eventType === 'race') {
+            // Try to build URL for race
+            url = `/races/${eventId}/`;
+        } else if (eventType === 'custom') {
+            // Try to build URL for custom event
+            url = `/calendar/custom/${eventId}/`;
+        }
+        
+        // Navigate to the URL
+        if (url !== '#') {
+            window.location.href = url;
+        } else {
+            // Fallback: show event details in alert
+            showEventDetails(eventType, eventId);
+        }
+    } catch (error) {
+        console.log('Navigation error:', error);
+        showEventDetails(eventType, eventId);
+    }
+}
+
+// Fallback function to show event details
+function showEventDetails(eventType, eventId) {
+    const eventCard = document.querySelector(`[data-event-id="${eventId}"]`);
+    if (eventCard) {
+        const title = eventCard.querySelector('.event-title')?.textContent || 'Event';
+        const time = eventCard.querySelector('.event-time')?.textContent || '';
+        const description = eventCard.getAttribute('title') || '';
+        
+        alert(`Event Details:\n\nTitle: ${title}\nTime: ${time}\nType: ${eventType}\nID: ${eventId}\n\n${description}`);
+    }
+}
+
+document.addEventListener('DOMContentLoaded', function() {
+    // Handle multi-day events on page load
+    const multiDayEvents = document.querySelectorAll('.event-card[data-event-duration]');
+    
+    multiDayEvents.forEach(event => {
+        const duration = parseInt(event.getAttribute('data-event-duration'));
+        const startDate = event.getAttribute('data-start-date');
+        const eventId = event.getAttribute('data-event-id');
+        
+        if (duration > 1 && startDate) {
+            // Mark this as the original event
+            event.classList.add('multi-day-original', 'first-day');
+            
+            // Create copies for subsequent days
+            for (let i = 1; i < duration; i++) {
+                const currentDate = addDaysToDate(startDate, i);
+                const targetDay = document.querySelector(`[data-date="${currentDate}"] .day-events, .week-day[data-date="${currentDate}"] .week-day-events`);
+                
+                if (targetDay) {
+                    const eventCopy = event.cloneNode(true);
+                    eventCopy.classList.add('multi-day-copy');
+                    eventCopy.classList.remove('multi-day-original', 'first-day');
+                    
+                    // Update classes based on position
+                    if (i === duration - 1) {
+                        eventCopy.classList.add('last-day');
+                    } else {
+                        eventCopy.classList.add('middle-day');
+                    }
+                    
+                    // Remove time and some details from copies (show only on first day)
+                    const timeElement = eventCopy.querySelector('.event-time');
+                    if (timeElement) timeElement.remove();
+                    
+                    const durationElement = eventCopy.querySelector('.event-duration');
+                    if (durationElement) durationElement.remove();
+                    
+                    // Update data attributes
+                    eventCopy.setAttribute('data-date', currentDate);
+                    eventCopy.setAttribute('data-day-index', i);
+                    
+                    // Add continuation indicator
+                    const title = eventCopy.querySelector('.event-title');
+                    if (title && i === duration - 1) {
+                        title.innerHTML = title.innerHTML + ' <small>(end)</small>';
+                    } else if (title && i > 0) {
+                        title.innerHTML = title.innerHTML + ' <small>(cont.)</small>';
+                    }
+                    
+                    targetDay.appendChild(eventCopy);
+                }
+            }
+        }
+    });
+    
+    function addDaysToDate(dateString, days) {
+        const date = new Date(dateString);
+        date.setDate(date.getDate() + days);
+        return date.toISOString().split('T')[0];
+    }
+    
+    // Enhanced event card interactions
+    document.querySelectorAll('.event-card').forEach(card => {
+        // Prevent event bubbling to day selection
+        card.addEventListener('click', function(e) {
+            e.stopPropagation();
+            e.preventDefault();
+        });
+        
+        // Add hover effects
+        card.addEventListener('mouseenter', function() {
+            this.style.transform = 'scale(1.02) translateY(-1px)';
+            this.style.zIndex = '15';
+        });
+        
+        card.addEventListener('mouseleave', function() {
+            this.style.transform = 'scale(1) translateY(0)';
+            this.style.zIndex = '1';
+        });
+    });
+});
+
+// Add ripple animation CSS
+if (!document.querySelector('#event-card-styles')) {
+    const style = document.createElement('style');
+    style.id = 'event-card-styles';
+    style.textContent = `
+        @keyframes ripple {
+            to {
+                transform: scale(4);
+                opacity: 0;
+            }
+        }
+        .event-card {
+            overflow: hidden;
+            position: relative;
+        }
+        .event-card:hover {
+            cursor: pointer;
+        }
+    `;
+    document.head.appendChild(style);
+}
+</script>

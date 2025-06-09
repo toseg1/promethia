@@ -1,0 +1,383 @@
+<!-- 3. Create separate coach athlete view: -->
+<!-- calendar_management/templates/calendar_management/coach_athlete_calendar.html -->
+
+{% extends 'base.html' %}
+{% load static %}
+{% load calendar_extras %}
+
+{% block page_title %}{{ viewing_athlete.get_full_name }}'s Calendar{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'css/calendar.css' %}">
+{% endblock %}
+
+{% block breadcrumb %}
+<li class="breadcrumb-item"><a href="{% url 'dashboard' %}">Home</a></li>
+<li class="breadcrumb-item"><a href="{% url 'calendar_management:coach_view' %}">Athletes' Calendar</a></li>
+<li class="breadcrumb-item active">{{ viewing_athlete.get_full_name }}</li>
+{% endblock %}
+
+{% block content %}
+<!-- Athlete Header -->
+<div class="row mb-3">
+  <div class="col-12">
+    <div class="card bg-gradient-info">
+      <div class="card-body">
+        <div class="row align-items-center">
+          <div class="col-md-8">
+            <div class="d-flex align-items-center">
+              {% if viewing_athlete.profile_picture %}
+                <img src="{{ viewing_athlete.profile_picture.url }}" alt="{{ viewing_athlete.get_full_name }}" 
+                     class="img-circle elevation-2 mr-3" style="width: 60px; height: 60px;">
+              {% else %}
+                <div class="bg-white rounded-circle d-flex align-items-center justify-content-center mr-3" 
+                     style="width: 60px; height: 60px; font-size: 24px; color: #17a2b8;">
+                  {{ viewing_athlete.first_name.0 }}{{ viewing_athlete.last_name.0 }}
+                </div>
+              {% endif %}
+              <div class="text-white">
+                <h3 class="mb-0">{{ viewing_athlete.get_full_name }}</h3>
+                <p class="mb-0">
+                  <i class="fas fa-user-tie mr-1"></i>
+                  Coach View - Complete Training Calendar
+                </p>
+                <small>{{ viewing_athlete.email }}</small>
+              </div>
+            </div>
+          </div>
+          <div class="col-md-4 text-right">
+            <div class="text-white">
+              <div class="row">
+                <div class="col-6">
+                  <div class="description-block border-right">
+                    <span class="description-text">UPCOMING RACES</span>
+                    <h5 class="description-header">{{ athlete_upcoming_races|default:0 }}</h5>
+                  </div>
+                </div>
+                <div class="col-6">
+                  <div class="description-block">
+                    <span class="description-text">THIS MONTH</span>
+                    <h5 class="description-header">{{ athlete_events_this_month|default:0 }}</h5>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Calendar Controls -->
+<div class="row mb-3">
+  <div class="col-12">
+    <div class="card">
+      <div class="card-body">
+        <div class="row align-items-center">
+          <div class="col-md-6">
+            <h4 class="mb-0">
+              <i class="fas fa-calendar-alt mr-2 text-primary"></i>
+              {{ viewing_athlete.first_name }}'s Training Calendar
+            </h4>
+          </div>
+          <div class="col-md-6">
+            <div class="float-right">
+              <!-- Back to Coach Calendar Button -->
+              <a href="{% url 'calendar_management:coach_view' %}" class="btn btn-outline-secondary btn-sm mr-3">
+                <i class="fas fa-arrow-left"></i> Back to Coach Calendar
+              </a>
+              
+              <!-- View Toggle -->
+              <div class="btn-group mr-3" role="group">
+                <a href="{% url 'calendar_management:coach_athlete_view' viewing_athlete.id %}?view=month&year={{ year }}&month={{ month }}" 
+                   class="btn btn-outline-primary {% if view_type == 'month' %}active{% endif %}">
+                  <i class="fas fa-calendar"></i> Month
+                </a>
+                <a href="{% url 'calendar_management:coach_athlete_view' viewing_athlete.id %}?view=week&week_start={{ week_start_date|date:'Y-m-d' }}" 
+                   class="btn btn-outline-primary {% if view_type == 'week' %}active{% endif %}">
+                  <i class="fas fa-calendar-week"></i> Week
+                </a>
+              </div>
+              
+              <!-- Add Event Button for Coach -->
+              <div class="btn-group" role="group">
+                <button type="button" class="btn btn-success dropdown-toggle" data-toggle="dropdown">
+                  <i class="fas fa-plus"></i> Add Event for {{ viewing_athlete.first_name }}
+                </button>
+                <div class="dropdown-menu">
+                  <a class="dropdown-item" href="{% url 'session_create' %}?athlete={{ viewing_athlete.id }}">
+                    <i class="fas fa-running"></i> Training Session
+                  </a>
+                  <a class="dropdown-item" href="{% url 'race_events:race_create' %}?athlete={{ viewing_athlete.id }}">
+                    <i class="fas fa-trophy"></i> Race
+                  </a>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+{% if view_type == 'month' %}
+  <!-- Month View -->
+  <div class="row">
+    <div class="col-12">
+      <div class="card card-primary">
+        <div class="card-header" data-current-month="{{ month }}" data-current-year="{{ year }}">
+          <div class="row align-items-center">
+            <div class="col-md-6">
+              <h3 class="card-title mb-0">
+                <i class="fas fa-calendar mr-2"></i>
+                {{ month|month_name }} {{ year }}
+              </h3>
+            </div>
+            <div class="col-md-6">
+              <div class="float-right">
+                <!-- Month Navigation -->
+                <div class="btn-group" role="group">
+                  {% if month == 1 %}
+                    <a href="{% url 'calendar_management:coach_athlete_view' viewing_athlete.id %}?view=month&year={{ year|add:'-1' }}&month=12" 
+                       class="btn btn-link btn-sm text-white">
+                      <i class="fas fa-chevron-left"></i>
+                    </a>
+                  {% else %}
+                    <a href="{% url 'calendar_management:coach_athlete_view' viewing_athlete.id %}?view=month&year={{ year }}&month={{ month|add:'-1' }}" 
+                       class="btn btn-link btn-sm text-white">
+                      <i class="fas fa-chevron-left"></i>
+                    </a>
+                  {% endif %}
+                  
+                  <a href="{% url 'calendar_management:coach_athlete_view' viewing_athlete.id %}?view=month" 
+                     class="btn btn-link btn-sm text-white">
+                    Today
+                  </a>
+                  
+                  {% if month == 12 %}
+                    <a href="{% url 'calendar_management:coach_athlete_view' viewing_athlete.id %}?view=month&year={{ year|add:'1' }}&month=1" 
+                       class="btn btn-link btn-sm text-white">
+                      <i class="fas fa-chevron-right"></i>
+                    </a>
+                  {% else %}
+                    <a href="{% url 'calendar_management:coach_athlete_view' viewing_athlete.id %}?view=month&year={{ year }}&month={{ month|add:'1' }}" 
+                       class="btn btn-link btn-sm text-white">
+                      <i class="fas fa-chevron-right"></i>
+                    </a>
+                  {% endif %}
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="card-body p-0">
+          <div class="calendar-month">
+            <!-- Calendar Header -->
+            <div class="calendar-header">
+              <div class="calendar-day-header">Mon</div>
+              <div class="calendar-day-header">Tue</div>
+              <div class="calendar-day-header">Wed</div>
+              <div class="calendar-day-header">Thu</div>
+              <div class="calendar-day-header">Fri</div>
+              <div class="calendar-day-header">Sat</div>
+              <div class="calendar-day-header">Sun</div>
+            </div>
+            
+            <!-- Calendar Body -->
+            <div class="calendar-body">
+              {% if calendar_data %}
+                {% for week in calendar_data %}
+                  <div class="calendar-week">
+                    {% for day_data in week %}
+                      <div class="calendar-day 
+                          {% if not day_data.day %}calendar-day-empty{% endif %} 
+                          {% if day_data.day == today.day and month == today.month and year == today.year %}calendar-day-today{% endif %}"
+                          {% if day_data.day %}
+                            data-date="{{ year }}-{{ month|stringformat:'02d' }}-{{ day_data.day|stringformat:'02d' }}"
+                            tabindex="0"
+                          {% endif %}>
+                        {% if day_data.day %}
+                          <div class="day-number">{{ day_data.day }}</div>
+                          <div class="day-events">
+                            {% for event in day_data.events %}
+                              <!-- Use regular event card since we're viewing a specific athlete -->
+                              {% include 'calendar_management/partials/event_card.html' with event=event %}
+                            {% endfor %}
+                          </div>
+                        {% endif %}
+                      </div>
+                    {% endfor %}
+                  </div>
+                {% endfor %}
+              {% else %}
+                <!-- Fallback basic calendar if calendar_data is not available -->
+                {% for week_num in "1234567"|make_list %}
+                  <div class="calendar-week">
+                    {% for day_num in "1234567"|make_list %}
+                      <div class="calendar-day" 
+                           data-date="{{ year }}-{{ month|stringformat:'02d' }}-{{ forloop.counter|stringformat:'02d' }}"
+                           tabindex="0">
+                        <div class="day-number">{{ forloop.counter }}</div>
+                        <div class="day-events">
+                          <!-- Events will be populated here -->
+                        </div>
+                      </div>
+                    {% endfor %}
+                  </div>
+                {% endfor %}
+              {% endif %}
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+{% else %}
+  <!-- Week View -->
+  <div class="row">
+    <div class="col-12">
+      <div class="card card-primary">
+        <div class="card-header">
+          <div class="row align-items-center">
+            <div class="col-md-6">
+              <h3 class="card-title mb-0">
+                <i class="fas fa-calendar-week mr-2"></i>
+                Week of {{ week_start_date|date:"F d, Y" }}
+              </h3>
+            </div>
+            <div class="col-md-6">
+              <div class="float-right">
+                <!-- Week Navigation -->
+                <div class="btn-group" role="group">
+                  {% with prev_week=week_start_date|add_days:-7 %}
+                    <a href="{% url 'calendar_management:coach_athlete_view' viewing_athlete.id %}?view=week&week_start={{ prev_week|date:'Y-m-d' }}" 
+                       class="btn btn-link btn-sm text-white">
+                      <i class="fas fa-chevron-left"></i>
+                    </a>
+                  {% endwith %}
+                  
+                  <a href="{% url 'calendar_management:coach_athlete_view' viewing_athlete.id %}?view=week" 
+                     class="btn btn-link btn-sm text-white">
+                    This Week
+                  </a>
+                  
+                  {% with next_week=week_start_date|add_days:7 %}
+                    <a href="{% url 'calendar_management:coach_athlete_view' viewing_athlete.id %}?view=week&week_start={{ next_week|date:'Y-m-d' }}" 
+                       class="btn btn-link btn-sm text-white">
+                      <i class="fas fa-chevron-right"></i>
+                    </a>
+                  {% endwith %}
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="card-body p-0">
+          <div class="calendar-week-view">
+            <!-- Week Days Header -->
+            <div class="calendar-header">
+              {% if week_days %}
+                {% for day in week_days %}
+                  <div class="calendar-day-header">
+                    {{ day.day_short }}
+                  </div>
+                {% endfor %}
+              {% else %}
+                <div class="calendar-day-header">Mon</div>
+                <div class="calendar-day-header">Tue</div>
+                <div class="calendar-day-header">Wed</div>
+                <div class="calendar-day-header">Thu</div>
+                <div class="calendar-day-header">Fri</div>
+                <div class="calendar-day-header">Sat</div>
+                <div class="calendar-day-header">Sun</div>
+              {% endif %}
+            </div>
+            
+            <!-- Week Days Body -->
+          <div class="calendar-body">
+            <div class="calendar-week">
+              {% if week_days %}
+                {% for day in week_days %}
+                  <div class="calendar-day week-day
+                      {% if day.date == today %}calendar-day-today{% endif %}"
+                      data-date="{{ day.date|date:'Y-m-d' }}"
+                      tabindex="0">
+                    <div class="day-number {% if day.date == today %}today{% endif %}">{{ day.day_num }}</div>
+                    <div class="day-events">
+                      {% for event in week_events %}
+                        {% if event.date == day.date %}
+                          {% include 'calendar_management/partials/event_card.html' with event=event %}
+                        {% endif %}
+                      {% endfor %}
+                    </div>
+                  </div>
+                {% endfor %}
+              {% else %}
+                <!-- Fallback for 7 days if week_days is not available -->
+                {% for day_num in "1234567"|make_list %}
+                  <div class="calendar-day week-day" 
+                       data-date="{% now 'Y-m-d' %}"
+                       tabindex="0">
+                    <div class="day-number">{{ forloop.counter }}</div>
+                    <div class="day-events">
+                      <!-- Events will be populated here -->
+                    </div>
+                  </div>
+                {% endfor %}
+              {% endif %}
+            </div>
+          </div>
+        </div>
+      </div>
+      </div>
+    </div>
+  </div>
+{% endif %}
+
+<!-- Event Modal -->
+<div class="modal fade" id="eventModal" tabindex="-1" aria-hidden="true">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title">Event Details for {{ viewing_athlete.get_full_name }}</h5>
+        <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+          <span aria-hidden="true">&times;</span>
+        </button>
+      </div>
+      <div class="modal-body">
+        <div id="eventDetails">
+          <!-- Content will be loaded via JavaScript -->
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
+        <div class="btn-group" id="eventActions" style="display: none;">
+          <a href="#" class="btn btn-warning btn-sm" id="editEventBtn">
+            <i class="fas fa-edit"></i> Edit
+          </a>
+          <a href="#" class="btn btn-info btn-sm" id="viewEventBtn">
+            <i class="fas fa-eye"></i> View Details
+          </a>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script src="{% static 'js/calendar.js' %}"></script>
+<script>
+    const urls = {
+        sessionCreate: "{% url 'session_create' %}?athlete={{ viewing_athlete.id }}",
+        raceCreate: "{% url 'race_events:race_create' %}?athlete={{ viewing_athlete.id }}",
+        calendarView: "{% url 'calendar_management:coach_athlete_view' viewing_athlete.id %}"
+    };
+    
+    // Coach-specific JavaScript for athlete view
+    console.log('Coach viewing athlete calendar:', '{{ viewing_athlete.get_full_name }}');
+</script>
+{% endblock %}

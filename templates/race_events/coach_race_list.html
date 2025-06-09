@@ -1,0 +1,266 @@
+<!-- race_events/templates/race_events/coach_race_list.html -->
+{% extends 'base.html' %}
+{% load static %}
+
+{% block page_title %}All Athletes' Races{% endblock %}
+
+{% block content %}
+<div class="row">
+  <div class="col-12">
+    <div class="card card-primary card-outline">
+      <div class="card-header">
+        <h3 class="card-title">
+          <i class="fas fa-users mr-2"></i>
+          All Athletes' Races & Events
+        </h3>
+        <div class="card-tools">
+          <a href="{% url 'dashboard' %}" class="btn btn-sm btn-secondary">
+            <i class="fas fa-arrow-left"></i> Back to Dashboard
+          </a>
+        </div>
+      </div>
+      
+      <div class="card-body">
+        {% if races %}
+          <!-- Dashboard Style Widget Statistics -->
+          <div class="row mb-4">
+            <!-- Upcoming Races -->
+            <div class="col-lg-3 col-md-6 col-12">
+              <div class="small-box bg-info">
+                <div class="inner">
+                  <h3>{{ upcoming_count|default:0 }}</h3>
+                  <p>Upcoming Race(s)</p>
+                </div>
+                <div class="icon">
+                  <i class="fas fa-calendar"></i>
+                </div>
+                <div class="small-box-footer">
+                  <span class="text-white">Future Event(s)</span>
+                </div>
+              </div>
+            </div>
+
+            <!-- Completed Races -->
+            <div class="col-lg-3 col-md-6 col-12">
+              <div class="small-box bg-success">
+                <div class="inner">
+                  <h3>{{ completed_count|default:0 }}</h3>
+                  <p>Completed</p>
+                </div>
+                <div class="icon">
+                  <i class="fas fa-check"></i>
+                </div>
+                <div class="small-box-footer">
+                  <span class="text-white">With Result(s)</span>
+                </div>
+              </div>
+            </div>
+
+            <!-- Past (No Results) -->
+            <div class="col-lg-3 col-md-6 col-12">
+              <div class="small-box bg-warning">
+                <div class="inner">
+                  <h3>{{ past_no_results_count|default:0 }}</h3>
+                  <p>Past Event(s)</p>
+                </div>
+                <div class="icon">
+                  <i class="fas fa-clock"></i>
+                </div>
+                <div class="small-box-footer">
+                  <span class="text-white">Awaiting Result(s)</span>
+                </div>
+              </div>
+            </div>
+
+            <!-- Total Athletes -->
+            <div class="col-lg-3 col-md-6 col-12">
+              <div class="small-box bg-primary">
+                <div class="inner">
+                  <h3>{{ total_athletes|default:0 }}</h3>
+                  <p>Total Athlete(s)</p>
+                </div>
+                <div class="icon">
+                  <i class="fas fa-users"></i>
+                </div>
+                <div class="small-box-footer">
+                  <span class="text-white">With Race(s)</span>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="table-responsive">
+            <table class="table table-hover">
+              <thead>
+                <tr>
+                  <th style="width: 10px">#</th>
+                  <th>Athlete</th>
+                  <th>Date</th>
+                  <th>Race Name</th>
+                  <th>Sport</th>
+                  <th>Location</th>
+                  <th>Goal Time</th>
+                  <th>Finish Time</th>
+                  <th>Status</th>
+                  <th style="width: 120px">Action</th>
+                </tr>
+              </thead>
+              <tbody>
+                {% for race in races %}
+                <tr class="{% if race.is_past %}table-secondary{% endif %}">
+                  <td>{{ forloop.counter }}</td>
+                  <td>
+                    <div class="d-flex align-items-center">
+                      {% if race.athlete.profile_picture %}
+                        <img src="{{ race.athlete.profile_picture.url }}" alt="{{ race.athlete.get_full_name }}" 
+                             class="img-circle elevation-1 mr-2" style="width: 30px; height: 30px;">
+                      {% else %}
+                        <div class="bg-secondary rounded-circle d-flex align-items-center justify-content-center mr-2" 
+                             style="width: 30px; height: 30px; font-size: 12px; color: white;">
+                          {{ race.athlete.first_name.0 }}{{ race.athlete.last_name.0 }}
+                        </div>
+                      {% endif %}
+                      <div>
+                        <strong>{{ race.athlete.get_full_name }}</strong>
+                      </div>
+                    </div>
+                  </td>
+                  <td>
+                    <span class="badge {% if race.is_past %}badge-secondary{% else %}badge-info{% endif %}">
+                      {{ race.date|date:"M d, Y" }}
+                    </span>
+                  </td>
+                  <td>
+                    <strong>{{ race.name }}</strong>
+                    {% if race.distance %}
+                      <br><small class="text-muted">{{ race.distance }}</small>
+                    {% endif %}
+                  </td>
+                  <td>
+                    <i class="fas fa-running text-success mr-1"></i>
+                    {{ race.get_sport_type_display }}
+                  </td>
+                  <td>
+                    <i class="fas fa-map-marker-alt text-danger mr-1"></i>
+                    {{ race.location }}
+                  </td>
+                  <td>
+                    {% if race.goal_time %}
+                      <span class="badge badge-success">{{ race.goal_time }}</span>
+                    {% else %}
+                      <small class="text-muted">—</small>
+                    {% endif %}
+                  </td>
+                  <td>
+                    {% if race.result and race.result.finish_time %}
+                      <span class="badge badge-primary">{{ race.result.finish_time }}</span>
+                      {% if race.goal_time and race.result.finish_time %}
+                        {% if race.result.goal_achieved %}
+                          <br><small class="text-success"><i class="fas fa-check"></i> Goal met!</small>
+                        {% else %}
+                          <br><small class="text-warning"><i class="fas fa-clock"></i> Goal missed</small>
+                        {% endif %}
+                      {% endif %}
+                    {% elif race.is_past %}
+                      <small class="text-muted">No result</small>
+                    {% else %}
+                      <small class="text-muted">—</small>
+                    {% endif %}
+                  </td>
+                  <td>
+                    {% if race.result and race.result.finish_time %}
+                      <span class="badge badge-success">
+                        <i class="fas fa-check mr-1"></i>Completed
+                      </span>
+                    {% elif race.is_past %}
+                      <span class="badge badge-warning">
+                        <i class="fas fa-clock mr-1"></i>Past
+                      </span>
+                    {% else %}
+                      <span class="badge badge-info">
+                        <i class="fas fa-calendar mr-1"></i>{{ race.days_until_race }} days
+                      </span>
+                    {% endif %}
+                  </td>
+                  <td>
+                    <div class="btn-group btn-group-sm" role="group">
+                      <a href="{% url 'race_events:race_detail' race.id %}" class="btn btn-info btn-xs" title="View">
+                        <i class="fas fa-eye"></i>
+                      </a>
+                    </div>
+                  </td>
+                </tr>
+                {% endfor %}
+              </tbody>
+            </table>
+          </div>
+          
+          <!-- Pagination -->
+          {% if is_paginated %}
+            <div class="row">
+              <div class="col-sm-12 col-md-5">
+                <div class="dataTables_info">
+                  Showing {{ page_obj.start_index }} to {{ page_obj.end_index }} of {{ page_obj.paginator.count }} races
+                </div>
+              </div>
+              <div class="col-sm-12 col-md-7">
+                <div class="dataTables_paginate paging_simple_numbers">
+                  <ul class="pagination">
+                    {% if page_obj.has_previous %}
+                      <li class="paginate_button page-item previous">
+                        <a href="?page={{ page_obj.previous_page_number }}{% if request.GET.athlete %}&athlete={{ request.GET.athlete }}{% endif %}{% if request.GET.sport %}&sport={{ request.GET.sport }}{% endif %}{% if request.GET.status %}&status={{ request.GET.status }}{% endif %}" 
+                           class="page-link">Previous</a>
+                      </li>
+                    {% endif %}
+                    
+                    {% for num in page_obj.paginator.page_range %}
+                      {% if page_obj.number == num %}
+                        <li class="paginate_button page-item active">
+                          <span class="page-link">{{ num }}</span>
+                        </li>
+                      {% else %}
+                        <li class="paginate_button page-item">
+                          <a href="?page={{ num }}{% if request.GET.athlete %}&athlete={{ request.GET.athlete }}{% endif %}{% if request.GET.sport %}&sport={{ request.GET.sport }}{% endif %}{% if request.GET.status %}&status={{ request.GET.status }}{% endif %}" 
+                             class="page-link">{{ num }}</a>
+                        </li>
+                      {% endif %}
+                    {% endfor %}
+                    
+                    {% if page_obj.has_next %}
+                      <li class="paginate_button page-item next">
+                        <a href="?page={{ page_obj.next_page_number }}{% if request.GET.athlete %}&athlete={{ request.GET.athlete }}{% endif %}{% if request.GET.sport %}&sport={{ request.GET.sport }}{% endif %}{% if request.GET.status %}&status={{ request.GET.status }}{% endif %}" 
+                           class="page-link">Next</a>
+                      </li>
+                    {% endif %}
+                  </ul>
+                </div>
+              </div>
+            </div>
+          {% endif %}
+          
+        {% else %}
+          <div class="text-center">
+            <i class="fas fa-users fa-3x text-muted mb-3"></i>
+            <h4>No races found</h4>
+            <p class="text-muted">
+              {% if request.GET.athlete or request.GET.sport or request.GET.status %}
+                Try adjusting your filters or clear them to see all races.
+              {% else %}
+                Athletes haven't added any races yet.
+              {% endif %}
+            </p>
+            <div>
+              {% if request.GET.athlete or request.GET.sport or request.GET.status %}
+                <a href="{% url 'race_events:coach_race_list' %}" class="btn btn-secondary mr-2">
+                  <i class="fas fa-times"></i> Clear Filters
+                </a>
+              {% endif %}
+            </div>
+          </div>
+        {% endif %}
+      </div>
+    </div>
+  </div>
+</div>
+
+{% endblock %}

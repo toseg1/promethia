@@ -1,0 +1,47 @@
+/* Profile Page Specific Styles */
+
+.profile-image-container {
+    position: relative;
+    display: inline-block;
+  }
+  
+  .card-outline {
+    border-top: 3px solid;
+  }
+  
+  .card-primary.card-outline {
+    border-top-color: #007bff;
+  }
+  
+  .card-success.card-outline {
+    border-top-color: #28a745;
+  }
+  
+  .card-info.card-outline {
+    border-top-color: #17a2b8;
+  }
+  
+  .font-weight-semibold {
+    font-weight: 600;
+  }
+  
+  .form-control:read-only {
+    background-color: #f8f9fa;
+    cursor: not-allowed;
+  }
+  
+  .btn-group-vertical .btn {
+    border-radius: 0.25rem;
+    margin-bottom: 0;
+  }
+  
+  .btn-group-vertical .btn + .btn {
+    margin-top: 0.25rem;
+  }
+  
+  /* Responsive adjustments */
+  @media (max-width: 768px) {
+    .col-md-4:first-child {
+      margin-bottom: 1rem;
+    }
+  }

@@ -1,0 +1,67 @@
+{% extends 'base.html' %}
+{% load static %}
+
+
+
+{% block page_title %}Delete Session{% endblock %}
+
+{% block breadcrumb %}
+<li class="breadcrumb-item"><a href="{% url 'dashboard' %}">Home</a></li>
+<li class="breadcrumb-item"><a href="{% url 'calendar_view' %}">Calendar</a></li>
+<li class="breadcrumb-item"><a href="{% url 'session_detail' session.id %}">{{ session.title }}</a></li>
+<li class="breadcrumb-item active">Delete</li>
+{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+  <div class="col-md-6">
+    <div class="card">
+      <div class="card-header bg-danger">
+        <h3 class="card-title text-white">
+          <i class="fas fa-exclamation-triangle mr-1"></i>
+          Confirm Deletion
+        </h3>
+      </div>
+      <div class="card-body">
+        <p>Are you sure you want to delete the following training session?</p>
+        
+        <div class="alert alert-warning">
+          <h5><strong>{{ session.title }}</strong></h5>
+          <p class="mb-1"><strong>Athlete:</strong> {{ session.athlete.get_full_name }}</p>
+          <p class="mb-1"><strong>Date:</strong> {{ session.date|date:"l, F d, Y" }}</p>
+          <p class="mb-0"><strong>Time:</strong> {{ session.time|time:"H:i" }}</p>
+        </div>
+        
+        <p class="text-danger">
+          <i class="fas fa-warning"></i> 
+          This action cannot be undone.
+        </p>
+      </div>
+      <div class="card-footer">
+        <form method="post" class="d-inline">
+          {% csrf_token %}
+          <button type="submit" class="btn btn-danger">
+            <i class="fas fa-trash"></i> Yes, Delete Session
+          </button>
+        </form>
+        <button type="button" class="btn btn-secondary" onclick="goBack()">
+              <i class="fas fa-times mr-1"></i>
+              Cancel
+          </button>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}
+{% block extra_js %}
+<script>
+function goBack() {
+    if (document.referrer) {
+        history.back();
+    } else {
+        // Fallback if no referrer (like if user came directly to the page)
+        window.location.href = "{% url 'dashboard' %}";
+    }
+}
+</script>
+{% endblock %}

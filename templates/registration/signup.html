@@ -1,0 +1,114 @@
+{% load static %}
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Sign Up - Euphron Training</title>
+  <link rel="icon" type="image/x-icon" href="{% static 'img/istockphoto-503427908-612x612-logo.jpg' %}">
+
+  <!-- Google Font: Source Sans Pro -->
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Source+Sans+Pro:300,400,400i,700&display=fallback">
+  <!-- Font Awesome -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <!-- AdminLTE CSS -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/admin-lte/3.2.0/css/adminlte.min.css">
+</head>
+<body class="hold-transition register-page">
+<div class="register-box">
+  <div class="card card-outline card-primary">
+    <div class="card-header text-center">
+      <a href="#" class="h1"><b>Promethia</b>.app</a>
+    </div>
+    <div class="card-body">
+      <p class="login-box-msg">Register a new account</p>
+
+      <form method="post">
+        {% csrf_token %}
+        <div class="input-group mb-3">
+          <input type="text" name="username" class="form-control" placeholder="Username" required>
+          <div class="input-group-append">
+            <div class="input-group-text">
+              <span class="fas fa-user"></span>
+            </div>
+          </div>
+        </div>
+        <div class="input-group mb-3">
+          <input type="text" name="first_name" class="form-control" placeholder="First Name" required>
+          <div class="input-group-append">
+            <div class="input-group-text">
+              <span class="fas fa-user"></span>
+            </div>
+          </div>
+        </div>
+        <div class="input-group mb-3">
+          <input type="text" name="last_name" class="form-control" placeholder="Last Name" required>
+          <div class="input-group-append">
+            <div class="input-group-text">
+              <span class="fas fa-user"></span>
+            </div>
+          </div>
+        </div>
+        <div class="input-group mb-3">
+          <input type="email" name="email" class="form-control" placeholder="Email" required>
+          <div class="input-group-append">
+            <div class="input-group-text">
+              <span class="fas fa-envelope"></span>
+            </div>
+          </div>
+        </div>
+        <div class="input-group mb-3">
+          <select name="role" class="form-control" required>
+            <option value="">Select Role</option>
+            <option value="athlete">Athlete</option>
+            <option value="coach">Coach</option>
+          </select>
+          <div class="input-group-append">
+            <div class="input-group-text">
+              <span class="fas fa-users"></span>
+            </div>
+          </div>
+        </div>
+        <small class="form-text text-muted mb-3">
+          <i class="fas fa-info-circle mr-1"></i>
+          This sets your default dashboard view when you log in. You can switch between athlete and coach views anytime from the dashboard.
+        </small>
+        <div class="input-group mb-3">
+          <input type="password" name="password1" class="form-control" placeholder="Password" required>
+          <div class="input-group-append">
+            <div class="input-group-text">
+              <span class="fas fa-lock"></span>
+            </div>
+          </div>
+        </div>
+        <div class="input-group mb-3">
+          <input type="password" name="password2" class="form-control" placeholder="Confirm Password" required>
+          <div class="input-group-append">
+            <div class="input-group-text">
+              <span class="fas fa-lock"></span>
+            </div>
+          </div>
+        </div>
+        <div class="row">
+          <div class="col-12 text-center">
+            <button type="submit" class="btn btn-primary btn-block">Register</button>
+          </div>
+        </div>
+      </form>
+
+      <div class="text-center mt-3">
+        <a href="{% url 'login' %}">I already have an account</a>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- jQuery -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.6.0/jquery.min.js"></script>
+<!-- Bootstrap 4 -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/4.6.2/js/bootstrap.bundle.min.js"></script>
+<!-- AdminLTE App -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/admin-lte/3.2.0/js/adminlte.min.js"></script>
+</body>
+</html>

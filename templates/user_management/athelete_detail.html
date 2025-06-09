@@ -1,0 +1,356 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block page_title %}{{ athlete.get_full_name }} - Athlete Detail{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'css/dashboard.css' %}">
+{% endblock %}
+
+{% block content %}
+<!-- Athlete Header -->
+<div class="row mb-3">
+  <div class="col-12">
+    <div class="card">
+      <div class="card-body">
+        <div class="row align-items-center">
+          <div class="col-md-8">
+            <div class="d-flex align-items-center">
+              <div class="mr-3">
+                {% load profile_extras %}
+                {{ athlete|profile_image_or_initials|safe }}
+              </div>
+              <div>
+                <h4 class="mb-1">{{ athlete.get_full_name }}</h4>
+                <p class="text-muted mb-0">
+                  <i class="fas fa-envelope mr-1"></i> {{ athlete.email }}
+                  {% if athlete.profile.phone %}
+                    <span class="ml-3"><i class="fas fa-phone mr-1"></i> {{ athlete.profile.phone }}</span>
+                  {% endif %}
+                </p>
+                <small class="text-muted">
+                  Coaching since {{ relationship.created_at|date:"M d, Y" }}
+                </small>
+              </div>
+            </div>
+          </div>
+          <div class="col-md-4 text-right">
+            <a href="{% url 'dashboard' %}?athlete={{ athlete.id }}" class="btn btn-primary mr-2">
+              <i class="fas fa-tachometer-alt"></i> View Dashboard
+            </a>
+            <a href="{% url 'dashboard' %}" class="btn btn-secondary">
+              <i class="fas fa-arrow-left"></i> Back to Overview
+            </a>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Performance Metrics -->
+<div class="row">
+  <!-- VMA Level -->
+  <div class="col-lg-2 col-md-4 col-6">
+    <div class="small-box bg-warning">
+      <div class="inner">
+        <h3>{{ athlete.profile.vma|default:"--" }}<sup style="font-size: 16px">km/h</sup></h3>
+        <p>VMA Level</p>
+      </div>
+      <div class="icon">
+        <i class="fas fa-running"></i>
+      </div>
+      <div class="small-box-footer">
+        {% if athlete.profile.vma_updated %}
+          <span class="text-white">Updated {{ athlete.profile.vma_updated|date:"M d" }}</span>
+        {% else %}
+          <span class="text-white">Not set</span>
+        {% endif %}
+      </div>
+    </div>
+  </div>
+
+  <!-- FTP Level -->
+  <div class="col-lg-2 col-md-4 col-6">
+    <div class="small-box bg-danger">
+      <div class="inner">
+        <h3>{{ athlete.profile.ftp|default:"--" }}<sup style="font-size: 16px">W</sup></h3>
+        <p>FTP Level</p>
+      </div>
+      <div class="icon">
+        <i class="fas fa-bolt"></i>
+      </div>
+      <div class="small-box-footer">
+        {% if athlete.profile.ftp_updated %}
+          <span class="text-white">Updated {{ athlete.profile.ftp_updated|date:"M d" }}</span>
+        {% else %}
+          <span class="text-white">Not set</span>
+        {% endif %}
+      </div>
+    </div>
+  </div>
+
+  <!-- CSS Level -->
+  <div class="col-lg-2 col-md-4 col-6">
+    <div class="small-box bg-purple">
+      <div class="inner">
+        <h3>{{ athlete.profile.css|default:"--" }}<sup style="font-size: 16px">/100m</sup></h3>
+        <p>CSS (/100m)</p>
+      </div>
+      <div class="icon">
+        <i class="fas fa-swimmer"></i>
+      </div>
+      <div class="small-box-footer">
+        {% if athlete.profile.css_updated %}
+          <span class="text-white">Updated {{ athlete.profile.css_updated|date:"M d" }}</span>
+        {% else %}
+          <span class="text-white">Not set</span>
+        {% endif %}
+      </div>
+    </div>
+  </div>
+
+  <!-- Completion Rate -->
+  <div class="col-lg-2 col-md-4 col-6">
+    <div class="small-box bg-success">
+      <div class="inner">
+        <h3>{{ completion_rate|floatformat:0 }}<sup style="font-size: 16px">%</sup></h3>
+        <p>Completion Rate</p>
+      </div>
+      <div class="icon">
+        <i class="fas fa-chart-line"></i>
+      </div>
+      <div class="small-box-footer">
+        <span class="text-white">Last 30 Days</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- Training Frequency -->
+  <div class="col-lg-2 col-md-4 col-6">
+    <div class="small-box bg-info">
+      <div class="inner">
+        <h3>{{ avg_sessions_per_week }}<sup style="font-size: 16px">/week</sup></h3>
+        <p>Training Frequency</p>
+      </div>
+      <div class="icon">
+        <i class="fas fa-calendar-check"></i>
+      </div>
+      <div class="small-box-footer">
+        <span class="text-white">Average Sessions</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- Total Sessions -->
+  <div class="col-lg-2 col-md-4 col-6">
+    <div class="small-box bg-secondary">
+      <div class="inner">
+        <h3>{{ total_sessions_30d }}</h3>
+        <p>Total Sessions</p>
+      </div>
+      <div class="icon">
+        <i class="fas fa-dumbbell"></i>
+      </div>
+      <div class="small-box-footer">
+        <span class="text-white">Last 30 Days</span>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Main Content -->
+<div class="row">
+  <!-- Upcoming Sessions -->
+  <div class="col-lg-6">
+    <div class="card card-info card-outline">
+      <div class="card-header">
+        <h3 class="card-title">
+          <i class="fas fa-calendar-week mr-2"></i>
+          Upcoming Training Sessions
+        </h3>
+        <div class="card-tools">
+          <a href="{% url 'session_create' %}?athlete={{ athlete.id }}" class="btn btn-info btn-sm">
+            <i class="fas fa-plus"></i> Add Session
+          </a>
+        </div>
+      </div>
+      <div class="card-body">
+        {% if upcoming_sessions %}
+          <div class="table-responsive">
+            <table class="table table-sm">
+              <thead>
+                <tr>
+                  <th>Date</th>
+                  <th>Time</th>
+                  <th>Session</th>
+                  <th>Status</th>
+                </tr>
+              </thead>
+              <tbody>
+                {% for session in upcoming_sessions|slice:":5" %}
+                <tr>
+                  <td><span class="badge badge-info">{{ session.date|date:"M d" }}</span></td>
+                  <td>{{ session.time|time:"H:i" }}</td>
+                  <td>
+                    <strong>{{ session.title|default:"Training Session" }}</strong>
+                    {% if session.description %}
+                      <br><small class="text-muted">{{ session.description|truncatechars:30 }}</small>
+                    {% endif %}
+                  </td>
+                  <td>
+                    <span class="badge badge-{% if session.status == 'completed' %}success{% elif session.status == 'cancelled' %}danger{% else %}primary{% endif %}">
+                      {{ session.get_status_display|default:session.status }}
+                    </span>
+                  </td>
+                </tr>
+                {% endfor %}
+              </tbody>
+            </table>
+          </div>
+          {% if upcoming_sessions.count > 5 %}
+            <div class="text-center">
+              <a href="{% url 'dashboard' %}?athlete={{ athlete.id }}" class="btn btn-sm btn-outline-info">
+                View All {{ upcoming_sessions.count }} Sessions
+              </a>
+            </div>
+          {% endif %}
+        {% else %}
+          <div class="text-center">
+            <i class="fas fa-calendar-alt fa-2x text-muted mb-2"></i>
+            <p class="text-muted">No upcoming sessions</p>
+          </div>
+        {% endif %}
+      </div>
+    </div>
+  </div>
+
+  <!-- Upcoming Races -->
+  <div class="col-lg-6">
+    <div class="card card-primary card-outline">
+      <div class="card-header">
+        <h3 class="card-title">
+          <i class="fas fa-trophy mr-2"></i>
+          Upcoming Races
+        </h3>
+        <div class="card-tools">
+          <a href="{% url 'race_events:race_create' %}?athlete={{ athlete.id }}" class="btn btn-primary btn-sm">
+            <i class="fas fa-plus"></i> Add Race
+          </a>
+        </div>
+      </div>
+      <div class="card-body">
+        {% if upcoming_races %}
+          <div class="table-responsive">
+            <table class="table table-sm">
+              <thead>
+                <tr>
+                  <th>Date</th>
+                  <th>Race</th>
+                  <th>Location</th>
+                  <th>Goal</th>
+                </tr>
+              </thead>
+              <tbody>
+                {% for race in upcoming_races %}
+                <tr>
+                  <td><span class="badge badge-warning">{{ race.date|date:"M d" }}</span></td>
+                  <td>
+                    <strong>{{ race.name }}</strong>
+                    {% if race.distance %}
+                      <br><small class="text-muted">{{ race.distance }}</small>
+                    {% endif %}
+                  </td>
+                  <td>{{ race.location|default:"—" }}</td>
+                  <td>
+                    {% if race.goal_time %}
+                      <span class="badge badge-success">{{ race.goal_time }}</span>
+                    {% else %}
+                      <small class="text-muted">—</small>
+                    {% endif %}
+                  </td>
+                </tr>
+                {% endfor %}
+              </tbody>
+            </table>
+          </div>
+        {% else %}
+          <div class="text-center">
+            <i class="fas fa-trophy fa-2x text-muted mb-2"></i>
+            <p class="text-muted">No upcoming races</p>
+          </div>
+        {% endif %}
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Recent Activity -->
+<div class="row">
+  <div class="col-12">
+    <div class="card card-success card-outline">
+      <div class="card-header">
+        <h3 class="card-title">
+          <i class="fas fa-history mr-2"></i>
+          Recent Training Sessions
+        </h3>
+      </div>
+      <div class="card-body">
+        {% if recent_sessions %}
+          <div class="table-responsive">
+            <table class="table table-hover">
+              <thead>
+                <tr>
+                  <th>Date</th>
+                  <th>Session</th>
+                  <th>Status</th>
+                  <th>Duration</th>
+                  <th>Actions</th>
+                </tr>
+              </thead>
+              <tbody>
+                {% for session in recent_sessions %}
+                <tr>
+                  <td>{{ session.date|date:"M d, Y" }}</td>
+                  <td>
+                    <strong>{{ session.title|default:"Training Session" }}</strong>
+                    {% if session.description %}
+                      <br><small class="text-muted">{{ session.description|truncatechars:50 }}</small>
+                    {% endif %}
+                  </td>
+                  <td>
+                    <span class="badge badge-{% if session.status == 'completed' %}success{% elif session.status == 'cancelled' %}danger{% else %}primary{% endif %}">
+                      {{ session.get_status_display|default:session.status }}
+                    </span>
+                  </td>
+                  <td>
+                    {% if session.duration %}
+                      {{ session.duration }}
+                    {% else %}
+                      <small class="text-muted">—</small>
+                    {% endif %}
+                  </td>
+                  <td>
+                    <div class="btn-group btn-group-sm">
+                      <a href="{% url 'session_detail' session.id %}" class="btn btn-info btn-xs" title="View">
+                        <i class="fas fa-eye"></i>
+                      </a>
+                    </div>
+                  </td>
+                </tr>
+                {% endfor %}
+              </tbody>
+            </table>
+          </div>
+        {% else %}
+          <div class="text-center">
+            <i class="fas fa-history fa-3x text-muted mb-3"></i>
+            <h4>No recent sessions</h4>
+            <p class="text-muted">Recent training activity will appear here</p>
+          </div>
+        {% endif %}
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}
