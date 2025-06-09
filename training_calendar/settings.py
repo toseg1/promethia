@@ -30,7 +30,6 @@ INSTALLED_APPS = [
     'calendar_management.apps.CalendarManagementConfig',
 ]
 
-
 DATABASES = {
     'default': dj_database_url.parse(os.environ.get('DATABASE_URL'))
 }
