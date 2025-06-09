@@ -37,13 +37,20 @@ def coach_race_list_view(request):
     """Display races only for athletes that this coach is responsible for"""
     
     from django.contrib.auth.models import User
+    from user_management.models import CoachAthleteRelationship
     
-    # Exclude races from the current coach (by username and email to be safe)
-    races_queryset = Race.objects.exclude(
-        athlete__username=request.user.username
-    ).exclude(
-        athlete__email=request.user.email
-    )
+    coached_athlete_ids = CoachAthleteRelationship.objects.filter(
+        coach=request.user,
+        status='active'  # Only show races for active coaching relationships
+    ).values_list('athlete_id', flat=True)
+    
+    if not coached_athlete_ids:
+        # Coach has no active athletes assigned
+        races_queryset = Race.objects.none()
+        messages.info(request, 
+            "You don't have any active athletes assigned. Add new athlete to set up coaching relationships.")
+    else:
+        races_queryset = Race.objects.filter(athlete_id__in=coached_athlete_ids)
     
     # Apply filters
     athlete_filter = request.GET.get('athlete')
