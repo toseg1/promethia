@@ -45,13 +45,6 @@ def coach_race_list_view(request):
         athlete__email=request.user.email
     )
     
-    # Option 2: If you have coach relationship in Profile model
-    races_queryset = Race.objects.filter(
-        athlete__profile__coach=request.user
-    ).exclude(
-        athlete=request.user
-    )
-    
     # Apply filters
     athlete_filter = request.GET.get('athlete')
     sport_filter = request.GET.get('sport')
