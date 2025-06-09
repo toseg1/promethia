@@ -4,6 +4,7 @@ Django settings for training_calendar project.
 import os
 from pathlib import Path
 from decouple import config
+import dj_database_url
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -28,6 +29,11 @@ INSTALLED_APPS = [
     'race_events.apps.RaceEventsConfig',
     'calendar_management.apps.CalendarManagementConfig',
 ]
+
+
+DATABASES = {
+    'default': dj_database_url.parse(os.environ.get('postgresql://postgresql_promethia_user:ANnoF7OMtJKQhYJC4X3iWNtgASE75t0Y@dpg-d13hbk3uibrs7389cskg-a/postgresql_promethia'))
+}
 
 MIDDLEWARE = [
     'whitenoise.middleware.WhiteNoiseMiddleware',
