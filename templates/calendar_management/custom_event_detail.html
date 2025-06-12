@@ -105,8 +105,8 @@
                 </h3>
               </div>
               <div class="card-body">
-                {% if event.note %}
-                  <p>{{ event.note|linebreaks }}</p>
+                {% if event.description %}
+                  <p>{{ event.description|linebreaks }}</p>
                 {% else %}
                   <p class="text-muted"><em>No notes added</em></p>
                 {% endif %}

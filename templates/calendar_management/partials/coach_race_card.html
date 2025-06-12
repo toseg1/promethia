@@ -10,8 +10,8 @@
    data-event-type="race"
    data-athlete-id="{{ event.athlete.id }}"
    data-date="{{ event.date|date:'Y-m-d' }}"
-   {% if event.time %}data-time="{{ event.time|time:'H:i' }}"{% endif %}
-   title="{{ event.name }} - {{ event.athlete.get_full_name }}">
+   {% if event.start_time %}data-time="{{ event.start_time|time:'H:i' }}"{% endif %}
+   title="{{ event.title }} - {{ event.athlete.get_full_name }}">
     
     <!-- Race Icon -->
     <div class="event-icon">
@@ -21,7 +21,7 @@
     <!-- Race Content -->
     <div class="event-content">
         <!-- Race Name -->
-        <div class="event-title">{{ event.name|truncatechars:20 }}</div>
+        <div class="event-title">{{ event.title|truncatechars:20 }}</div>
         
         <!-- Athlete Name -->
         <div class="event-athlete">

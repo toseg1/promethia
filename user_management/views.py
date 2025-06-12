@@ -232,7 +232,7 @@ def dashboard(request):
             athlete=user,
             date__range=[today, week_end],
             status='planned'
-        ).order_by('date', 'time')
+        ).order_by('date', 'start_time')
         
         my_coaches = CoachAthleteRelationship.objects.filter(
             athlete=user,
@@ -301,7 +301,7 @@ def dashboard(request):
                     athlete_upcoming_sessions = TrainingSession.objects.filter(
                         athlete=selected_athlete,
                         date__gte=today
-                    ).order_by('date', 'time')
+                    ).order_by('date', 'start_time')
                     
                     athlete_upcoming_races = Race.objects.filter(
                         athlete=selected_athlete,
@@ -341,7 +341,7 @@ def dashboard(request):
             upcoming_sessions = TrainingSession.objects.filter(
                 athlete__in=athlete_users,
                 date__range=[today, week_end]
-            ).order_by('date', 'time')
+            ).order_by('date', 'start_time')
             
             # Get upcoming races for all coached athletes
             upcoming_races = Race.objects.filter(
@@ -457,7 +457,7 @@ def get_all_upcoming_events_for_coach(athlete_users):
     upcoming_sessions = TrainingSession.objects.filter(
         athlete__in=athlete_users,
         date__gte=datetime.now().date()
-    ).select_related('athlete').order_by('date', 'time')[:15]
+    ).select_related('athlete').order_by('date', 'start_time')[:15]
     
     for session in upcoming_sessions:
         events.append({
@@ -519,7 +519,7 @@ def get_recent_activities_for_coach(athlete_users):
             activities.append({
                 'timestamp': session.created_at,
                 'date': session.created_at.date(),
-                'time': session.created_at.time(),
+                'start_time': session.created_at.time(),
                 'athlete_name': session.athlete.get_full_name(),
                 'description': f'Added new training session: {session.title if hasattr(session, "title") else "Training Session"}',
                 'icon': 'plus-circle',
@@ -542,14 +542,14 @@ def get_recent_activities_for_coach(athlete_users):
             session_datetime = timezone.make_aware(
                 datetime.combine(
                     session.date, 
-                    session.time if hasattr(session, 'time') and session.time else datetime.min.time()
+                    session.start_time if hasattr(session, 'start_time') and session.time else datetime.min.time()
                 )
             ) if hasattr(session, 'time') else timezone.now()
             
             activities.append({
                 'timestamp': session_datetime,
                 'date': session.date,
-                'time': session.time if hasattr(session, 'time') else timezone.now().time(),
+                'start_time': session.start_time if hasattr(session, 'start_time') else timezone.now().time(),
                 'athlete_name': session.athlete.get_full_name(),
                 'description': f'Completed training session: {session.title if hasattr(session, "title") else "Training Session"}',
                 'icon': 'check-circle',
@@ -571,7 +571,7 @@ def get_recent_activities_for_coach(athlete_users):
             activities.append({
                 'timestamp': race.created_at,
                 'date': race.created_at.date(),
-                'time': race.created_at.time(),
+                'start_time': race.created_at.time(),
                 'athlete_name': race.athlete.get_full_name(),
                 'description': f'Registered for race: {race.name}',
                 'icon': 'trophy',
@@ -593,7 +593,7 @@ def get_recent_activities_for_coach(athlete_users):
             activities.append({
                 'timestamp': event.created_at,
                 'date': event.created_at.date(),
-                'time': event.created_at.time(),
+                'start_time': event.created_at.time(),
                 'athlete_name': event.user.get_full_name(),
                 'description': f'Added custom event: {event.title if hasattr(event, "title") else "Custom Event"}',
                 'icon': 'star',
@@ -624,7 +624,7 @@ def get_recent_activities_for_coach(athlete_users):
                 activities.append({
                     'timestamp': profile.updated_at,
                     'date': profile.updated_at.date(),
-                    'time': profile.updated_at.time(),
+                    'start_time': profile.updated_at.time(),
                     'athlete_name': profile.user.get_full_name(),
                     'description': f'Updated performance metrics: {", ".join(updates)}',
                     'icon': 'user-edit',
@@ -646,7 +646,7 @@ def get_recent_activities_for_coach(athlete_users):
             activities.append({
                 'timestamp': session.updated_at,
                 'date': session.updated_at.date(),
-                'time': session.updated_at.time(),
+                'start_time': session.updated_at.time(),
                 'athlete_name': session.athlete.get_full_name(),
                 'description': f'Cancelled training session: {session.title if hasattr(session, "title") else "Training Session"}',
                 'icon': 'times-circle',
@@ -688,13 +688,13 @@ def athlete_detail(request, athlete_id):
     upcoming_sessions = TrainingSession.objects.filter(
         athlete=athlete,
         date__gte=today
-    ).order_by('date', 'time')
+    ).order_by('date', 'start_time')
     
     recent_sessions = TrainingSession.objects.filter(
         athlete=athlete,
         date__gte=thirty_days_ago,
         date__lt=today
-    ).order_by('-date', '-time')[:10]
+    ).order_by('-date', '-start_time')[:10]
     
     # Races data
     upcoming_races = Race.objects.filter(

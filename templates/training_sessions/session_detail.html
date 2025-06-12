@@ -80,8 +80,8 @@
               <div class="info-box-content">
                 <span class="info-box-text">Time</span>
                 <span class="info-box-number">
-                  {% if session.time %}
-                    {{ session.time|time:"g:i A" }}
+                  {% if session.start_time %}
+                    {{ session.start_time|time:"g:i A" }}
                   {% else %}
                     <em class="text-muted">Not set</em>
                   {% endif %}
@@ -142,30 +142,6 @@
             </div>
           </div>
         </div>
-
-        <!-- Notes Section -->
-        <div class="row">
-          <div class="col-12">
-            <div class="card card-light card-outline">
-              <div class="card-header">
-                <h3 class="card-title">
-                  <i class="fas fa-sticky-note mr-2"></i>
-                  Notes
-                </h3>
-              </div>
-              <div class="card-body">
-                {% if session.notes %}
-                  <p>{{ session.notes|linebreaks }}</p>
-                {% else %}
-                  <p class="text-muted"><em>No notes added</em></p>
-                {% endif %}
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-    </div>
-  </div>
 
   <!-- Session Status & Actions -->
   <div class="col-lg-4">

@@ -361,7 +361,7 @@
                 <div>
                   <i class="fas fa-{{ activity.icon }} bg-{{ activity.color }}"></i>
                   <div class="timeline-item">
-                    <span class="time"><i class="fas fa-clock"></i> {{ activity.time|time:"H:i" }}</span>
+                    <span class="time"><i class="fas fa-clock"></i> {{ activity.start_time|time:"H:i" }}</span>
                     <h3 class="timeline-header">{{ activity.athlete_name }}</h3>
                     <div class="timeline-body">
                       {{ activity.description }}
@@ -630,14 +630,14 @@
                         </span>
                       </td>
                       <td>
-                        <strong>{{ race.name }}</strong>
+                        <strong>{% if race.title %}{{ race.title }}{% else %}Untitled Race{% endif %}</strong>
                         {% if race.distance %}
                           <br><small class="text-muted">{{ race.distance }}</small>
                         {% endif %}
                       </td>
                       <td>
                         <i class="fas fa-running text-success mr-1"></i>
-                        {{ race.get_sport_type_display }}
+                        {{ race.get_sport_display }}
                       </td>
                       <td>
                         <i class="fas fa-map-marker-alt text-danger mr-1"></i>
@@ -938,14 +938,14 @@
                       </span>
                     </td>
                     <td>
-                      <strong>{{ race.name }}</strong>
+                      <strong>{{ race.title }}</strong>
                       {% if race.distance %}
                         <br><small class="text-muted">{{ race.distance }}</small>
                       {% endif %}
                     </td>
                     <td>
                       <i class="fas fa-running text-success mr-1"></i>
-                      {{ race.get_sport_type_display }}
+                      {{ race.get_sport_display }}
                     </td>
                     <td>
                       <i class="fas fa-map-marker-alt text-danger mr-1"></i>

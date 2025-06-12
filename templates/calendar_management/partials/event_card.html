@@ -162,7 +162,7 @@ function showEventDetails(eventType, eventId) {
     const eventCard = document.querySelector(`[data-event-id="${eventId}"]`);
     if (eventCard) {
         const title = eventCard.querySelector('.event-title')?.textContent || 'Event';
-        const time = eventCard.querySelector('.event-time')?.textContent || '';
+        const time = eventCard.querySelector('.event-start_time')?.textContent || '';
         const description = eventCard.getAttribute('title') || '';
         
         alert(`Event Details:\n\nTitle: ${title}\nTime: ${time}\nType: ${eventType}\nID: ${eventId}\n\n${description}`);
@@ -200,7 +200,7 @@ document.addEventListener('DOMContentLoaded', function() {
                     }
                     
                     // Remove time and some details from copies (show only on first day)
-                    const timeElement = eventCopy.querySelector('.event-time');
+                    const timeElement = eventCopy.querySelector('.event-start_time');
                     if (timeElement) timeElement.remove();
                     
                     const durationElement = eventCopy.querySelector('.event-duration');

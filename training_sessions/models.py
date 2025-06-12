@@ -4,27 +4,12 @@ Training session models.
 from django.db import models
 from django.contrib.auth.models import User
 from django.utils import timezone
+from training_calendar.constants import SPORT_CHOICES, STATUS_CHOICES, INTENSITY_CHOICES
 
 class TrainingSession(models.Model):
     """
     Training sessions for athletes.
     """
-    STATUS_CHOICES = [
-        ('planned', 'Planned'),
-        ('completed', 'Completed'),
-        ('cancelled', 'Cancelled'),
-    ]
-    
-    SPORT_CHOICES = [
-        ('running', 'Running'),
-        ('swimming', 'Swimming'),
-        ('cycling', 'Cycling'),
-        ('trail', 'Trail Running'),
-        ('triathlon', 'Triathlon'),
-        ('duathlon', 'Duathlon'),
-        ('other', 'Other'),
-    ]
-
     # Basic information
     athlete = models.ForeignKey(
         User,
@@ -40,18 +25,39 @@ class TrainingSession(models.Model):
     )
     
     title = models.CharField(max_length=200)
-    description = models.TextField(blank=True)
+
+    # ADD description field (around line 45)  
+    description = models.TextField(
+        blank=True,
+        help_text="Detailed workout description, instructions, or plan"
+    )
 
     # Scheduling
     date = models.DateField()
-    time = models.TimeField(blank=True, null=True)
+
+    start_time = models.TimeField(
+        blank=True, 
+        null=True,
+        help_text="Planned start time"
+    )
+    
+    distance = models.FloatField(
+        blank=True,
+        null=True,
+        help_text="Planned distance in km"
+    )
+
+    intensity = models.CharField(
+        max_length=20,
+        choices=INTENSITY_CHOICES,
+        blank=True,
+        default='moderate'
+    )
+
     duration_minutes = models.PositiveIntegerField(default=60, blank=True, null=True)
 
     # Status
-    status = models.CharField(max_length=10, choices=STATUS_CHOICES, default='planned')
-
-    # Notes
-    notes = models.TextField(blank=True)
+    status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='planned')
 
     # Who created it
     created_by = models.ForeignKey(
@@ -66,7 +72,7 @@ class TrainingSession(models.Model):
 
     class Meta:
         app_label = 'training_sessions'
-        ordering = ['date', 'time']
+        ordering = ['date', 'start_time']
 
     def __str__(self):
         return f"{self.title} - {self.athlete.get_full_name()} ({self.date})"
@@ -93,3 +99,15 @@ class TrainingSession(models.Model):
         """Mark session as completed."""
         self.status = 'completed'
         self.save()
+
+    @property
+    def sport_color(self):
+        """Get color for this sport from constants."""
+        from training_calendar.constants import SPORT_COLORS
+        return SPORT_COLORS.get(self.sport, '#6c757d')
+
+    @property
+    def sport_icon(self):
+        """Get icon for this sport from constants."""
+        from training_calendar.constants import SPORT_ICONS
+        return SPORT_ICONS.get(self.sport, 'fas fa-dumbbell')

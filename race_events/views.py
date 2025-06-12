@@ -136,17 +136,15 @@ def coach_race_list_view(request):
 def race_create(request):
     """Create new race."""
     if request.method == 'POST':
-        form = RaceForm(request.POST)
+        form = RaceForm(request.POST, user=request.user) 
         if form.is_valid():
             race = form.save(commit=False)
-            
-            # If coach is creating, they might specify which athlete (modify form as needed)
-            # For now, default to the current user
+            # Ensure athlete is set to current user
             race.athlete = request.user
             
-            # Handle separate goal time fields
+            # Handle separate goal time fields (if your template uses separate fields)
             goal_hours = request.POST.get('goal_hours', '') or '0'
-            goal_minutes = request.POST.get('goal_minutes', '') or '0' 
+            goal_minutes = request.POST.get('goal_minutes', '') or '0'
             goal_seconds = request.POST.get('goal_seconds', '') or '0'
             
             # Only set goal_time if at least minutes is provided
@@ -154,14 +152,18 @@ def race_create(request):
                 race.goal_time = f"{goal_hours}:{goal_minutes.zfill(2)}:{goal_seconds.zfill(2)}"
             
             race.save()
-            messages.success(request, f'Race "{race.name}" created successfully!')
+            # FIXED: Use race.title instead of race.name
+            messages.success(request, f'Race "{race.title}" created successfully!')
             return redirect('dashboard')
+        else:
+            # DEBUG: Print form errors to console
+            print(f"Form errors: {form.errors}")
     else:
-        form = RaceForm()
-    
-    # Pre-fill date if provided
-    if 'date' in request.GET:
-        form.fields['date'].initial = request.GET['date']
+        form = RaceForm(user=request.user) 
+        
+        # Pre-fill date if provided
+        if 'date' in request.GET:
+            form.fields['date'].initial = request.GET['date']
     
     return render(request, 'race_events/race_form.html', {
         'form': form,
