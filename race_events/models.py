@@ -1,35 +1,14 @@
-
 """
 Race management models.
 """
 from django.db import models
 from django.contrib.auth.models import User
-from django.utils import timezone
-
+from training_calendar.constants import SPORT_CHOICES, STATUS_CHOICES, RACE_GOAL_CHOICES
 
 class Race(models.Model):
     """
     Races and events for athletes.
     """
-    SPORT_CHOICES = [
-        ('running', 'Running'),
-        ('swimming', 'Swimming'), 
-        ('cycling', 'Cycling'),
-        ('trail', 'Trail Running'),
-        ('triathlon', 'Triathlon'),
-        ('duathlon', 'Duathlon'),
-        ('other', 'Other'),
-    ]
-    
-    GOAL_CHOICES = [
-        ('finish', 'Just Finish'),
-        ('pb', 'Personal Best'),
-        ('time', 'Specific Time'),
-        ('placement', 'Top Placement'),
-        ('qualify', 'Qualify for Event'),
-        ('experience', 'Experience/Fun'),
-    ]
-
     # Basic information
     athlete = models.ForeignKey(
         User, 
@@ -37,13 +16,31 @@ class Race(models.Model):
         related_name='races',
         limit_choices_to={'profile__role': 'athlete'}
     )
-    name = models.CharField(max_length=200)
-    sport_type = models.CharField(max_length=20, choices=SPORT_CHOICES, default='running')
+    title = models.CharField(
+        max_length=200, 
+        help_text="e.g., Paris Marathon 2025"
+    )
+
+    sport = models.CharField(max_length=20, 
+                             choices=SPORT_CHOICES, 
+                             default='running')
+
+    description = models.TextField(
+        blank=True,
+        help_text="Race details, strategy, or notes"
+    )
     
     # When and where
     date = models.DateField()
-    time = models.TimeField(blank=True, null=True)
+
+    start_time = models.TimeField(
+        blank=True, 
+        null=True,
+        help_text="Race start time"
+    )
+    
     location = models.CharField(max_length=200)
+
     venue = models.CharField(max_length=200, blank=True)
     
     # Race details
@@ -51,21 +48,28 @@ class Race(models.Model):
     
     # Goals
     goal_time = models.CharField(max_length=20, blank=True, help_text="e.g., 3:30:00")
-    goal_type = models.CharField(max_length=20, choices=GOAL_CHOICES, blank=True)
-    
-    # Additional info
-    notes = models.TextField(blank=True)
+    goal_type = models.CharField(
+        max_length=20,
+        choices=RACE_GOAL_CHOICES,
+        blank=True
+    )
+
+    status = models.CharField(
+        max_length=20,
+        choices=STATUS_CHOICES,
+        default='planned'
+    )
     
     # Timestamps
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
     class Meta:
+        ordering = ['date', 'start_time']
         app_label = 'race_events'
-        ordering = ['date']
 
     def __str__(self):
-        return f"{self.name} - {self.athlete.get_full_name()} ({self.date})"
+       return f"{self.title} - {self.athlete.get_full_name()} ({self.date})"
 
     @property
     def is_past(self):

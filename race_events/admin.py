@@ -12,28 +12,31 @@ class RaceResultInline(admin.StackedInline):
 
 @admin.register(Race)
 class RaceAdmin(admin.ModelAdmin):
-    list_display = ['name', 'athlete', 'sport_type', 'date', 'location', 'goal_type', 'goal_time', 'get_finish_time']
-    list_filter = ['sport_type', 'goal_type', 'date']
-    search_fields = ['name', 'athlete__username', 'location']
-    ordering = ['date']
+    list_display = ['title', 'athlete', 'sport', 'date', 'start_time', 'location', 'goal_type', 'status', 'get_finish_time']
+    list_filter = ['sport', 'goal_type', 'status', 'date']
+    search_fields = ['title', 'athlete__username', 'athlete__first_name', 'athlete__last_name', 'location']
+    ordering = ['date', 'start_time']
     inlines = [RaceResultInline]
     
     fieldsets = (
         ('Basic Info', {
-            'fields': ('athlete', 'name', 'sport_type', 'date', 'time')
+            'fields': ('athlete', 'title', 'sport', 'date', 'start_time')  # CHANGED: name→title, sport_type→sport, time→start_time
         }),
         ('Location', {
             'fields': ('location', 'venue', 'distance')
         }),
         ('Objective', {
-            'fields': ('goal_time', 'goal_type'),
+            'fields': ('goal_time', 'goal_type', 'status'),  # ADDED: status
             'description': 'What are you aiming for in this race?'
         }),
         ('Notes', {
-            'fields': ('notes',),
-            'classes': ('collapse',)  # This section can be collapsed
+            'fields': ('description',),  # CHANGED: notes→description
+            'classes': ('collapse',)  
         }),
     )
+
+    def get_queryset(self, request):
+        return super().get_queryset(request).select_related('athlete')
     
     def get_finish_time(self, obj):
         """Display finish time if race has results."""

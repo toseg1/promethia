@@ -1,63 +1,87 @@
 """
-Forms for race_events app.
+Forms for race_events app - FIXED with standardized fields.
 """
 from django import forms
 from .models import Race
+from training_calendar.constants import SPORT_CHOICES, RACE_GOAL_CHOICES, STATUS_CHOICES
 
 
 class RaceForm(forms.ModelForm):
-    """Form for creating and editing races."""
+    """Form for creating and editing races - FIXED with standardized fields."""
+    
+    sport = forms.ChoiceField(
+        choices=SPORT_CHOICES,
+        widget=forms.Select(attrs={
+            'class': 'form-control',
+            'id': 'sportSelect'
+        })
+    )
     
     class Meta:
         model = Race
-        fields = ['name', 'sport_type', 'date', 'time', 'location', 'venue', 
-                 'distance', 'goal_time', 'goal_type', 'notes']
+        fields = [
+            'title',        # FIXED: was 'name'
+            'sport',        # FIXED: was 'sport_type' 
+            'date', 
+            'start_time',   # FIXED: was 'time'
+            'location', 
+            'venue',
+            'distance', 
+            'goal_time', 
+            'goal_type', 
+            'description',  # FIXED: new field (was 'notes')
+            'status'        # FIXED: new field added
+        ]
+        
         widgets = {
-            'name': forms.TextInput(attrs={
+            'title': forms.TextInput(attrs={
                 'class': 'form-control',
                 'placeholder': 'e.g., Paris Marathon 2025',
-                'id': 'raceName'
-            }),
-            'sport_type': forms.Select(attrs={
-                'class': 'form-control',
-                'id': 'sportType'
             }),
             'date': forms.DateInput(attrs={
                 'class': 'form-control',
                 'type': 'date',
-                'id': 'raceDate'
             }),
-            'time': forms.TimeInput(attrs={
+            'start_time': forms.TimeInput(attrs={  # FIXED: was 'time'
                 'class': 'form-control',
                 'type': 'time',
-                'id': 'raceTime'
             }),
             'location': forms.TextInput(attrs={
                 'class': 'form-control',
                 'placeholder': 'e.g., Paris, France',
-                'id': 'raceLocation'
             }),
             'venue': forms.TextInput(attrs={
                 'class': 'form-control',
                 'placeholder': 'e.g., City Marathon Association',
-                'id': 'raceVenue'
             }),
             'distance': forms.TextInput(attrs={
                 'class': 'form-control',
                 'placeholder': 'e.g., 42.2km, Sprint, Half',
-                'id': 'raceDistance'
+            }),
+            'goal_time': forms.TextInput(attrs={
+                'class': 'form-control',
+                'placeholder': 'e.g., 3:30:00',
             }),
             'goal_type': forms.Select(attrs={
                 'class': 'form-control',
-                'id': 'goalType'
             }),
-            'notes': forms.Textarea(attrs={
+            'description': forms.Textarea(attrs={  # NEW FIELD
                 'class': 'form-control',
                 'rows': 3,
-                'placeholder': 'Training plan, special requirements, motivation, etc...',
-                'id': 'raceNotes'
+                'placeholder': 'Race strategy, goals, or special notes...',
+            }),
+            'status': forms.Select(attrs={  # NEW FIELD
+                'class': 'form-control',
             }),
         }
     
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
+        
+        # Add helpful labels
+        self.fields['title'].label = "Race Name"
+        self.fields['sport'].label = "Sport Type"
+        self.fields['start_time'].label = "Start Time"
+        self.fields['goal_type'].label = "Goal Type"
+        self.fields['description'].label = "Race Description"
+        self.fields['status'].label = "Status"
