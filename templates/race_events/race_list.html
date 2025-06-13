@@ -14,9 +14,6 @@
           My Races & Events
         </h3>
         <div class="card-tools">
-          <a href="{% url 'dashboard' %}" class="btn btn-sm btn-secondary">
-            <i class="fas fa-arrow-left"></i> Back to Dashboard
-          </a>
           <a href="{% url 'race_events:race_create' %}" class="btn btn-primary btn-sm">
             <i class="fas fa-plus"></i> Add Race
           </a>
@@ -56,8 +53,8 @@
                     {% endif %}
                   </td>
                   <td>
-                    <i class="fas fa-running text-success mr-1"></i>
-                    {{ race.get_sport_display }}
+                  {% include 'components/sport_icon.html' with event=race %}
+                      {{ race.get_sport_display }}
                   </td>
                   <td>
                     <i class="fas fa-map-marker-alt text-danger mr-1"></i>

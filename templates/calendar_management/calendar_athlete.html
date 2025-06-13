@@ -53,11 +53,7 @@
             <div class="float-right">
               {% if is_coach_view %}
                 <!-- Coach viewing athlete - different navigation -->
-                <!-- Back to Coach Calendar Button -->
-                <a href="{% url 'calendar_management:coach_view' %}" class="btn btn-outline-secondary btn-sm mr-3">
-                  <i class="fas fa-arrow-left"></i> Back to Coach Calendar
-                </a>
-                
+
                 <!-- View Toggle for Coach -->
                 <div class="btn-group mr-3" role="group">
                   <a href="{% url 'calendar_management:coach_athlete_view' viewing_athlete.id %}?view=month&year={{ year }}&month={{ month }}" 
@@ -453,8 +449,320 @@
 </div>
 {% endif %}
 
-{% endblock %}
+<!-- Training Volume Section -->
+<div class="row mt-4">
+  <div class="col-12">
+    <div class="card">
+      <div class="card-body">
+        <div class="row align-items-center mb-3">
+          <div class="col-md-8">
+            <h4 class="mb-0">
+              <i class="fas fa-chart-bar mr-2 text-primary"></i>
+              Completed Training Volume
+              {% if view_type == 'month' %}
+                - {{ month|month_name }} {{ year }}
+              {% else %}
+                - Week of {{ week_start_date|date:"M d, Y" }}
+              {% endif %}
+            </h4>
+          </div>
+          <div class="col-md-4">
+            <div class="float-right">
+              <small class="text-muted">
+                {% if view_type == 'month' %}
+                  <i class="fas fa-calendar mr-1"></i>Monthly Completed Sessions
+                {% else %}
+                  <i class="fas fa-calendar-week mr-1"></i>Weekly Completed Sessions
+                {% endif %}
+              </small>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
 
+{% if volume_data %}
+<!-- Volume Widgets Row -->
+<div class="row">
+  <!-- Total Volume -->
+  <div class="col-lg-3 col-md-6 col-12">
+    <div class="small-box bg-primary">
+      <div class="inner">
+        <h3>{{ volume_data.total.sessions }}</h3>
+        <p>Completed Session(s)</p>
+      </div>
+      <div class="icon">
+        <i class="fas fa-check-circle"></i>
+      </div>
+      <div class="small-box-footer">
+        <span class="text-white">{{ volume_data.total.duration_formatted }}</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- Running Volume (including trail) -->
+  <div class="col-lg-3 col-md-6 col-12">
+    <div class="small-box bg-success">
+      <div class="inner">
+        <h3>{{ volume_data.running.sessions }}</h3>
+        <p>Running Completed</p>
+      </div>
+      <div class="icon">
+        <i class="fas fa-running"></i>
+      </div>
+      <div class="small-box-footer">
+        <span class="text-white">{{ volume_data.running.duration_formatted }}</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- Cycling Volume -->
+  <div class="col-lg-3 col-md-6 col-12">
+    <div class="small-box bg-info">
+      <div class="inner">
+        <h3>{{ volume_data.cycling.sessions }}</h3>
+        <p>Cycling Completed</p>
+      </div>
+      <div class="icon">
+        <i class="fas fa-bicycle"></i>
+      </div>
+      <div class="small-box-footer">
+        <span class="text-white">{{ volume_data.cycling.duration_formatted }}</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- Swimming Volume -->
+  <div class="col-lg-3 col-md-6 col-12">
+    <div class="small-box bg-warning">
+      <div class="inner">
+        <h3>{{ volume_data.swimming.sessions }}</h3>
+        <p>Swimming Completed</p>
+      </div>
+      <div class="icon">
+        <i class="fas fa-swimmer"></i>
+      </div>
+      <div class="small-box-footer">
+        <span class="text-white">{{ volume_data.swimming.duration_formatted }}</span>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Visual Chart and Breakdown -->
+{% if volume_data.total.sessions > 0 %}
+<div class="row">
+  <!-- Chart Section -->
+  <div class="col-lg-8">
+    <div class="card card-primary card-outline">
+      <div class="card-header">
+        <h3 class="card-title">
+          <i class="fas fa-chart-column mr-2"></i>
+          Completed Training Distribution
+        </h3>
+        <div class="card-tools">
+          <button type="button" class="btn btn-tool" data-card-widget="collapse">
+            <i class="fas fa-minus"></i>
+          </button>
+        </div>
+      </div>
+      <div class="card-body">
+        <!-- Chart Container -->
+        <div style="position: relative; height: 300px;">
+          <canvas id="trainingVolumeChart"></canvas>
+        </div>
+        
+        <!-- Fallback: Simple bars if chart fails -->
+        <div id="chartFallback" style="display: none;">
+          <h5 class="text-center mb-3">Training Volume Overview</h5>
+          
+          {% if volume_data.running.sessions > 0 %}
+          <div class="row mb-2">
+            <div class="col-3"><strong>Running:</strong></div>
+            <div class="col-6">
+              <div class="progress">
+                <div class="progress-bar bg-success" style="width: {% widthratio volume_data.running.sessions volume_data.total.sessions 100 %}%"></div>
+              </div>
+            </div>
+            <div class="col-3">{{ volume_data.running.sessions }} sessions ({{ volume_data.running.duration_formatted }})</div>
+          </div>
+          {% endif %}
+          
+          {% if volume_data.cycling.sessions > 0 %}
+          <div class="row mb-2">
+            <div class="col-3"><strong>Cycling:</strong></div>
+            <div class="col-6">
+              <div class="progress">
+                <div class="progress-bar bg-info" style="width: {% widthratio volume_data.cycling.sessions volume_data.total.sessions 100 %}%"></div>
+              </div>
+            </div>
+            <div class="col-3">{{ volume_data.cycling.sessions }} sessions ({{ volume_data.cycling.duration_formatted }})</div>
+          </div>
+          {% endif %}
+          
+          {% if volume_data.swimming.sessions > 0 %}
+          <div class="row mb-2">
+            <div class="col-3"><strong>Swimming:</strong></div>
+            <div class="col-6">
+              <div class="progress">
+                <div class="progress-bar bg-warning" style="width: {% widthratio volume_data.swimming.sessions volume_data.total.sessions 100 %}%"></div>
+              </div>
+            </div>
+            <div class="col-3">{{ volume_data.swimming.sessions }} sessions ({{ volume_data.swimming.duration_formatted }})</div>
+          </div>
+          {% endif %}
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Progress Bars Section -->
+  <div class="col-lg-4">
+
+    <div class="card card-success card-outline">
+      
+      <div class="card-header">
+        <h3 class="card-title">
+          
+          <i class="fas fa-percentage mr-2"></i>
+          Volume Breakdown
+        </h3>
+           <div class="card-tools">
+          <button type="button" class="btn btn-tool" data-card-widget="collapse">
+            <i class="fas fa-minus"></i>
+          </button>
+</div>
+      </div>
+      <div class="card-body">
+        
+        {% if volume_data.running.sessions > 0 %}
+        <div class="progress-group">
+          <span class="progress-text">
+            <i class="fas fa-running text-success mr-1"></i>
+            Running
+          </span>
+          <span class="float-right">
+            <b>{{ volume_data.running.sessions }}</b>/{{ volume_data.total.sessions }}
+          </span>
+          <div class="progress progress-sm">
+            <div class="progress-bar bg-success" 
+                 style="width: {% if volume_data.total.sessions > 0 %}{% widthratio volume_data.running.sessions volume_data.total.sessions 100 %}{% else %}0{% endif %}%"></div>
+          </div>
+        </div>
+        {% endif %}
+
+        {% if volume_data.cycling.sessions > 0 %}
+        <div class="progress-group">
+          <span class="progress-text">
+            <i class="fas fa-bicycle text-info mr-1"></i>
+            Cycling
+          </span>
+          <span class="float-right">
+            <b>{{ volume_data.cycling.sessions }}</b>/{{ volume_data.total.sessions }}
+          </span>
+          <div class="progress progress-sm">
+            <div class="progress-bar bg-info" 
+                 style="width: {% if volume_data.total.sessions > 0 %}{% widthratio volume_data.cycling.sessions volume_data.total.sessions 100 %}{% else %}0{% endif %}%"></div>
+          </div>
+        </div>
+        {% endif %}
+
+        {% if volume_data.swimming.sessions > 0 %}
+        <div class="progress-group">
+          <span class="progress-text">
+            <i class="fas fa-swimmer text-warning mr-1"></i>
+            Swimming
+          </span>
+          <span class="float-right">
+            <b>{{ volume_data.swimming.sessions }}</b>/{{ volume_data.total.sessions }}
+          </span>
+          <div class="progress progress-sm">
+            <div class="progress-bar bg-warning" 
+                 style="width: {% if volume_data.total.sessions > 0 %}{% widthratio volume_data.swimming.sessions volume_data.total.sessions 100 %}{% else %}0{% endif %}%"></div>
+          </div>
+        </div>
+        {% endif %}
+
+        <!-- Duration Breakdown -->
+        <hr>
+        <h6 class="text-center">Duration Breakdown</h6>
+        
+        {% if volume_data.running.duration > 0 %}
+        <div class="progress-group">
+          <span class="progress-text">Running Duration</span>
+          <span class="float-right">
+            <b>{{ volume_data.running.duration_formatted }}</b>
+          </span>
+          <div class="progress progress-sm">
+            <div class="progress-bar bg-success" 
+                 style="width: {% if volume_data.total.duration > 0 %}{% widthratio volume_data.running.duration volume_data.total.duration 100 %}{% else %}0{% endif %}%"></div>
+          </div>
+        </div>
+        {% endif %}
+
+        {% if volume_data.cycling.duration > 0 %}
+        <div class="progress-group">
+          <span class="progress-text">Cycling Duration</span>
+          <span class="float-right">
+            <b>{{ volume_data.cycling.duration_formatted }}</b>
+          </span>
+          <div class="progress progress-sm">
+            <div class="progress-bar bg-info" 
+                 style="width: {% if volume_data.total.duration > 0 %}{% widthratio volume_data.cycling.duration volume_data.total.duration 100 %}{% else %}0{% endif %}%"></div>
+          </div>
+        </div>
+        {% endif %}
+
+        {% if volume_data.swimming.duration > 0 %}
+        <div class="progress-group">
+          <span class="progress-text">Swimming Duration</span>
+          <span class="float-right">
+            <b>{{ volume_data.swimming.duration_formatted }}</b>
+          </span>
+          <div class="progress progress-sm">
+            <div class="progress-bar bg-warning" 
+                 style="width: {% if volume_data.total.duration > 0 %}{% widthratio volume_data.swimming.duration volume_data.total.duration 100 %}{% else %}0{% endif %}%"></div>
+          </div>
+        </div>
+        {% endif %}
+      </div>
+    </div>
+  </div>
+</div>
+{% endif %}
+
+{% else %}
+<!-- No Data State -->
+<div class="row">
+  <div class="col-12">
+    <div class="card">
+      <div class="card-body text-center">
+        <i class="fas fa-chart-bar fa-3x text-muted mb-3"></i>
+        <h4>No completed training sessions</h4>
+        <p class="text-muted">
+          {% if view_type == 'month' %}
+            No training sessions completed this month yet
+          {% else %}
+            No training sessions completed this week yet
+          {% endif %}
+        </p>
+        <p class="text-muted">
+          <small>Complete your training sessions to see volume analytics here</small>
+        </p>
+        <a href="{% url 'session_create' %}" class="btn btn-primary">
+          <i class="fas fa-plus"></i> Add Training Session
+        </a>
+      </div>
+    </div>
+  </div>
+</div>
+{% endif %}
+
+
+<!-- Custom Event Modal -->
+{% endblock %}
 {% block extra_js %}
 <script src="{% static 'js/calendar.js' %}"></script>
 <script>
@@ -487,5 +795,244 @@
         console.warn('⚠️ Invalid viewingAthleteId, setting to null:', viewingAthleteId);
         viewingAthleteId = null;
     }
+
+    // FIXED: Pass Django context data to JavaScript properly
+    {% if volume_data %}
+    window.trainingChartData = {
+        total: {
+            sessions: {{ volume_data.total.sessions }},
+            duration: {{ volume_data.total.duration }},
+            duration_formatted: "{{ volume_data.total.duration_formatted }}"
+        },
+        running: {
+            sessions: {{ volume_data.running.sessions }},
+            duration: {{ volume_data.running.duration }},
+            duration_formatted: "{{ volume_data.running.duration_formatted }}"
+        },
+        cycling: {
+            sessions: {{ volume_data.cycling.sessions }},
+            duration: {{ volume_data.cycling.duration }},
+            duration_formatted: "{{ volume_data.cycling.duration_formatted }}"
+        },
+        swimming: {
+            sessions: {{ volume_data.swimming.sessions }},
+            duration: {{ volume_data.swimming.duration }},
+            duration_formatted: "{{ volume_data.swimming.duration_formatted }}"
+        },
+        viewType: "{{ view_type|default:'month' }}"
+    };
+    console.log('📊 Training chart data loaded:', window.trainingChartData);
+    console.log('📊 Current view type:', "{{ view_type|default:'month' }}");
+    {% else %}
+    window.trainingChartData = null;
+    console.log('📊 No volume data available');
+    {% endif %}
+
+    // Training Volume Chart Implementation
+    document.addEventListener('DOMContentLoaded', function() {
+        console.log('DOM loaded, initializing training chart...');
+        
+        // Check if we have chart data
+        if (!window.trainingChartData || window.trainingChartData.total.sessions === 0) {
+            console.log('No training chart data or no completed sessions');
+            showChartFallback();
+            return;
+        }
+        
+        // Check if Chart.js is loaded
+        if (typeof Chart === 'undefined') {
+            console.error('Chart.js is not loaded! Make sure you include Chart.js CDN.');
+            showChartFallback();
+            return;
+        }
+        
+        const chartCanvas = document.getElementById('trainingVolumeChart');
+        if (!chartCanvas) {
+            console.error('Chart canvas not found!');
+            return;
+        }
+        
+        try {
+            createTrainingChart();
+        } catch (error) {
+            console.error('Error creating chart:', error);
+            showChartFallback();
+        }
+    });
+
+    function createTrainingChart() {
+        const data = window.trainingChartData;
+        console.log('Creating pie chart with data:', data);
+        
+        // Prepare data arrays
+        const sports = [];
+        const sessionCounts = [];
+        const colors = [];
+        const hoverColors = [];
+        
+        // Add sports that have sessions
+        if (data.running.sessions > 0) {
+            sports.push('Running');
+            sessionCounts.push(data.running.sessions);
+            colors.push('#28a745');
+            hoverColors.push('#1e7e34');
+        }
+        
+        if (data.cycling.sessions > 0) {
+            sports.push('Cycling');
+            sessionCounts.push(data.cycling.sessions);
+            colors.push('#17a2b8');
+            hoverColors.push('#117a8b');
+        }
+        
+        if (data.swimming.sessions > 0) {
+            sports.push('Swimming');
+            sessionCounts.push(data.swimming.sessions);
+            colors.push('#ffc107');
+            hoverColors.push('#d39e00');
+        }
+        
+        console.log('Pie chart arrays:', { sports, sessionCounts, colors });
+        
+        // If no active sports, show fallback
+        if (sports.length === 0) {
+            console.log('No active sports found, showing fallback');
+            showChartFallback();
+            return;
+        }
+        
+        const ctx = document.getElementById('trainingVolumeChart').getContext('2d');
+        
+        const chart = new Chart(ctx, {
+            type: 'pie',
+            data: {
+                labels: sports,
+                datasets: [{
+                    data: sessionCounts,
+                    backgroundColor: colors,
+                    hoverBackgroundColor: hoverColors,
+                    borderWidth: 3,
+                    borderColor: '#ffffff',
+                    hoverBorderWidth: 4
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    title: {
+                        display: true,
+                        text: (function() {
+                            const viewType = data.viewType || 'month';
+                            console.log('Chart title - viewType:', viewType);
+                            if (viewType === 'month') {
+                                return 'Monthly Training Distribution';
+                            } else if (viewType === 'week') {
+                                return 'Week Training Distribution';
+                            } else {
+                                return 'Training Distribution';
+                            }
+                        })(),
+                        font: {
+                            size: 16,
+                            weight: 'bold'
+                        },
+                        padding: 20,
+                        color: '#2c3e50'
+                    },
+                    legend: {
+                        position: 'bottom',
+                        labels: {
+                            usePointStyle: true,
+                            padding: 15,
+                            font: {
+                                size: 12
+                            },
+                            generateLabels: function(chart) {
+                                const chartData = chart.data;
+                                if (chartData.labels.length && chartData.datasets.length) {
+                                    return chartData.labels.map((label, i) => {
+                                        const value = chartData.datasets[0].data[i];
+                                        const total = chartData.datasets[0].data.reduce((sum, val) => sum + val, 0);
+                                        const percentage = ((value / total) * 100).toFixed(1);
+                                        
+                                        return {
+                                            text: `${label}: ${value} sessions (${percentage}%)`,
+                                            fillStyle: chartData.datasets[0].backgroundColor[i],
+                                            strokeStyle: '#ffffff',
+                                            lineWidth: 2,
+                                            hidden: false,
+                                            index: i
+                                        };
+                                    });
+                                }
+                                return [];
+                            }
+                        }
+                    },
+                    tooltip: {
+                        backgroundColor: 'rgba(0,0,0,0.8)',
+                        titleColor: 'white',
+                        bodyColor: 'white',
+                        borderColor: '#ffffff',
+                        borderWidth: 1,
+                        callbacks: {
+                            label: function(context) {
+                                const label = context.label || '';
+                                const value = context.parsed;
+                                const total = context.dataset.data.reduce((sum, val) => sum + val, 0);
+                                const percentage = ((value / total) * 100).toFixed(1);
+                                
+                                // Get duration info
+                                let durationText = '';
+                                if (label === 'Running') {
+                                    durationText = ` (${data.running.duration_formatted})`;
+                                } else if (label === 'Cycling') {
+                                    durationText = ` (${data.cycling.duration_formatted})`;
+                                } else if (label === 'Swimming') {
+                                    durationText = ` (${data.swimming.duration_formatted})`;
+                                }
+                                
+                                return `${label}: ${value} sessions (${percentage}%)${durationText}`;
+                            }
+                        }
+                    }
+                },
+                animation: {
+                    animateRotate: true,
+                    animateScale: true,
+                    duration: 1000,
+                    easing: 'easeOutQuart'
+                }
+            }
+        });
+        
+        console.log('Pie chart created successfully!');
+        
+        // Hide fallback since chart worked
+        const fallback = document.getElementById('chartFallback');
+        if (fallback) {
+            fallback.style.display = 'none';
+        }
+    }
+
+    function showChartFallback() {
+        console.log('Showing chart fallback');
+        
+        const canvas = document.getElementById('trainingVolumeChart');
+        const fallback = document.getElementById('chartFallback');
+        
+        if (canvas) {
+            canvas.style.display = 'none';
+        }
+        
+        if (fallback) {
+            fallback.style.display = 'block';
+        }
+    }
+
+    // Also make chart creation available globally for debugging
+    window.createTrainingChart = createTrainingChart;
+    window.showChartFallback = showChartFallback;
 </script>
 {% endblock %}

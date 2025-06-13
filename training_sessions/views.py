@@ -382,10 +382,9 @@ def session_edit(request, session_id):
             'title': session.title,
             'athlete': session.athlete.id if session.athlete else None,
             'date': session.date,
-            'time': session.time,
+            'start_time': session.start_time,
             'duration_minutes': session.duration_minutes,
             'description': session.description,
-            'notes': session.notes,
             'status': session.status,
         })
     

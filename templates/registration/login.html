@@ -1,4 +1,5 @@
 {% load static %}
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -13,6 +14,109 @@
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
   <!-- AdminLTE CSS -->
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/admin-lte/3.2.0/css/adminlte.min.css">
+  
+  <!-- Enhanced CSS for perfect input alignment -->
+  <style>
+    /* Fix input group alignment issues */
+    .input-group .form-control {
+      position: relative;
+      flex: 1 1 auto;
+      width: 1%;
+      min-width: 0;
+      margin-bottom: 0;
+      border-radius: 0.25rem 0 0 0.25rem;
+    }
+    
+    .input-group .form-control:not(:first-child) {
+      border-left: 0;
+    }
+    
+    .input-group .input-group-append .input-group-text {
+      border-radius: 0 0.25rem 0.25rem 0;
+      border-left: 0;
+    }
+    
+    /* Ensure inputs fit perfectly */
+    .input-group {
+      display: flex;
+      width: 100%;
+    }
+    
+    .input-group > .form-control {
+      height: calc(2.25rem + 2px);
+      padding: 0.375rem 0.75rem;
+      font-size: 1rem;
+      line-height: 1.5;
+      border: 1px solid #ced4da;
+      background-color: #fff;
+    }
+    
+    /* Fix focus states */
+    .input-group .form-control:focus {
+      z-index: 3;
+      border-color: #007bff;
+      outline: 0;
+      box-shadow: 0 0 0 0.2rem rgba(0, 123, 255, 0.25);
+    }
+    
+    /* Error state styling */
+    .form-control.is-invalid {
+      border-color: #dc3545;
+      box-shadow: 0 0 0 0.2rem rgba(220, 53, 69, 0.25);
+    }
+    
+    .invalid-feedback {
+      color: #dc3545;
+      font-size: 0.875em;
+      margin-top: 0.25rem;
+      display: block;
+    }
+    
+    /* Input group text alignment */
+    .input-group-text {
+      display: flex;
+      align-items: center;
+      padding: 0.375rem 0.75rem;
+      margin-bottom: 0;
+      font-size: 1rem;
+      font-weight: 400;
+      line-height: 1.5;
+      color: #495057;
+      text-align: center;
+      white-space: nowrap;
+      background-color: #e9ecef;
+      border: 1px solid #ced4da;
+    }
+    
+    /* Ensure consistent height across all elements */
+    .input-group > .form-control,
+    .input-group > .input-group-append > .input-group-text {
+      height: calc(2.25rem + 2px);
+      min-height: calc(2.25rem + 2px);
+    }
+    
+    /* Remove any default margins that might cause misalignment */
+    .input-group .form-control,
+    .input-group .input-group-text {
+      margin: 0;
+    }
+    
+    /* Fix for potential AdminLTE conflicts */
+    .login-box .input-group .form-control {
+      border-radius: 0.25rem 0 0 0.25rem !important;
+    }
+    
+    .login-box .input-group .input-group-append .input-group-text {
+      border-radius: 0 0.25rem 0.25rem 0 !important;
+    }
+    
+    /* Alert styling */
+    .alert-error {
+      background-color: #f8d7da;
+      border-color: #f5c6cb;
+      color: #721c24;
+    }
+  </style>
 </head>
 <body class="hold-transition login-page">
 <div class="login-box">
@@ -23,47 +127,90 @@
     <div class="card-body">
       <p class="login-box-msg">Sign in to start your session</p>
 
+      <!-- Messages Display -->
       {% if messages %}
         {% for message in messages %}
-          <div class="alert alert-{{ message.tags }}">{{ message }}</div>
+          <div class="alert alert-{{ message.tags }} alert-dismissible fade show" role="alert">
+            {{ message }}
+            <button type="button" class="close" data-dismiss="alert" aria-label="Close">
+              <span aria-hidden="true">&times;</span>
+            </button>
+          </div>
         {% endfor %}
       {% endif %}
 
-      <form method="post">
+      <!-- Display non-field errors (authentication errors) -->
+      {% if form.non_field_errors %}
+        <div class="alert alert-danger alert-dismissible fade show" role="alert">
+          {% for error in form.non_field_errors %}
+            <i class="fas fa-exclamation-triangle mr-2"></i>{{ error }}
+          {% endfor %}
+          <button type="button" class="close" data-dismiss="alert" aria-label="Close">
+            <span aria-hidden="true">&times;</span>
+          </button>
+        </div>
+      {% endif %}
+
+      <!-- CRITICAL: novalidate prevents browser validation -->
+      <form method="post" novalidate>
         {% csrf_token %}
+        
+        <!-- Username Field -->
         <div class="input-group mb-3">
-          <input type="text" name="username" class="form-control" placeholder="Username" required>
+          {{ form.username }}
           <div class="input-group-append">
             <div class="input-group-text">
               <span class="fas fa-user"></span>
             </div>
           </div>
+          {% if form.username.errors %}
+            <div class="invalid-feedback d-block">
+              {% for error in form.username.errors %}
+                {{ error }}
+              {% endfor %}
+            </div>
+          {% endif %}
         </div>
+        
+        <!-- Password Field -->
         <div class="input-group mb-3">
-          <input type="password" name="password" class="form-control" placeholder="Password" required>
+          {{ form.password }}
           <div class="input-group-append">
             <div class="input-group-text">
               <span class="fas fa-lock"></span>
             </div>
           </div>
+          {% if form.password.errors %}
+            <div class="invalid-feedback d-block">
+              {% for error in form.password.errors %}
+                {{ error }}
+              {% endfor %}
+            </div>
+          {% endif %}
         </div>
+        
+        <!-- Remember Me (optional) -->
         <div class="row">
           <div class="col-8">
             <div class="icheck-primary">
-              <input type="checkbox" id="remember">
-              <label for="remember">Remember Me</label>
+              <input type="checkbox" id="remember" name="remember">
+              <label for="remember">
+                Remember Me
+              </label>
             </div>
           </div>
+          <!-- Submit Button -->
           <div class="col-4">
             <button type="submit" class="btn btn-primary btn-block">Sign In</button>
           </div>
         </div>
       </form>
 
-      <p class="mb-1">
+      <!-- Links -->
+      <p class="mb-1 text-center mt-3">
         <a href="{% url 'password_reset' %}">I forgot my password</a>
       </p>
-      <p class="mb-0">
+      <p class="mb-0 text-center">
         <a href="{% url 'signup' %}" class="text-center">Register a new account</a>
       </p>
     </div>
@@ -76,5 +223,65 @@
 <script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/4.6.2/js/bootstrap.bundle.min.js"></script>
 <!-- AdminLTE App -->
 <script src="https://cdnjs.cloudflare.com/ajax/libs/admin-lte/3.2.0/js/adminlte.min.js"></script>
+
+<!-- Enhanced JavaScript for perfect input styling -->
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Ensure all form controls have the correct classes
+    const formControls = document.querySelectorAll('.input-group .form-control, .input-group input, .input-group select, .input-group textarea');
+    
+    formControls.forEach(function(control) {
+        // Add form-control class if missing
+        if (!control.classList.contains('form-control')) {
+            control.classList.add('form-control');
+        }
+        
+        // Ensure proper styling
+        control.style.height = 'calc(2.25rem + 2px)';
+        control.style.padding = '0.375rem 0.75rem';
+        control.style.fontSize = '1rem';
+        control.style.lineHeight = '1.5';
+        control.style.border = '1px solid #ced4da';
+        control.style.backgroundColor = '#fff';
+        control.style.borderRadius = '0.25rem 0 0 0.25rem';
+    });
+    
+    // Add 'is-invalid' class to form controls with errors
+    const errorDivs = document.querySelectorAll('.invalid-feedback.d-block');
+    errorDivs.forEach(function(errorDiv) {
+        const inputGroup = errorDiv.closest('.input-group');
+        const formControl = inputGroup.querySelector('.form-control, input, select, textarea');
+        if (formControl) {
+            formControl.classList.add('is-invalid');
+        }
+    });
+    
+    // Fix input group alignment
+    const inputGroups = document.querySelectorAll('.input-group');
+    inputGroups.forEach(function(group) {
+        group.style.display = 'flex';
+        group.style.width = '100%';
+        
+        const formControl = group.querySelector('.form-control, input, select, textarea');
+        const appendText = group.querySelector('.input-group-append .input-group-text');
+        
+        if (formControl && appendText) {
+            // Ensure same height
+            const height = 'calc(2.25rem + 2px)';
+            formControl.style.height = height;
+            formControl.style.minHeight = height;
+            appendText.style.height = height;
+            appendText.style.minHeight = height;
+            
+            // Ensure proper flex properties
+            formControl.style.flex = '1 1 auto';
+            formControl.style.width = '1%';
+            formControl.style.minWidth = '0';
+        }
+    });
+    
+    console.log('Login form: Perfect input alignment applied');
+});
+</script>
 </body>
 </html>

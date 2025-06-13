@@ -67,8 +67,9 @@ class RaceForm(forms.ModelForm):
         
         widgets = {
             'title': forms.TextInput(attrs={
-                'class': 'form-control',
+                'class': 'form-control',  # Keep existing
                 'placeholder': 'e.g., Paris Marathon 2025',
+                'maxlength': '200',  # Add this line
             }),
             'date': forms.DateInput(attrs={
                 'class': 'form-control',
@@ -81,10 +82,12 @@ class RaceForm(forms.ModelForm):
             'location': forms.TextInput(attrs={
                 'class': 'form-control',
                 'placeholder': 'e.g., Paris, France',
+                'maxlength': '150',
             }),
             'venue': forms.TextInput(attrs={
                 'class': 'form-control',
                 'placeholder': 'e.g., City Marathon Association',
+                'maxlength': '150',
             }),
             'distance': forms.TextInput(attrs={
                 'class': 'form-control',
@@ -98,6 +101,7 @@ class RaceForm(forms.ModelForm):
                 'class': 'form-control',
                 'rows': 3,
                 'placeholder': 'Race strategy, goals, or special notes...',
+                'maxlength': '500',
             }),
         }
         

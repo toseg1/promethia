@@ -156,6 +156,7 @@
                       <th>Date</th>
                       <th>Athlete</th>
                       <th>Type</th>
+                      <th>Sport</th>
                       <th>Event</th>
                       <th>Status</th>
                       <th style="width: 40px">Actions</th>
@@ -177,9 +178,13 @@
                         {{ event.type }}
                       </td>
                       <td>
+                        {% include 'components/sport_icon.html' with event=event %}
+                        {{ event.sport}}
+                      </td>
+                      <td>
                         <strong>{{ event.title }}</strong>
-                        {% if event.description %}
-                          <br><small class="text-muted">{{ event.description|truncatechars:40 }}</small>
+                        {% if event.location %}
+                          <br><small class="text-muted">{{ event.location|truncatechars:40 }}</small>
                         {% endif %}
                       </td>
                       <td>
@@ -387,9 +392,6 @@
     <div class="alert alert-info">
       <i class="fas fa-info-circle mr-2"></i>
       <strong>Viewing athlete:</strong> {{ selected_athlete.get_full_name }}
-      <a href="{% url 'dashboard' %}" class="btn btn-sm btn-secondary float-right">
-          <i class="fas fa-arrow-left"></i> Back to dashboard
-      </a>
     </div>
 
 
@@ -527,8 +529,9 @@
                     <tr>
                       <th style="width: 10px">#</th>
                       <th>Date</th>
-                      <th>Duration</th>
                       <th>Title</th>
+                      <th>Sport</th>
+                      <th>Duration</th>
                       <th>Status</th>
                       <th style="width: 40px">Actions</th>
                     </tr>
@@ -542,14 +545,19 @@
                           {{ session.date|date:"M d" }}
                         </span>
                       </td>
+<td>
+  <div class="session-title text-truncate-title" title="{{ session.title }}">{{ session.title }}</div>
+  {% if session.description %}
+    <div class="session-description text-truncate-description" title="{{ session.description }}">{{ session.description }}</div>
+  {% endif %}
+</td>
                       <td>
-                        <strong>{{ session.duration_minutes|duration_hms }}</strong>
+                    {% include 'components/sport_icon.html' with event=session %}
+                      {{ session.get_sport_display }}
+                      
                       </td>
                       <td>
-                        <strong>{{ session.title }}</strong>
-                        {% if session.description %}
-                          <br><small class="text-muted">{{ session.description|truncatechars:60 }}</small>
-                        {% endif %}
+                      <strong>{{ session.duration_minutes|duration_hms }}</strong>
                       </td>
                       <td>
                         {% if session.status == 'completed' %}
@@ -636,8 +644,8 @@
                         {% endif %}
                       </td>
                       <td>
-                        <i class="fas fa-running text-success mr-1"></i>
-                        {{ race.get_sport_display }}
+                     {% include 'components/sport_icon.html' with event=race %}
+                      {{ race.get_sport_display }}
                       </td>
                       <td>
                         <i class="fas fa-map-marker-alt text-danger mr-1"></i>
@@ -832,8 +840,9 @@
                   <tr>
                     <th style="width: 10px">#</th>
                     <th>Date</th>
-                    <th>Duration</th>
                     <th>Title</th>
+                    <th>Sport</th>
+                    <th>Duration</th>
                     <th>Status</th>
                     <th style="width: 40px">Actions</th>
                   </tr>
@@ -847,15 +856,20 @@
                         {{ session.date|date:"M d" }}
                       </span>
                     </td>
-                    <td>
-                        <strong>{{ session.duration_minutes|duration_hms }}</strong>
-                    </td>
-                    <td>
+                   <td>
                       <strong>{{ session.title }}</strong>
                       {% if session.description %}
                         <br><small class="text-muted">{{ session.description|truncatechars:60 }}</small>
                       {% endif %}
                     </td>
+                        <td>
+                     {% include 'components/sport_icon.html' with event=session %}
+                      {{ session.get_sport_display }}
+                    </td>
+                    <td>
+                        <strong>{{ session.duration_minutes|duration_hms }}</strong>
+                    </td>
+ 
                     <td>
                       {% if session.status == 'completed' %}
                         <span class="badge badge-success">{{ session.get_status_display }}</span>
@@ -944,7 +958,7 @@
                       {% endif %}
                     </td>
                     <td>
-                      <i class="fas fa-running text-success mr-1"></i>
+                     {% include 'components/sport_icon.html' with event=race %}
                       {{ race.get_sport_display }}
                     </td>
                     <td>

@@ -27,21 +27,76 @@ from django.contrib.auth.tokens import default_token_generator
 from django.utils.http import urlsafe_base64_encode
 from django.utils.encoding import force_bytes
 import threading
+from training_calendar.utils.logging_helpers import get_logger, log_error, log_warning, log_info, log_user_action
+from training_calendar.utils.messages import UserMessages
+from django.contrib.auth import authenticate, login as auth_login
+from django.core.exceptions import ValidationError
+from django.contrib.auth.password_validation import validate_password
+from django.http import HttpRequest, HttpResponse
+from django.contrib.auth import logout
+from django.contrib.auth.forms import AuthenticationForm 
+from .forms import CustomLoginForm
+from django.urls import reverse_lazy
+from django.contrib.auth.views import LoginView
+from .forms import CustomPasswordResetForm
+from django.contrib.auth.views import PasswordResetView
+
+
+logger = get_logger('user_management')
 
 def signup(request):
-    """User registration view."""
+    """User registration with comprehensive error handling."""
     if request.method == 'POST':
         form = SignUpForm(request.POST)
+        
+        # Log registration attempt
+        email = request.POST.get('email', 'unknown')
+        username = request.POST.get('username', 'unknown')
+        log_info(logger, f"Registration attempt", username=username, email=email)
+        
         if form.is_valid():
-            user = form.save()
-            # Set role on profile
-            user.profile.role = form.cleaned_data['role']
-            user.profile.save()
-            login(request, user)
-            messages.success(request, 'Account created successfully!')
-            return redirect('dashboard')
+            try:
+                # Create user
+                user = form.save()
+                
+                # Set role on profile
+                user.profile.role = form.cleaned_data['role']
+                user.profile.save()
+                
+                # Log successful registration
+                log_user_action(logger, user, "registered", f"Role: {user.profile.role}")
+                
+                # Login user
+                auth_login(request, user)
+                
+                UserMessages.success(
+                    request, 
+                    'Account created successfully! Welcome to Promethia!',
+                    f"New user registered: {user.username}"
+                )
+                
+                return redirect('dashboard')
+                
+            except Exception as e:
+                log_error(logger, "Error during user registration", e, 
+                         username=username, email=email)
+                UserMessages.error(
+                    request,
+                    "An error occurred during registration. Please try again.",
+                    f"Registration error for {username}"
+                )
+        else:
+            # Form validation failed - errors are already in form.errors
+            # The template will display them automatically
+            log_warning(logger, "Registration failed - form validation errors", 
+                       username=username, form_errors=str(form.errors))
+            
+            # Add a general error message
+            UserMessages.error(request, "Please correct the errors below and try again.")
+    
     else:
         form = SignUpForm()
+    
     return render(request, 'registration/signup.html', {'form': form})
 
 
@@ -470,7 +525,8 @@ def get_all_upcoming_events_for_coach(athlete_users):
             'status': session.get_status_display() if hasattr(session, 'get_status_display') else session.status,
             'status_color': 'primary' if session.status == 'planned' else 'success',
             'object_id': session.id,  # Add the actual object ID
-            'object': session  # Keep reference to the object if needed
+            'object': session,  # Keep reference to the object if needed
+            'sport': session.sport
         })
     
     # Get upcoming races
@@ -485,12 +541,14 @@ def get_all_upcoming_events_for_coach(athlete_users):
             'athlete_name': race.athlete.get_full_name(),
             'type': 'Race',
             'type_icon': 'trophy',
-            'title': race.name,
-            'description': f'{race.distance} - {race.location}' if hasattr(race, 'distance') and hasattr(race, 'location') else '',
+            'title': race.title,
+            'description': f'{race.distance}' if hasattr(race, 'location') else '',
+            'location': race.location,
             'status': 'Scheduled',
             'status_color': 'warning',
             'object_id': race.id,  # Add the actual object ID
-            'object': race  # Keep reference to the object if needed
+            'object': race,  # Keep reference to the object if needed
+            'sport': race.sport
         })
     
     # Sort all events by date
@@ -573,7 +631,7 @@ def get_recent_activities_for_coach(athlete_users):
                 'date': race.created_at.date(),
                 'start_time': race.created_at.time(),
                 'athlete_name': race.athlete.get_full_name(),
-                'description': f'Registered for race: {race.name}',
+                'description': f'Registered for race: {race.title}',
                 'icon': 'trophy',
                 'color': 'warning',
                 'type': 'race_created'
@@ -930,3 +988,190 @@ This email was sent to {email} because you requested a password reset.
     
     # GET request - show the form
     return render(request, 'registration/password_reset_form.html')
+
+
+def custom_login(request: HttpRequest) -> HttpResponse:
+    """Custom login view with comprehensive error handling and logging."""
+    
+    # Redirect if already authenticated
+    if request.user.is_authenticated:
+        log_info(logger, f"Already authenticated user tried to access login", 
+                user=request.user.username)
+        return redirect('dashboard')
+    
+    if request.method == 'POST':
+        form = AuthenticationForm(request, data=request.POST)
+        
+        # Get credentials for logging (before validation)
+        username = request.POST.get('username', 'unknown')
+        
+        # Log login attempt
+        log_info(logger, "Login attempt", username=username, ip=request.META.get('REMOTE_ADDR'))
+        
+        if form.is_valid():
+            username = form.cleaned_data.get('username')
+            password = form.cleaned_data.get('password')
+            
+            # Authenticate user
+            user = authenticate(request, username=username, password=password)
+            
+            if user is not None:
+                if user.is_active:
+                    # Successful login
+                    auth_login(request, user)
+                    
+                    # Log successful login
+                    log_user_action(logger, user, "logged in", 
+                                   f"IP: {request.META.get('REMOTE_ADDR')}")
+                    
+                    # Welcome message
+                    UserMessages.success(
+                        request, 
+                        f"Welcome back, {user.get_full_name() or user.username}!",
+                        f"Successful login: {user.username}"
+                    )
+                    
+                    # Redirect to next page or dashboard
+                    next_page = request.GET.get('next')
+                    if next_page:
+                        log_info(logger, f"Redirecting to requested page: {next_page}", 
+                                user=user.username)
+                        return redirect(next_page)
+                    else:
+                        return redirect('dashboard')
+                
+                else:
+                    # Account is inactive
+                    log_warning(logger, "Login failed - inactive account", 
+                               username=username, ip=request.META.get('REMOTE_ADDR'))
+                    UserMessages.error(
+                        request,
+                        "Your account has been deactivated. Please contact support for assistance.",
+                        f"Inactive account login attempt: {username}"
+                    )
+            else:
+                # Invalid credentials
+                log_warning(logger, "Login failed - invalid credentials", 
+                        username=username, ip=request.META.get('REMOTE_ADDR'))
+                
+                UserMessages.error(
+                    request,
+                    "Invalid username or password. Please check your credentials and try again.",
+                    f"Invalid login attempt: {username}"
+                )
+        else:
+            # Form validation failed
+            log_warning(logger, "Login form validation failed", 
+                       username=username, errors=str(form.errors))
+            
+            # Handle specific form errors
+            if form.non_field_errors():
+                # Django's AuthenticationForm puts credential errors in non_field_errors
+                UserMessages.error(
+                    request,
+                    "Invalid username or password. Please check your credentials and try again."
+                )
+            else:
+                # Other form errors (empty fields, etc.)
+                UserMessages.error(
+                    request,
+                    "Please fill in all required fields."
+                )
+    
+    else:
+        # GET request - show login form
+        form = AuthenticationForm()
+        
+        # Log if user came from a redirect (e.g., login required)
+        next_page = request.GET.get('next')
+        if next_page:
+            log_info(logger, f"Login required for page: {next_page}")
+            UserMessages.info(
+                request,
+                "Please log in to access that page."
+            )
+    
+    return render(request, 'registration/login.html', {
+        'form': form,
+        'title': 'Log In'
+    })
+
+
+def custom_logout(request: HttpRequest) -> HttpResponse:
+    """Custom logout view with logging."""
+    
+    if request.user.is_authenticated:
+        username = request.user.username
+        log_user_action(logger, request.user, "logged out", 
+                       f"IP: {request.META.get('REMOTE_ADDR')}")
+        
+        logout(request)
+        
+        UserMessages.success(
+            request,
+            "You have been logged out successfully.",
+            f"User logged out: {username}"
+        )
+    
+    return redirect('custom_login')
+
+
+class CustomLoginView(LoginView):
+    """
+    Custom login view using our CustomLoginForm.
+    """
+    form_class = CustomLoginForm
+    template_name = 'registration/login.html'
+    redirect_authenticated_user = True
+    success_url = reverse_lazy('dashboard')  # Change to your dashboard URL
+    
+    def form_invalid(self, form):
+        """
+        Handle form validation errors.
+        """
+        # Add any additional error handling here if needed
+        return super().form_invalid(form)
+    
+    def form_valid(self, form):
+        """
+        Handle successful login.
+        """
+        messages.success(self.request, 'Welcome back! You have been logged in successfully.')
+        return super().form_valid(form)
+    
+
+class CustomPasswordResetView(PasswordResetView):
+    """
+    Custom password reset view with styled form and messages.
+    """
+    form_class = CustomPasswordResetForm
+    template_name = 'registration/password_reset_form.html'
+    email_template_name = 'registration/password_reset_email.html'
+    subject_template_name = 'registration/password_reset_subject.txt'
+    success_url = reverse_lazy('password_reset_done')
+    
+    def form_valid(self, form):
+        """
+        Handle successful form submission with custom success message.
+        """
+        # Get the email from the form
+        email = form.cleaned_data['email']
+        
+        # Add success message
+        messages.success(
+            self.request, 
+            f'Password reset instructions have been sent to {email}. Please check your email.'
+        )
+        
+        return super().form_valid(form)
+    
+    def form_invalid(self, form):
+        """
+        Handle form validation errors.
+        """
+        # Add error message for general form issues
+        if form.non_field_errors():
+            for error in form.non_field_errors():
+                messages.error(self.request, error)
+        
+        return super().form_invalid(form)

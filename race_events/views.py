@@ -10,6 +10,10 @@ from django.utils import timezone
 from .models import Race, RaceResult
 from .forms import RaceForm
 from user_management.views import get_current_view_mode
+from training_calendar.utils.logging_helpers import get_logger, log_error, log_info, log_user_action, log_warning
+from training_calendar.utils.messages import UserMessages
+
+logger = get_logger('race_events')
 
 
 @login_required
@@ -134,34 +138,53 @@ def coach_race_list_view(request):
 
 @login_required
 def race_create(request):
-    """Create new race."""
+    """Create new race with proper error handling."""
     if request.method == 'POST':
-        form = RaceForm(request.POST, user=request.user) 
-        if form.is_valid():
-            race = form.save(commit=False)
-            # Ensure athlete is set to current user
-            race.athlete = request.user
-            
-            # Handle separate goal time fields (if your template uses separate fields)
-            goal_hours = request.POST.get('goal_hours', '') or '0'
-            goal_minutes = request.POST.get('goal_minutes', '') or '0'
-            goal_seconds = request.POST.get('goal_seconds', '') or '0'
-            
-            # Only set goal_time if at least minutes is provided
-            if goal_minutes != '0':
-                race.goal_time = f"{goal_hours}:{goal_minutes.zfill(2)}:{goal_seconds.zfill(2)}"
-            
-            race.save()
-            # FIXED: Use race.title instead of race.name
-            messages.success(request, f'Race "{race.title}" created successfully!')
-            return redirect('dashboard')
-        else:
-            # DEBUG: Print form errors to console
-            print(f"Form errors: {form.errors}")
-    else:
-        form = RaceForm(user=request.user) 
+        form = RaceForm(request.POST, user=request.user)
         
-        # Pre-fill date if provided
+        if form.is_valid():
+            try:
+                race = form.save(commit=False)
+                race.athlete = request.user
+                
+                # Handle goal time logic
+                goal_hours = request.POST.get('goal_hours', '') or '0'
+                goal_minutes = request.POST.get('goal_minutes', '') or '0'
+                goal_seconds = request.POST.get('goal_seconds', '') or '0'
+                
+                if goal_minutes != '0':
+                    race.goal_time = f"{goal_hours}:{goal_minutes.zfill(2)}:{goal_seconds.zfill(2)}"
+                
+                race.save()
+                
+                # Log race creation
+                log_user_action(logger, request.user, "created race", f"Race: {race.title}")
+                
+                UserMessages.success(
+                    request, 
+                    f'Race "{race.title}" created successfully!',
+                    f"Race created: {race.title} by {request.user.username}"
+                )
+                
+                return redirect('dashboard')
+                
+            except Exception as e:
+                log_error(logger, "Error creating race", e, 
+                         user=request.user.username, form_data=str(form.cleaned_data))
+                UserMessages.error(
+                    request,
+                    "Unable to save your race. Please try again.",
+                    "Race creation failed"
+                )
+        else:
+            # Form validation failed
+            log_warning(logger, "Race form validation failed", 
+                       user=request.user.username, errors=str(form.errors))
+            UserMessages.error(request, "Please correct the errors below and try again.")
+    
+    else:
+        form = RaceForm(user=request.user)
+        
         if 'date' in request.GET:
             form.fields['date'].initial = request.GET['date']
     
@@ -221,7 +244,7 @@ def race_edit(request, race_id):
                 updated_race.goal_time = ''
             
             updated_race.save()
-            messages.success(request, f'Race "{updated_race.name}" updated successfully!')
+            messages.success(request, f'Race "{updated_race.title}" updated successfully!')
             return redirect('race_events:race_list')
     else:
         form = RaceForm(instance=race)
@@ -229,7 +252,7 @@ def race_edit(request, race_id):
     context = {
         'form': form,
         'race': race,
-        'title': f'Edit Race: {race.name}',
+        'title': f'Edit Race: {race.title}',
         'goal_hours': goal_hours,
         'goal_minutes': goal_minutes,
         'goal_seconds': goal_seconds,
@@ -249,7 +272,7 @@ def race_delete(request, race_id):
         return redirect('race_events:race_list')
     
     if request.method == 'POST':
-        race_name = race.name
+        race_name = race.title
         race.delete()
         messages.success(request, f'Race "{race_name}" deleted successfully!')
         return redirect('race_events:race_list')
@@ -312,7 +335,7 @@ def race_result(request, race_id):
             result.satisfaction = satisfaction
             result.race_report = race_report
             result.save()
-            messages.success(request, f'Results for "{race.name}" updated successfully!')
+            messages.success(request, f'Results for "{race.title}" updated successfully!')
         else:
             # Create new result
             result = RaceResult.objects.create(
@@ -324,7 +347,7 @@ def race_result(request, race_id):
                 satisfaction=satisfaction,
                 race_report=race_report
             )
-            messages.success(request, f'Results for "{race.name}" saved successfully!')
+            messages.success(request, f'Results for "{race.title}" saved successfully!')
         
         return redirect('race_events:race_list')
     

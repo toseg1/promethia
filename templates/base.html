@@ -15,6 +15,8 @@
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/admin-lte/3.2.0/css/adminlte.min.css">
   <!-- Custom Base Styles -->
   <link rel="stylesheet" href="{% static 'css/base.css' %}">
+
+  <link rel="stylesheet" href="{% static 'css/ux_optimization.css' %}">
   
   <!-- Page-specific CSS -->
   {% block extra_css %}{% endblock %}
@@ -24,12 +26,16 @@
 <body class="hold-transition sidebar-mini sidebar-mini-md layout-fixed layout-navbar-fixed layout-footer-fixed">
 <div class="wrapper">
 
-  <!-- Navbar - Add navbar-fixed-top class -->
-  <nav class="main-header navbar navbar-expand navbar-white navbar-light navbar-fixed-top">
-    <!-- Left navbar links - Remove pushmenu toggle -->
-    <ul class="navbar-nav">
-      <!-- Remove the hamburger menu button that collapses sidebar -->
-    </ul>
+ <nav class="main-header navbar navbar-expand navbar-white navbar-light navbar-fixed-top">
+  <!-- Left navbar links -->
+  <ul class="navbar-nav">
+    <!-- Pushmenu toggle button -->
+    <li class="nav-item">
+      <a class="nav-link" data-widget="pushmenu" href="#" role="button">
+        <i class="fas fa-bars"></i>
+      </a>
+    </li>
+  </ul>
 
     <!-- Right navbar links -->
     <ul class="navbar-nav ml-auto">
@@ -134,8 +140,8 @@
         </a>
       </li>
       <li class="nav-item" style="height: 20px;"></li>
-      {% if current_view == 'coach' %}
       
+      {% if current_view == 'coach' %}
       <!-- Quick Add Athlete Button -->
       <li class="nav-item">
           <a href="{% url 'add_athlete' %}" class="nav-link bg-success text-white">
@@ -293,5 +299,7 @@ $(document).ready(function() {
     });
 });
 </script>
+<!-- Add this to your base.html template before closing </body> tag -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/3.9.1/chart.min.js"></script>
 </body>
 </html>

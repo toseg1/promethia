@@ -115,9 +115,9 @@
         </div>
         
         <div class="card-footer">
-         <button type="button" class="btn btn-primary">
-          <i class="fas fa-times mr-1"></i>
-           Save Event
+         <button type="submit" class="btn btn-primary">
+          <i class="fas fa-calendar-days mr-1"></i>
+    {% if is_editing %}Update Event{% else %}Save Event          {% endif %}
       </button>
           <button type="button" class="btn btn-secondary" onclick="goBack()">
               <i class="fas fa-times mr-1"></i>

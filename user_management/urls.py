@@ -3,7 +3,8 @@ URL configuration for user management app.
 """
 from django.urls import path, include
 from . import views
-
+from .views import CustomLoginView
+from .views import CustomPasswordResetView
 
 urlpatterns = [
     path('signup/', views.signup, name='signup'),
@@ -18,5 +19,15 @@ urlpatterns = [
     path('vma-calculator/', views.vma_calculator, name='vma_calculator'),
     path('calendar/', include('calendar_management.urls')), 
     path('profile/remove-picture/', views.remove_profile_picture, name='remove_profile_picture'),
+    # Custom authentication views
+    path('login/', views.custom_login, name='custom_login'),
+    path('logout/', views.custom_logout, name='custom_logout'),
+    path('accounts/login/', CustomLoginView.as_view(), name='login'),
+    path('accounts/signup/', views.signup, name='signup'),
+    path('signup/', views.signup, name='signup'),
+    path('accounts/password_reset/', CustomPasswordResetView.as_view(), name='password_reset'),
+
+    path('accounts/login/', views.custom_login, name='login'),  # Override Django's login
+    path('accounts/logout/', views.custom_logout, name='logout'),
 
 ]
