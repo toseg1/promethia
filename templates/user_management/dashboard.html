@@ -167,7 +167,7 @@
                     <tr>
                       <td>
                         <span class="badge badge-info">
-                          {{ event.date|date:"M d" }}
+                          {{ event.date|date:"M d, Y" }}
                         </span>
                       </td>
                       <td>
@@ -361,7 +361,7 @@
               <div class="timeline">
                 {% for activity in recent_activities %}
                 <div class="time-label">
-                  <span class="bg-info">{{ activity.date|date:"M d" }}</span>
+                  <span class="bg-info">{{ activity.date|date:"M d, Y" }}</span>
                 </div>
                 <div>
                   <i class="fas fa-{{ activity.icon }} bg-{{ activity.color }}"></i>
@@ -542,7 +542,7 @@
                       <td>{{ forloop.counter }}</td>
                       <td>
                         <span class="badge badge-info">
-                          {{ session.date|date:"M d" }}
+                          {{ session.date|date:"M d, Y" }}
                         </span>
                       </td>
 <td>
@@ -853,7 +853,7 @@
                     <td>{{ forloop.counter }}</td>
                     <td>
                       <span class="badge badge-info">
-                        {{ session.date|date:"M d" }}
+                        {{ session.date|date:"M d, Y" }}
                       </span>
                     </td>
                    <td>
