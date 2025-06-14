@@ -139,17 +139,17 @@
         {% endfor %}
       {% endif %}
 
-      <!-- Display non-field errors (authentication errors) -->
-      {% if form.non_field_errors %}
-        <div class="alert alert-danger alert-dismissible fade show" role="alert">
-          {% for error in form.non_field_errors %}
-            <i class="fas fa-exclamation-triangle mr-2"></i>{{ error }}
-          {% endfor %}
-          <button type="button" class="close" data-dismiss="alert" aria-label="Close">
-            <span aria-hidden="true">&times;</span>
-          </button>
-        </div>
-      {% endif %}
+ <!-- Display non-field errors ONLY if no custom messages -->
+{% if form.non_field_errors and not messages %}
+  <div class="alert alert-danger alert-dismissible fade show" role="alert">
+    {% for error in form.non_field_errors %}
+      <i class="fas fa-exclamation-triangle mr-2"></i>{{ error }}
+    {% endfor %}
+    <button type="button" class="close" data-dismiss="alert" aria-label="Close">
+      <span aria-hidden="true">&times;</span>
+    </button>
+  </div>
+{% endif %}
 
       <!-- CRITICAL: novalidate prevents browser validation -->
       <form method="post" novalidate>
