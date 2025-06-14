@@ -41,9 +41,6 @@
               <div class="info-box-content">
                 <span class="info-box-text">Race Date</span>
                 <span class="info-box-number">{{ race.date|date:"F d, Y" }}</span>
-                  {% if race.start_time %}{{ race.start_time|time:"g:i A" }}
-                  <span class="info-box-more">at {{ race.start_time|time:"H:i" }}</span>
-                  {% endif %}
               </div>
             </div>
           </div>
