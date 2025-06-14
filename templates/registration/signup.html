@@ -14,6 +14,32 @@
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
   <!-- AdminLTE CSS -->
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/admin-lte/3.2.0/css/adminlte.min.css">
+  
+  <!-- Minimal error styling - consistent with your theme -->
+  <style>
+    .form-control.is-invalid {
+      border-color: #dc3545;
+    }
+    .invalid-feedback {
+      color: #dc3545;
+      font-size: 0.875em;
+    }
+    .password-requirements {
+      background-color: #e3f2fd;
+      border: 1px solid #2196f3;
+      border-radius: 0.25rem;
+      padding: 0.75rem;
+      font-size: 0.85em;
+      margin-bottom: 1rem;
+    }
+    .password-requirements ul {
+      margin-bottom: 0;
+      padding-left: 1.2rem;
+    }
+    .password-requirements li {
+      margin-bottom: 0.25rem;
+    }
+  </style>
 </head>
 <body class="hold-transition register-page">
 <div class="register-box">
@@ -24,72 +50,151 @@
     <div class="card-body">
       <p class="login-box-msg">Register a new account</p>
 
-      <form method="post">
+    <!-- Messages Display -->
+      {% include 'partials/messages.html' %}
+
+      <!-- CRITICAL: novalidate prevents browser validation -->
+      <form method="post" novalidate>
         {% csrf_token %}
+        
+        <!-- Username Field -->
         <div class="input-group mb-3">
-          <input type="text" name="username" class="form-control" placeholder="Username" required>
+          {{ form.username }}
           <div class="input-group-append">
             <div class="input-group-text">
               <span class="fas fa-user"></span>
             </div>
           </div>
+          {% if form.username.errors %}
+            <div class="invalid-feedback d-block">
+              {% for error in form.username.errors %}
+                {{ error }}
+              {% endfor %}
+            </div>
+          {% endif %}
         </div>
+        
+        <!-- First Name Field -->
         <div class="input-group mb-3">
-          <input type="text" name="first_name" class="form-control" placeholder="First Name" required>
+          {{ form.first_name }}
           <div class="input-group-append">
             <div class="input-group-text">
               <span class="fas fa-user"></span>
             </div>
           </div>
+          {% if form.first_name.errors %}
+            <div class="invalid-feedback d-block">
+              {% for error in form.first_name.errors %}
+                {{ error }}
+              {% endfor %}
+            </div>
+          {% endif %}
         </div>
+        
+        <!-- Last Name Field -->
         <div class="input-group mb-3">
-          <input type="text" name="last_name" class="form-control" placeholder="Last Name" required>
+          {{ form.last_name }}
           <div class="input-group-append">
             <div class="input-group-text">
               <span class="fas fa-user"></span>
             </div>
           </div>
+          {% if form.last_name.errors %}
+            <div class="invalid-feedback d-block">
+              {% for error in form.last_name.errors %}
+                {{ error }}
+              {% endfor %}
+            </div>
+          {% endif %}
         </div>
+        
+        <!-- Email Field -->
         <div class="input-group mb-3">
-          <input type="email" name="email" class="form-control" placeholder="Email" required>
+          {{ form.email }}
           <div class="input-group-append">
             <div class="input-group-text">
               <span class="fas fa-envelope"></span>
             </div>
           </div>
+          {% if form.email.errors %}
+            <div class="invalid-feedback d-block">
+              {% for error in form.email.errors %}
+                <i class="fas fa-exclamation-triangle mr-1"></i>{{ error }}
+              {% endfor %}
+            </div>
+          {% endif %}
         </div>
+        
+        <!-- Role Field -->
         <div class="input-group mb-3">
-          <select name="role" class="form-control" required>
-            <option value="">Select Role</option>
-            <option value="athlete">Athlete</option>
-            <option value="coach">Coach</option>
-          </select>
+          {{ form.role }}
           <div class="input-group-append">
             <div class="input-group-text">
               <span class="fas fa-users"></span>
             </div>
           </div>
+          {% if form.role.errors %}
+            <div class="invalid-feedback d-block">
+              {% for error in form.role.errors %}
+                {{ error }}
+              {% endfor %}
+            </div>
+          {% endif %}
         </div>
         <small class="form-text text-muted mb-3">
           <i class="fas fa-info-circle mr-1"></i>
           This sets your default dashboard view when you log in. You can switch between athlete and coach views anytime from the dashboard.
         </small>
+        
+        <!-- Password Requirements Note -->
+        <div class="password-requirements">
+          <div class="d-flex align-items-center mb-2">
+            <i class="fas fa-shield-alt text-primary mr-2"></i>
+            <strong class="text-primary">Password Requirements:</strong>
+          </div>
+          <ul class="text-muted">
+            <li>At least 8 characters long</li>
+            <li>Cannot be too similar to your personal information</li>
+            <li>Cannot be a commonly used password</li>
+            <li>Cannot be entirely numeric</li>
+          </ul>
+        </div>
+        
+        <!-- Password1 Field -->
         <div class="input-group mb-3">
-          <input type="password" name="password1" class="form-control" placeholder="Password" required>
+          {{ form.password1 }}
           <div class="input-group-append">
             <div class="input-group-text">
               <span class="fas fa-lock"></span>
             </div>
           </div>
+          {% if form.password1.errors %}
+            <div class="invalid-feedback d-block">
+              {% for error in form.password1.errors %}
+                {{ error }}
+              {% endfor %}
+            </div>
+          {% endif %}
         </div>
+        
+        <!-- Password2 Field -->
         <div class="input-group mb-3">
-          <input type="password" name="password2" class="form-control" placeholder="Confirm Password" required>
+          {{ form.password2 }}
           <div class="input-group-append">
             <div class="input-group-text">
               <span class="fas fa-lock"></span>
             </div>
           </div>
+          {% if form.password2.errors %}
+            <div class="invalid-feedback d-block">
+              {% for error in form.password2.errors %}
+                {{ error }}
+              {% endfor %}
+            </div>
+          {% endif %}
         </div>
+        
+        <!-- Submit Button -->
         <div class="row">
           <div class="col-12 text-center">
             <button type="submit" class="btn btn-primary btn-block">Register</button>
@@ -98,7 +203,7 @@
       </form>
 
       <div class="text-center mt-3">
-        <a href="{% url 'login' %}">I already have an account</a>
+        <a href="{% url 'custom_login' %}">I already have an account</a>
       </div>
     </div>
   </div>
@@ -110,5 +215,22 @@
 <script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/4.6.2/js/bootstrap.bundle.min.js"></script>
 <!-- AdminLTE App -->
 <script src="https://cdnjs.cloudflare.com/ajax/libs/admin-lte/3.2.0/js/adminlte.min.js"></script>
+
+<!-- Minimal JavaScript for error styling -->
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Add 'is-invalid' class to form controls with errors
+    const errorDivs = document.querySelectorAll('.invalid-feedback.d-block');
+    errorDivs.forEach(function(errorDiv) {
+        const inputGroup = errorDiv.closest('.input-group');
+        const formControl = inputGroup.querySelector('.form-control, select');
+        if (formControl) {
+            formControl.classList.add('is-invalid');
+        }
+    });
+    
+    console.log('Signup form: Custom error messages enabled');
+});
+</script>
 </body>
 </html>

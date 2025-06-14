@@ -1,0 +1,15 @@
+{% if event.sport == 'custom' %}
+    <i class="fas fa-star" ></i>
+{% elif event.sport == 'running' %}
+    <i class="fas fa-running" ></i>
+{% elif event.sport == 'cycling' %}
+    <i class="fas fa-bicycle" ></i>
+{% elif event.sport == 'swimming' %}
+    <i class="fas fa-swimmer"></i>
+{% elif event.sport == 'trail' %}
+    <i class="fas fa-mountain"></i>
+{% elif event.sport == 'triathlon' %}
+    <i class="fas fa-medal"></i>
+{% else %}
+    <i class="fas fa-heartbeat" ></i>
+{% endif %}

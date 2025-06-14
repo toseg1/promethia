@@ -14,6 +14,10 @@ from django.contrib.auth.models import User
 from django.views.generic import TemplateView
 import calendar as cal
 from user_management.views import get_current_view_mode
+from training_calendar.utils.logging_helpers import get_logger, log_error, log_warning, log_info
+from training_calendar.utils.messages import UserMessages
+
+logger = get_logger('calendar_management')
 
 @login_required
 def calendar_view(request):
@@ -49,6 +53,8 @@ def render_month_view(request, today):
     
     events = get_month_events(request.user, start_date, end_date)
     
+    volume_data = get_training_volume_by_sport(request.user, start_date, end_date)
+
     # Organize events by date
     events_by_date = defaultdict(list)
     for event in events:
@@ -78,7 +84,8 @@ def render_month_view(request, today):
         'year': year,
         'today': today,
         'view_type': 'month',
-        'events': events
+        'events': events,
+        'volume_data': volume_data,
     }
     
     return render(request, 'calendar_management/calendar_athlete.html', context)
@@ -105,6 +112,10 @@ def render_week_view(request, today):
     
     week_end_date = week_start_date + timedelta(days=6)
     week_events = get_month_events(request.user, week_start_date, week_end_date)
+
+    # Get training volume data for the week
+    volume_data = get_training_volume_by_sport(request.user, week_start_date, week_end_date)
+
     
     for event in week_events:
         event_date = event.get('date')
@@ -120,80 +131,110 @@ def render_week_view(request, today):
         'week_start_date': week_start_date,
         'today': today,
         'view_type': 'week',
-        'hours': range(6, 24)
+        'hours': range(6, 24),
+        'volume_data': volume_data,
     }
     
     return render(request, 'calendar_management/calendar_athlete.html', context)
 
 def get_month_events(user, start_date, end_date):
-    """Get real events from your models"""
+    """Get all events with proper error handling and logging."""
     events = []
     
     try:
-        # Training Sessions
+        # Get athlete users
+        athlete_users = [user]
+        if hasattr(user, 'profile') and user.profile.is_coach:
+            try:
+                from user_management.models import CoachAthleteRelationship
+                coach_athletes = CoachAthleteRelationship.objects.filter(
+                    coach=user, status='accepted'
+                ).select_related('athlete')
+                athlete_users.extend([rel.athlete for rel in coach_athletes])
+            except Exception as e:
+                log_error(logger, "Error loading coach-athlete relationships", e, user=user.username)
+        
+        # TRAINING SESSIONS - FIXED with proper logging
         try:
             from training_sessions.models import TrainingSession
             sessions = TrainingSession.objects.filter(
-                athlete=user,
+                athlete__in=athlete_users,
                 date__range=[start_date, end_date]
             ).select_related('athlete')
             
             for session in sessions:
-                events.append({
-                    'id': session.id,
-                    'title': getattr(session, 'session_type', None) or getattr(session, 'title', None) or 'Training Session',
-                    'date': session.date,
-                    'start_time': getattr(session, 'start_time', None) or datetime_time(1, 0),  # Default to 0:00 AM
-                    'duration': getattr(session, 'duration_minutes', None) or getattr(session, 'duration', None),
-                    'distance': getattr(session, 'distance', None),
-                    'sport': getattr(session, 'sport', 'running'),
-                    'event_type': 'training_session',
-                    'status': getattr(session, 'status', 'scheduled'),
-                    'athlete': session.athlete,
-                    'description': getattr(session, 'notes', '') or getattr(session, 'description', ''),
-                    'intensity': getattr(session, 'intensity', None),
-                    'duration_days': 1,
-                })
+                try:
+                    events.append({
+                        'id': session.id,
+                        'title': session.title,
+                        'date': session.date,
+                        'start_time': session.start_time,
+                        'duration': session.duration_minutes,
+                        'distance': session.distance,
+                        'sport': session.sport,
+                        'event_type': 'training_session',
+                        'status': session.status,
+                        'athlete': session.athlete,
+                        'description': session.description,
+                        'intensity': session.intensity,
+                        'duration_days': 1,
+                        'color': session.sport_color,
+                        'icon': session.sport_icon,
+                    })
+                except AttributeError as e:
+                    log_error(logger, f"Error processing training session {session.id}", e, 
+                             session_id=session.id, user=user.username)
+                    continue
+                    
         except ImportError:
-            print("TrainingSession model not found")
+            log_warning(logger, "TrainingSession model not available", user=user.username)
         except Exception as e:
-            print(f"Training sessions error: {e}")
+            log_error(logger, "Error loading training sessions", e, 
+                     user=user.username, date_range=f"{start_date} to {end_date}")
         
-        # Race Events  
+        # RACE EVENTS - FIXED with proper logging
         try:
             from race_events.models import Race
             races = Race.objects.filter(
-                athlete=user,
+                athlete__in=athlete_users,
                 date__range=[start_date, end_date]
             ).select_related('athlete')
             
             for race in races:
-                events.append({
-                    'id': race.id,
-                    'title': getattr(race, 'name', None) or getattr(race, 'title', None) or 'Race Event',
-                    'date': race.date,
-                    'start_time': getattr(race, 'start_time', None) or datetime_time(1, 0),  # Default to 0:00 AM for races
-                    'distance': getattr(race, 'distance', None),
-                    'sport': getattr(race, 'race_type', 'race'),
-                    'event_type': 'race',
-                    'status': getattr(race, 'status', 'scheduled'),
-                    'athlete': race.athlete,
-                    'description': getattr(race, 'description', ''),
-                    'location': getattr(race, 'location', ''),
-                    'race_type': getattr(race, 'race_type', ''),
-                    'duration_days': 1,
-                })
+                try:
+                    events.append({
+                        'id': race.id,
+                        'title': race.title,
+                        'date': race.date,
+                        'start_time': race.start_time,
+                        'distance': race.distance,
+                        'sport': race.sport,
+                        'event_type': 'race',
+                        'status': race.status,
+                        'athlete': race.athlete,
+                        'description': race.description,
+                        'location': race.location,
+                        'venue': race.venue,
+                        'goal_time': race.goal_time,
+                        'goal_type': race.goal_type,
+                        'duration_days': 1,
+                    })
+                except AttributeError as e:
+                    log_error(logger, f"Error processing race {race.id}", e,
+                             race_id=race.id, user=user.username)
+                    continue
+                    
         except ImportError:
-            print("Race model not found")
+            log_warning(logger, "Race model not available", user=user.username)
         except Exception as e:
-            print(f"Race events error: {e}")
+            log_error(logger, "Error loading race events", e,
+                     user=user.username, date_range=f"{start_date} to {end_date}")
         
-        # Custom Events
+        # CUSTOM EVENTS - Already clean, just add logging
         try:
             from calendar_management.models import CustomEvent
-            
             custom_events = CustomEvent.objects.filter(
-                user=user,
+                user__in=athlete_users,
                 start_date__range=[start_date, end_date]
             )
             
@@ -207,21 +248,28 @@ def get_month_events(user, start_date, end_date):
                     'athlete': custom_event.user,
                     'description': custom_event.note or '',
                     'color': custom_event.color or '#6c757d',
-                    'duration_days': 1,  # Each entry is single-day now
+                    'duration_days': (custom_event.end_date - custom_event.start_date).days + 1,
                     'start_time': datetime_time(0, 0),
                 })
+                
         except ImportError:
-            print("CustomEvent model not found")
+            log_warning(logger, "CustomEvent model not available", user=user.username)
         except Exception as e:
-            print(f"Custom events error: {e}")
-        
+            log_error(logger, "Error loading custom events", e,
+                     user=user.username, date_range=f"{start_date} to {end_date}")
+            
     except Exception as e:
-        print(f"Overall get_month_events error: {e}")
-        import traceback
-        traceback.print_exc()
+        log_error(logger, "Critical error in get_month_events", e,
+                 user=user.username, date_range=f"{start_date} to {end_date}")
     
-    # Sort events by date only (since custom events don't have start_time)
-    events.sort(key=lambda x: x.get('date', start_date))
+    # Sort events by date and time
+    events.sort(key=lambda x: (
+        x.get('date', start_date),
+        x.get('start_time') or datetime_time(0, 0)
+    ))
+    
+    log_info(logger, f"Loaded {len(events)} events for calendar", 
+             user=user.username, event_count=len(events))
     
     return events
 
@@ -451,7 +499,7 @@ class CoachCalendarView(LoginRequiredMixin, TemplateView):
             races = Race.objects.filter(
                 athlete__in=coach_athletes,
                 date__range=[start_date, end_date]
-            ).select_related('athlete').order_by('date', 'time')
+            ).select_related('athlete').order_by('date', 'start_time')
             
             # Build calendar structure
             calendar_data = []
@@ -507,7 +555,7 @@ class CoachCalendarView(LoginRequiredMixin, TemplateView):
             races = Race.objects.filter(
                 athlete__in=coach_athletes,
                 date__range=[week_start_date, week_end_date]
-            ).select_related('athlete').order_by('date', 'time')
+            ).select_related('athlete').order_by('date', 'start_time')
             
         except ImportError:
             races = []
@@ -635,6 +683,8 @@ class CoachAthleteCalendarView(LoginRequiredMixin, TemplateView):
         
         # Use the existing get_month_events function to get standardized event data
         events = get_month_events(athlete, start_date, end_date)
+
+        volume_data = get_training_volume_by_sport(athlete, start_date, end_date)
         
         # Organize events by date
         events_by_date = defaultdict(list)
@@ -664,6 +714,7 @@ class CoachAthleteCalendarView(LoginRequiredMixin, TemplateView):
         
         return {
             'calendar_data': calendar_data,
+            'volume_data': volume_data,
         }
     
     def _get_athlete_week_context(self, week_start_date, athlete):
@@ -672,6 +723,8 @@ class CoachAthleteCalendarView(LoginRequiredMixin, TemplateView):
         
         # Use the existing get_month_events function to get standardized event data
         week_events = get_month_events(athlete, week_start_date, week_end_date)
+
+        volume_data = get_training_volume_by_sport(athlete, week_start_date, week_end_date)
         
         # Build week days
         week_days = []
@@ -687,4 +740,65 @@ class CoachAthleteCalendarView(LoginRequiredMixin, TemplateView):
             'week_start_date': week_start_date,
             'week_days': week_days,
             'week_events': week_events,
+            'volume_data': volume_data,
         }
+    
+def get_training_volume_by_sport(user, start_date, end_date):
+    """Calculate training volume by sport for a date range - ONLY COMPLETED sessions"""
+    from training_sessions.models import TrainingSession
+    from collections import defaultdict
+    
+    # Get athlete users (including coached athletes if user is coach)
+    athlete_users = [user]
+    if hasattr(user, 'profile') and user.profile.role == 'coach':
+        from user_management.models import CoachAthleteRelationship
+        coach_athletes = CoachAthleteRelationship.objects.filter(
+            coach=user, status='accepted'
+        ).select_related('athlete')
+        athlete_users.extend([rel.athlete for rel in coach_athletes])
+    
+    # Get ONLY COMPLETED training sessions in date range
+    sessions = TrainingSession.objects.filter(
+        athlete__in=athlete_users,
+        date__range=[start_date, end_date],
+        status='completed'  # FIXED: Only count completed sessions
+    ).select_related('athlete')
+    
+    # Initialize volume counters
+    volume_data = {
+        'total': {'sessions': 0, 'duration': 0},
+        'running': {'sessions': 0, 'duration': 0},
+        'cycling': {'sessions': 0, 'duration': 0}, 
+        'swimming': {'sessions': 0, 'duration': 0},
+    }
+    
+    # Calculate volumes
+    for session in sessions:
+        duration = session.duration_minutes or 0
+        sport = session.sport or 'other'
+        
+        # Add to total
+        volume_data['total']['sessions'] += 1
+        volume_data['total']['duration'] += duration
+        
+        # Add to sport-specific (running includes trail)
+        if sport in ['running', 'trail']:
+            volume_data['running']['sessions'] += 1
+            volume_data['running']['duration'] += duration
+        elif sport == 'cycling':
+            volume_data['cycling']['sessions'] += 1
+            volume_data['cycling']['duration'] += duration
+        elif sport == 'swimming':
+            volume_data['swimming']['sessions'] += 1
+            volume_data['swimming']['duration'] += duration
+    
+    # Format durations as hours:minutes
+    for sport_data in volume_data.values():
+        hours = sport_data['duration'] // 60
+        minutes = sport_data['duration'] % 60
+        sport_data['duration_formatted'] = f"{hours}h {minutes:02d}m"
+        
+        # Add hours as decimal for charts
+        sport_data['duration_hours'] = round(sport_data['duration'] / 60, 1)
+    
+    return volume_data

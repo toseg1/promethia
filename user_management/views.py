@@ -27,22 +27,154 @@ from django.contrib.auth.tokens import default_token_generator
 from django.utils.http import urlsafe_base64_encode
 from django.utils.encoding import force_bytes
 import threading
+from training_calendar.utils.logging_helpers import get_logger, log_error, log_warning, log_info, log_user_action
+from training_calendar.utils.messages import UserMessages
+from django.contrib.auth import authenticate, login as auth_login
+from django.core.exceptions import ValidationError
+from django.contrib.auth.password_validation import validate_password
+from django.http import HttpRequest, HttpResponse
+from django.contrib.auth import logout
+from django.contrib.auth.forms import AuthenticationForm 
+from .forms import CustomLoginForm
+from django.urls import reverse_lazy
+from django.contrib.auth.views import LoginView
+from .forms import CustomPasswordResetForm
+from django.contrib.auth.views import PasswordResetView
+import cloudinary.uploader
+import os
+
+logger = get_logger('user_management')
 
 def signup(request):
-    """User registration view."""
+    """User registration with comprehensive error handling."""
     if request.method == 'POST':
         form = SignUpForm(request.POST)
+        
+        # Log registration attempt
+        email = request.POST.get('email', 'unknown')
+        username = request.POST.get('username', 'unknown')
+        log_info(logger, f"Registration attempt", username=username, email=email)
+        
         if form.is_valid():
-            user = form.save()
-            # Set role on profile
-            user.profile.role = form.cleaned_data['role']
-            user.profile.save()
-            login(request, user)
-            messages.success(request, 'Account created successfully!')
-            return redirect('dashboard')
+            try:
+                # Create user
+                user = form.save()
+                
+                # Set role on profile
+                user.profile.role = form.cleaned_data['role']
+                user.profile.save()
+                
+                # Log successful registration
+                log_user_action(logger, user, "registered", f"Role: {user.profile.role}")
+                
+                # Login user
+                auth_login(request, user)
+                
+                UserMessages.success(
+                    request, 
+                    'Account created successfully! Welcome to Promethia!',
+                    f"New user registered: {user.username}"
+                )
+                
+                return redirect('dashboard')
+                
+            except Exception as e:
+                log_error(logger, "Error during user registration", e, 
+                         username=username, email=email)
+                UserMessages.error(
+                    request,
+                    "An error occurred during registration. Please try again.",
+                    f"Registration error for {username}"
+                )
+        else:
+            # Form validation failed - errors are already in form.errors
+            # The template will display them automatically
+            log_warning(logger, "Registration failed - form validation errors", 
+                       username=username, form_errors=str(form.errors))
+            
+            # Add a general error message
+            UserMessages.error(request, "Please correct the errors below and try again.")
+    
     else:
         form = SignUpForm()
+    
     return render(request, 'registration/signup.html', {'form': form})
+
+
+@login_required
+def upload_avatar(request):
+    """Upload avatar to Cloudinary and save URL to profile."""
+    
+    if request.method == 'POST':
+        avatar_file = request.FILES.get('avatar')
+        
+        if not avatar_file:
+            return JsonResponse({'success': False, 'error': 'No file provided'})
+        
+        # Validate file type
+        allowed_types = ['image/jpeg', 'image/png', 'image/gif', 'image/webp']
+        if avatar_file.content_type not in allowed_types:
+            return JsonResponse({'success': False, 'error': 'Invalid file type'})
+        
+        # Validate file size (max 5MB)
+        if avatar_file.size > 5 * 1024 * 1024:
+            return JsonResponse({'success': False, 'error': 'File too large'})
+        
+        try:
+            
+            # Upload to Cloudinary
+            upload_result = cloudinary.uploader.upload(
+                avatar_file,
+                folder="user_avatars",
+                public_id=f"user_{request.user.id}",
+                overwrite=True,
+                resource_type="image",
+                transformation=[
+                    {'width': 300, 'height': 300, 'crop': 'fill'},
+                    {'quality': 'auto'},
+                    {'fetch_format': 'auto'}
+                ]
+            )
+            
+            # Save URL to user profile
+            request.user.profile.avatar_url = upload_result['secure_url']
+            request.user.profile.save()
+            
+        
+            return JsonResponse({
+                'success': True, 
+                'url': upload_result['secure_url']
+            })
+            
+        except Exception as e:
+            return JsonResponse({'success': False, 'error': str(e)})
+    
+    return JsonResponse({'success': False, 'error': 'Invalid request method'})
+
+@login_required
+def remove_avatar(request):
+    """Remove avatar from Cloudinary and profile."""
+    if request.method == 'POST':
+        try:
+            # Delete from Cloudinary if URL exists
+            if request.user.profile.avatar_url:
+                public_id = f"user_avatars/user_{request.user.id}"
+                cloudinary.uploader.destroy(public_id)
+            
+            # Remove URL from profile
+            request.user.profile.avatar_url = None
+            request.user.profile.save()
+            
+            return JsonResponse({'success': True})
+            
+        except Exception as e:
+            return JsonResponse({'success': False, 'error': str(e)})
+    
+    return JsonResponse({'success': False, 'error': 'Invalid request method'})
+
+@login_required
+def profile_view(request):
+    return render(request, 'profile.html', {'user': request.user})
 
 
 @login_required
@@ -232,7 +364,7 @@ def dashboard(request):
             athlete=user,
             date__range=[today, week_end],
             status='planned'
-        ).order_by('date', 'time')
+        ).order_by('date', 'start_time')
         
         my_coaches = CoachAthleteRelationship.objects.filter(
             athlete=user,
@@ -301,7 +433,7 @@ def dashboard(request):
                     athlete_upcoming_sessions = TrainingSession.objects.filter(
                         athlete=selected_athlete,
                         date__gte=today
-                    ).order_by('date', 'time')
+                    ).order_by('date', 'start_time')
                     
                     athlete_upcoming_races = Race.objects.filter(
                         athlete=selected_athlete,
@@ -341,7 +473,7 @@ def dashboard(request):
             upcoming_sessions = TrainingSession.objects.filter(
                 athlete__in=athlete_users,
                 date__range=[today, week_end]
-            ).order_by('date', 'time')
+            ).order_by('date', 'start_time')
             
             # Get upcoming races for all coached athletes
             upcoming_races = Race.objects.filter(
@@ -457,7 +589,7 @@ def get_all_upcoming_events_for_coach(athlete_users):
     upcoming_sessions = TrainingSession.objects.filter(
         athlete__in=athlete_users,
         date__gte=datetime.now().date()
-    ).select_related('athlete').order_by('date', 'time')[:15]
+    ).select_related('athlete').order_by('date', 'start_time')[:15]
     
     for session in upcoming_sessions:
         events.append({
@@ -470,7 +602,8 @@ def get_all_upcoming_events_for_coach(athlete_users):
             'status': session.get_status_display() if hasattr(session, 'get_status_display') else session.status,
             'status_color': 'primary' if session.status == 'planned' else 'success',
             'object_id': session.id,  # Add the actual object ID
-            'object': session  # Keep reference to the object if needed
+            'object': session,  # Keep reference to the object if needed
+            'sport': session.sport
         })
     
     # Get upcoming races
@@ -485,12 +618,14 @@ def get_all_upcoming_events_for_coach(athlete_users):
             'athlete_name': race.athlete.get_full_name(),
             'type': 'Race',
             'type_icon': 'trophy',
-            'title': race.name,
-            'description': f'{race.distance} - {race.location}' if hasattr(race, 'distance') and hasattr(race, 'location') else '',
+            'title': race.title,
+            'description': f'{race.distance}' if hasattr(race, 'location') else '',
+            'location': race.location,
             'status': 'Scheduled',
             'status_color': 'warning',
             'object_id': race.id,  # Add the actual object ID
-            'object': race  # Keep reference to the object if needed
+            'object': race,  # Keep reference to the object if needed
+            'sport': race.sport
         })
     
     # Sort all events by date
@@ -519,7 +654,7 @@ def get_recent_activities_for_coach(athlete_users):
             activities.append({
                 'timestamp': session.created_at,
                 'date': session.created_at.date(),
-                'time': session.created_at.time(),
+                'start_time': session.created_at.time(),
                 'athlete_name': session.athlete.get_full_name(),
                 'description': f'Added new training session: {session.title if hasattr(session, "title") else "Training Session"}',
                 'icon': 'plus-circle',
@@ -542,14 +677,14 @@ def get_recent_activities_for_coach(athlete_users):
             session_datetime = timezone.make_aware(
                 datetime.combine(
                     session.date, 
-                    session.time if hasattr(session, 'time') and session.time else datetime.min.time()
+                    session.start_time if hasattr(session, 'start_time') and session.time else datetime.min.time()
                 )
             ) if hasattr(session, 'time') else timezone.now()
             
             activities.append({
                 'timestamp': session_datetime,
                 'date': session.date,
-                'time': session.time if hasattr(session, 'time') else timezone.now().time(),
+                'start_time': session.start_time if hasattr(session, 'start_time') else timezone.now().time(),
                 'athlete_name': session.athlete.get_full_name(),
                 'description': f'Completed training session: {session.title if hasattr(session, "title") else "Training Session"}',
                 'icon': 'check-circle',
@@ -571,9 +706,9 @@ def get_recent_activities_for_coach(athlete_users):
             activities.append({
                 'timestamp': race.created_at,
                 'date': race.created_at.date(),
-                'time': race.created_at.time(),
+                'start_time': race.created_at.time(),
                 'athlete_name': race.athlete.get_full_name(),
-                'description': f'Registered for race: {race.name}',
+                'description': f'Registered for race: {race.title}',
                 'icon': 'trophy',
                 'color': 'warning',
                 'type': 'race_created'
@@ -593,7 +728,7 @@ def get_recent_activities_for_coach(athlete_users):
             activities.append({
                 'timestamp': event.created_at,
                 'date': event.created_at.date(),
-                'time': event.created_at.time(),
+                'start_time': event.created_at.time(),
                 'athlete_name': event.user.get_full_name(),
                 'description': f'Added custom event: {event.title if hasattr(event, "title") else "Custom Event"}',
                 'icon': 'star',
@@ -624,7 +759,7 @@ def get_recent_activities_for_coach(athlete_users):
                 activities.append({
                     'timestamp': profile.updated_at,
                     'date': profile.updated_at.date(),
-                    'time': profile.updated_at.time(),
+                    'start_time': profile.updated_at.time(),
                     'athlete_name': profile.user.get_full_name(),
                     'description': f'Updated performance metrics: {", ".join(updates)}',
                     'icon': 'user-edit',
@@ -646,7 +781,7 @@ def get_recent_activities_for_coach(athlete_users):
             activities.append({
                 'timestamp': session.updated_at,
                 'date': session.updated_at.date(),
-                'time': session.updated_at.time(),
+                'start_time': session.updated_at.time(),
                 'athlete_name': session.athlete.get_full_name(),
                 'description': f'Cancelled training session: {session.title if hasattr(session, "title") else "Training Session"}',
                 'icon': 'times-circle',
@@ -688,13 +823,13 @@ def athlete_detail(request, athlete_id):
     upcoming_sessions = TrainingSession.objects.filter(
         athlete=athlete,
         date__gte=today
-    ).order_by('date', 'time')
+    ).order_by('date', 'start_time')
     
     recent_sessions = TrainingSession.objects.filter(
         athlete=athlete,
         date__gte=thirty_days_ago,
         date__lt=today
-    ).order_by('-date', '-time')[:10]
+    ).order_by('-date', '-start_time')[:10]
     
     # Races data
     upcoming_races = Race.objects.filter(
@@ -930,3 +1065,275 @@ This email was sent to {email} because you requested a password reset.
     
     # GET request - show the form
     return render(request, 'registration/password_reset_form.html')
+
+def custom_login(request: HttpRequest) -> HttpResponse:
+    """Custom login view with comprehensive error handling and logging."""
+    
+    # Redirect if already authenticated
+    if request.user.is_authenticated:
+        log_info(logger, f"Already authenticated user tried to access login", 
+                user=request.user.username)
+        return redirect('dashboard')
+    
+    if request.method == 'POST':
+        form = AuthenticationForm(request, data=request.POST)
+        
+        # Get credentials for logging (before validation)
+        username = request.POST.get('username', 'unknown')
+        
+        # Log login attempt
+        log_info(logger, "Login attempt", username=username, ip=request.META.get('REMOTE_ADDR'))
+        
+        if form.is_valid():
+            username = form.cleaned_data.get('username')
+            password = form.cleaned_data.get('password')
+            
+            # Authenticate user
+            user = authenticate(request, username=username, password=password)
+            
+            if user is not None:
+                if user.is_active:
+                    # Successful login
+                    auth_login(request, user)
+                    
+                    # Log successful login
+                    log_user_action(logger, user, "logged in", 
+                                   f"IP: {request.META.get('REMOTE_ADDR')}")
+                    
+                    # Welcome message
+                    UserMessages.success(
+                        request, 
+                        f"Welcome back, {user.get_full_name() or user.username}!",
+                        f"Successful login: {user.username}"
+                    )
+                    
+                    # Redirect to next page or dashboard
+                    next_page = request.GET.get('next')
+                    if next_page:
+                        log_info(logger, f"Redirecting to requested page: {next_page}", 
+                                user=user.username)
+                        return redirect(next_page)
+                    else:
+                        return redirect('dashboard')
+                
+                else:
+                    # Account is inactive
+                    log_warning(logger, "Login failed - inactive account", 
+                               username=username, ip=request.META.get('REMOTE_ADDR'))
+                    UserMessages.error(
+                        request,
+                        "Your account has been deactivated. Please contact support for assistance.",
+                        f"Inactive account login attempt: {username}"
+                    )
+            else:
+                # Invalid credentials
+                log_warning(logger, "Login failed - invalid credentials", 
+                        username=username, ip=request.META.get('REMOTE_ADDR'))
+                
+                UserMessages.error(
+                    request,
+                    "Invalid username or password. Please check your credentials and try again.",
+                    f"Invalid login attempt: {username}"
+                )
+        else:
+            # Form validation failed
+            log_warning(logger, "Login form validation failed", 
+                       username=username, errors=str(form.errors))
+            
+            # Handle specific form errors
+            if form.non_field_errors():
+                # Django's AuthenticationForm puts credential errors in non_field_errors
+                UserMessages.error(
+                    request,
+                    "Invalid username or password. Please check your credentials and try again."
+                )
+            else:
+                # Other form errors (empty fields, etc.)
+                UserMessages.error(
+                    request,
+                    "Please fill in all required fields."
+                )
+    
+    else:
+        # GET request - show login form
+        form = AuthenticationForm()
+        
+        # Log if user came from a redirect (e.g., login required)
+        next_page = request.GET.get('next')
+        if next_page:
+            log_info(logger, f"Login required for page: {next_page}")
+            UserMessages.info(
+                request,
+                "Please log in to access that page."
+            )
+    
+    return render(request, 'registration/login.html', {
+        'form': form,
+        'title': 'Log In'
+    })
+
+
+def custom_logout(request: HttpRequest) -> HttpResponse:
+    """Custom logout view with logging."""
+    
+    if request.user.is_authenticated:
+        username = request.user.username
+        log_user_action(logger, request.user, "logged out", 
+                       f"IP: {request.META.get('REMOTE_ADDR')}")
+        
+        logout(request)
+        
+        UserMessages.success(
+            request,
+            "You have been logged out successfully.",
+            f"User logged out: {username}"
+        )
+    
+    return redirect('custom_login')
+
+
+class CustomLoginView(LoginView):
+    """
+    Custom login view using our CustomLoginForm.
+    """
+    form_class = CustomLoginForm
+    template_name = 'registration/login.html'
+    redirect_authenticated_user = True
+    success_url = reverse_lazy('dashboard')  # Change to your dashboard URL
+    
+    def form_invalid(self, form):
+        """
+        Handle form validation errors.
+        """
+        # Add any additional error handling here if needed
+        return super().form_invalid(form)
+    
+    def form_valid(self, form):
+        """
+        Handle successful login.
+        """
+        messages.success(self.request, 'Welcome back! You have been logged in successfully.')
+        return super().form_valid(form)
+    
+
+class CustomPasswordResetView(PasswordResetView):
+    """
+    Custom password reset view with styled form and messages.
+    MODIFIED: Now sends plain text emails instead of HTML
+    """
+    form_class = CustomPasswordResetForm
+    template_name = 'registration/password_reset_form.html'
+    
+    # REMOVED: email_template_name = 'registration/password_reset_email.html'  # This was causing HTML emails
+    # REMOVED: subject_template_name = 'registration/password_reset_subject.txt'
+    
+    success_url = reverse_lazy('password_reset_done')
+    
+    def form_valid(self, form):
+        """
+        Handle successful form submission with custom success message.
+        MODIFIED: Now sends plain text email manually
+        """
+        # Get the email from the form
+        email = form.cleaned_data['email']
+        
+        # Check if user exists
+        try:
+            from django.contrib.auth.models import User
+            user = User.objects.get(email=email)
+            
+            # Send plain text email manually
+            self.send_plain_text_email(user, email)
+            
+            # Add success message
+            messages.success(
+                self.request,
+                f'Password reset instructions have been sent to {email}. Please check your email.'
+            )
+            
+            return redirect(self.success_url)
+            
+        except User.DoesNotExist:
+            # Handle non-existent user (security: don't reveal if email exists)
+            messages.success(
+                self.request,
+                f'If an account with {email} exists, password reset instructions have been sent.'
+            )
+            return redirect(self.success_url)
+    
+    def send_plain_text_email(self, user, email):
+        """Send plain text password reset email"""
+        from django.contrib.auth.tokens import default_token_generator
+        from django.utils.http import urlsafe_base64_encode
+        from django.utils.encoding import force_bytes
+        from django.contrib.sites.shortcuts import get_current_site
+        from django.core.mail import send_mail
+        from django.conf import settings
+        import threading
+        
+        def send_reset_email():
+            try:
+                
+                # Generate token
+                token = default_token_generator.make_token(user)
+                uid = urlsafe_base64_encode(force_bytes(user.pk))
+                
+                # Get domain
+                current_site = get_current_site(self.request)
+                domain = current_site.domain
+                protocol = 'https' if self.request.is_secure() else 'http'
+                
+                # Create reset URL
+                reset_url = f"{protocol}://{domain}/accounts/reset/{uid}/{token}/"
+                
+                # Plain text email message
+                subject = "Reset your Promethia password"
+                message = f"""Hello {user.get_full_name() or user.username},
+
+You requested a password reset for your Promethia Training Calendar account.
+
+Click this link to reset your password:
+{reset_url}
+
+This link will expire in 24 hours.
+
+If you didn't request this password reset, please ignore this email.
+
+Best regards,
+The Promethia Team
+
+---
+This email was sent to {email} because you requested a password reset.
+"""
+                
+                
+                # Send email
+                result = send_mail(
+                    subject=subject,
+                    message=message,
+                    from_email=settings.DEFAULT_FROM_EMAIL,
+                    recipient_list=[email],
+                    fail_silently=False,
+                )
+                
+                
+            except Exception as e:
+                import traceback
+                traceback.print_exc()
+        
+        # Send email in background thread
+        email_thread = threading.Thread(target=send_reset_email)
+        email_thread.daemon = False
+        email_thread.start()
+    
+    def form_invalid(self, form):
+        """
+        Handle form validation errors.
+        """
+        
+        # Add error message for general form issues
+        if form.non_field_errors():
+            for error in form.non_field_errors():
+                messages.error(self.request, error)
+        
+        return super().form_invalid(form)

@@ -29,7 +29,7 @@
           <h5><strong>{{ session.title }}</strong></h5>
           <p class="mb-1"><strong>Athlete:</strong> {{ session.athlete.get_full_name }}</p>
           <p class="mb-1"><strong>Date:</strong> {{ session.date|date:"l, F d, Y" }}</p>
-          <p class="mb-0"><strong>Time:</strong> {{ session.time|time:"H:i" }}</p>
+          <p class="mb-0"><strong>Time:</strong> {{ session.start_time|time:"H:i" }}</p>
         </div>
         
         <p class="text-danger">

@@ -17,15 +17,9 @@
       <div class="card-header">
         <h3 class="card-title">
           <i class="fas fa-dumbbell mr-2"></i>
-          {{ session.title }}
+          {% if session.title %}{{ session.title }}{% else %}Untitled Session{% endif %}
         </h3>
         <div class="card-tools">
-          <a href="{% url 'calendar_management:view' %}" class="btn btn-sm btn-secondary">
-            <i class="fas fa-arrow-left"></i> Back to Calendar
-          </a>
-          <a href="{% url 'dashboard' %}" class="btn btn-sm btn-secondary">
-            <i class="fas fa-arrow-left"></i> Back to Dashboard
-          </a>
         </div>
       </div>
       
@@ -45,17 +39,17 @@
           </div>
           
           <!-- Sport Info -->
-          <div class="col-md-4">
+        <div class="col-md-4">
             <div class="info-box">
-              <span class="info-box-icon bg-secondary">
-                <i class="fas fa-running"></i>
-              </span>
-              <div class="info-box-content">
-                <span class="info-box-text">Sport</span>
-                <span class="info-box-number">{{ session.get_sport_display }}</span>
-              </div>
+                <span class="info-box-icon bg-primary">
+                    {% include 'components/sport_icon_only.html' with event=session %}
+                </span>
+                <div class="info-box-content">
+                    <span class="info-box-text">Sport Type</span>
+                    <span class="info-box-number">{{ session.get_sport_display }}</span>
+                </div>
             </div>
-          </div>
+        </div>
           
           <div class="col-md-4">
             <div class="info-box">
@@ -80,8 +74,8 @@
               <div class="info-box-content">
                 <span class="info-box-text">Time</span>
                 <span class="info-box-number">
-                  {% if session.time %}
-                    {{ session.time|time:"g:i A" }}
+                  {% if session.start_time %}
+                    {{ session.start_time|time:"g:i A" }}
                   {% else %}
                     <em class="text-muted">Not set</em>
                   {% endif %}
@@ -142,31 +136,9 @@
             </div>
           </div>
         </div>
-
-        <!-- Notes Section -->
-        <div class="row">
-          <div class="col-12">
-            <div class="card card-light card-outline">
-              <div class="card-header">
-                <h3 class="card-title">
-                  <i class="fas fa-sticky-note mr-2"></i>
-                  Notes
-                </h3>
-              </div>
-              <div class="card-body">
-                {% if session.notes %}
-                  <p>{{ session.notes|linebreaks }}</p>
-                {% else %}
-                  <p class="text-muted"><em>No notes added</em></p>
-                {% endif %}
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
     </div>
-  </div>
-
+       </div>
+    </div>
   <!-- Session Status & Actions -->
   <div class="col-lg-4">
     <div class="card card-success card-outline">

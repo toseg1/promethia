@@ -26,16 +26,21 @@ function initializeTooltips() {
  * Initialize navigation enhancements
  */
 function initializeNavigation() {
-    // Add smooth scrolling for anchor links
+    // Add smooth scrolling for anchor links - FIXED
     const anchorLinks = document.querySelectorAll('a[href^="#"]');
     anchorLinks.forEach(anchor => {
         anchor.addEventListener('click', function (e) {
-            const target = document.querySelector(this.getAttribute('href'));
-            if (target) {
-                e.preventDefault();
-                target.scrollIntoView({
-                    behavior: 'smooth'
-                });
+            const href = this.getAttribute('href');
+            
+            // Check if href is valid and not just '#'
+            if (href && href !== '#' && href.length > 1) {
+                const target = document.querySelector(href);
+                if (target) {
+                    e.preventDefault();
+                    target.scrollIntoView({
+                        behavior: 'smooth'
+                    });
+                }
             }
         });
     });
@@ -280,3 +285,89 @@ function initViewKeyboardShortcuts() {
         }
     });
 }
+
+/**
+ * Enhanced View Toggle with Collapsed Sidebar Support
+ */
+function initViewToggle() {
+    // Handle view toggle button clicks
+    $('.view-toggle-btn').on('click', function() {
+        const viewMode = $(this).data('view');
+        const currentActive = $('.view-toggle-btn.active').data('view');
+        
+        // Don't do anything if clicking the already active button
+        if (viewMode === currentActive) {
+            return;
+        }
+        
+        // Show loading state
+        const $btn = $(this);
+        showButtonLoading($btn);
+        
+        // Submit form via AJAX
+        switchView(viewMode, $btn);
+    });
+    
+    // Handle sidebar collapse/expand to update button states
+    $('[data-widget="pushmenu"]').on('collapsed.lte.pushmenu expanded.lte.pushmenu', function() {
+        // Slight delay to allow AdminLTE animations to complete
+        setTimeout(function() {
+            updateViewToggleDisplay();
+        }, 300);
+    });
+}
+
+/**
+ * Update view toggle display based on sidebar state
+ */
+function updateViewToggleDisplay() {
+    const isCollapsed = $('body').hasClass('sidebar-collapse');
+    const $toggleContainer = $('.view-toggle-container');
+    
+    if (isCollapsed) {
+        $toggleContainer.addClass('collapsed-state');
+    } else {
+        $toggleContainer.removeClass('collapsed-state');
+    }
+}
+
+/**
+ * Enhanced button loading state for collapsed sidebar
+ */
+function showButtonLoading($btn) {
+    const originalHtml = $btn.html();
+    $btn.data('original-html', originalHtml);
+    
+    const isCollapsed = $('body').hasClass('sidebar-collapse');
+    const loadingContent = isCollapsed ? 
+        '<i class="fas fa-spinner fa-spin"></i>' : 
+        '<i class="fas fa-spinner fa-spin mr-1"></i> Loading...';
+    
+    $btn.html(loadingContent);
+    $btn.prop('disabled', true);
+}
+
+/**
+ * Simple fix for mobile navigation links
+ */
+$(document).ready(function() {
+    // Only fix navigation on mobile, don't interfere with AdminLTE pushmenu
+    if (window.innerWidth <= 800) {
+        $('.main-sidebar .nav-sidebar .nav-item .nav-link').each(function() {
+            const $link = $(this);
+            const href = $link.attr('href');
+            
+            // Only add click handler if it has a valid href
+            if (href && href !== '#' && href !== 'javascript:void(0)') {
+                $link.off('click.mobilefix').on('click.mobilefix', function(e) {
+                    // Let the original click work, just ensure it processes
+                    setTimeout(() => {
+                        if (!e.isDefaultPrevented()) {
+                            window.location.href = href;
+                        }
+                    }, 50);
+                });
+            }
+        });
+    }
+});

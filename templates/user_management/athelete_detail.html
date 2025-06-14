@@ -191,7 +191,7 @@
                 {% for session in upcoming_sessions|slice:":5" %}
                 <tr>
                   <td><span class="badge badge-info">{{ session.date|date:"M d" }}</span></td>
-                  <td>{{ session.time|time:"H:i" }}</td>
+                  <td>{{ session.start_time|time:"H:i" }}</td>
                   <td>
                     <strong>{{ session.title|default:"Training Session" }}</strong>
                     {% if session.description %}
@@ -256,7 +256,7 @@
                 <tr>
                   <td><span class="badge badge-warning">{{ race.date|date:"M d" }}</span></td>
                   <td>
-                    <strong>{{ race.name }}</strong>
+                    <strong>{% if race.title %}{{ race.title }}{% else %}Untitled Race{% endif %}</strong>
                     {% if race.distance %}
                       <br><small class="text-muted">{{ race.distance }}</small>
                     {% endif %}

@@ -24,11 +24,11 @@
         </div>
         
         <div class="race-details bg-light p-3 rounded">
-          <h4 class="mb-3">{{ race.name }}</h4>
+          <h4 class="mb-3">{% if race.title %}{{ race.title }}{% else %}Untitled Race{% endif %}</h4>
           <div class="row">
             <div class="col-sm-6">
               <strong><i class="fas fa-running text-success mr-1"></i> Sport:</strong>
-              {{ race.get_sport_type_display }}
+              {{ race.get_sport_display }}
             </div>
             <div class="col-sm-6">
               <strong><i class="fas fa-calendar-alt text-info mr-1"></i> Date:</strong>

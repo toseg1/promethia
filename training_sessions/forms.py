@@ -1,39 +1,42 @@
 """
-Forms for training sessions.
+Forms for training sessions - FIXED with athlete field visible.
 """
 from django import forms
 from django.contrib.auth.models import User
 from .models import TrainingSession
 from user_management.models import CoachAthleteRelationship
+from training_calendar.constants import SPORT_CHOICES, INTENSITY_CHOICES, STATUS_CHOICES
 
-# Define sport choices locally to avoid circular import
-SPORT_CHOICES = [
-    ('running', 'Running'),
-    ('swimming', 'Swimming'),
-    ('cycling', 'Cycling'),
-    ('trail', 'Trail Running'),
-    ('triathlon', 'Triathlon'),
-    ('duathlon', 'Duathlon'),
-    ('other', 'Other'),
-]
 
 class TrainingSessionForm(forms.ModelForm):
     """Form for creating and editing training sessions."""
+    
+    # Override fields to explicitly use constants
     sport = forms.ChoiceField(
         choices=SPORT_CHOICES,
+        widget=forms.Select(attrs={'class': 'form-control'})
+    )
+    
+    intensity = forms.ChoiceField(
+        choices=INTENSITY_CHOICES,
+        required=False,
+        widget=forms.Select(attrs={'class': 'form-control'})
+    )
+    
+    status = forms.ChoiceField(
+        choices=STATUS_CHOICES,
         widget=forms.Select(attrs={'class': 'form-control'})
     )
     
     def __init__(self, *args, athlete_choices=None, user=None, current_view=None, **kwargs):
         super().__init__(*args, **kwargs)
         
+        # IMPORTANT: Athlete field logic - this was getting lost!
         if athlete_choices:
-            # Convert to proper choice format and set as ModelChoiceField
             athlete_ids = [choice[0] for choice in athlete_choices]
             
-            # If coach is in athlete view, add themselves to the choices
             if (user and current_view == 'athlete' and 
-                user.profile.role == 'coach' and 
+                hasattr(user, 'profile') and user.profile.role == 'coach' and 
                 user.id not in athlete_ids):
                 athlete_ids.append(user.id)
             
@@ -43,73 +46,93 @@ class TrainingSessionForm(forms.ModelForm):
                 widget=forms.Select(attrs={'class': 'form-control'})
             )
         elif user:
-            # Handle cases where no athlete_choices are provided
+            # For normal users, show athlete selection
             if current_view == 'athlete':
-                if user.profile.role == 'coach':
-                    # Coach in athlete view - only show themselves
+                if hasattr(user, 'profile') and user.profile.role == 'coach':
+                    # Coach in athlete view - show themselves
                     self.fields['athlete'] = forms.ModelChoiceField(
                         queryset=User.objects.filter(id=user.id),
                         initial=user,
-                        widget=forms.Select(attrs={'class': 'form-control'})
+                        widget=forms.Select(attrs={'class': 'form-control'})  # CHANGED: was HiddenInput
                     )
                 else:
-                    # Regular athlete - only show themselves
+                    # Regular athlete - show themselves
+                    self.fields['athlete'] = forms.ModelChoiceField(
+                        queryset=User.objects.filter(id=user.id),
+                        initial=user,
+                        widget=forms.Select(attrs={'class': 'form-control'})  # CHANGED: was HiddenInput
+                    )
+            else:
+                # Coach view - show all coached athletes
+                try:
+                    coached_athletes = CoachAthleteRelationship.objects.filter(
+                        coach=user, status='accepted'
+                    ).values_list('athlete_id', flat=True)
+                    
+                    if coached_athletes:
+                        self.fields['athlete'] = forms.ModelChoiceField(
+                            queryset=User.objects.filter(id__in=coached_athletes),
+                            empty_label="Select Athlete",
+                            widget=forms.Select(attrs={'class': 'form-control'})
+                        )
+                    else:
+                        # No coached athletes, show current user
+                        self.fields['athlete'] = forms.ModelChoiceField(
+                            queryset=User.objects.filter(id=user.id),
+                            initial=user,
+                            widget=forms.Select(attrs={'class': 'form-control'})
+                        )
+                except:
+                    # Fallback - show current user
                     self.fields['athlete'] = forms.ModelChoiceField(
                         queryset=User.objects.filter(id=user.id),
                         initial=user,
                         widget=forms.Select(attrs={'class': 'form-control'})
                     )
-            elif current_view == 'coach' and user.profile.role == 'coach':
-                # Coach in coach view - show their coached athletes
-                coached_relationships = CoachAthleteRelationship.objects.filter(
-                    coach=user,
-                    status='active'
-                )
-                athlete_ids = [rel.athlete.id for rel in coached_relationships]
-                self.fields['athlete'].queryset = User.objects.filter(
-                    id__in=athlete_ids,
-                    profile__role='athlete'
-                )
-        
-        # Add CSS classes for styling
-        for field_name, field in self.fields.items():
-            if field_name not in ['athlete', 'sport']:  # these fields already have class
-                field.widget.attrs['class'] = 'form-control'
-        
-        # Specific widget customizations
-        self.fields['date'].widget = forms.DateInput(
-            attrs={'class': 'form-control', 'type': 'date'}
-        )
-        self.fields['time'].widget = forms.TimeInput(
-            attrs={'class': 'form-control', 'type': 'time'}
-        )
-        self.fields['description'].widget = forms.Textarea(
-            attrs={'class': 'form-control', 'rows': 3}
-        )
-        self.fields['notes'].widget = forms.Textarea(
-            attrs={'class': 'form-control', 'rows': 3}
-        )
-
+        else:
+            # No user context - show all users (shouldn't happen in normal flow)
+            self.fields['athlete'] = forms.ModelChoiceField(
+                queryset=User.objects.all(),
+                empty_label="Select Athlete",
+                widget=forms.Select(attrs={'class': 'form-control'})
+            )
+    
     class Meta:
         model = TrainingSession
-        fields = ['athlete', 'sport', 'title', 'description', 'date', 'time', 'duration_minutes', 'status', 'notes']
-
-    def save(self, commit=True):
-        session = super().save(commit=False)
+        fields = [
+            'athlete',       # IMPORTANT: Must be first for proper display
+            'title', 'sport', 'date', 'start_time',
+            'duration_minutes', 'distance', 'intensity', 'description', 'status'
+        ]
         
-        # Ensure athlete is properly set
-        if 'athlete' in self.cleaned_data:
-            athlete = self.cleaned_data['athlete']
-            if isinstance(athlete, User):
-                session.athlete = athlete
-            elif isinstance(athlete, str) and athlete.isdigit():
-                try:
-                    session.athlete = User.objects.get(id=int(athlete))
-                except User.DoesNotExist:
-                    raise forms.ValidationError("Selected athlete does not exist.")
-            else:
-                raise forms.ValidationError("Invalid athlete selection.")
-        
-        if commit:
-            session.save()
-        return session
+        widgets = {
+            'title': forms.TextInput(attrs={
+                'class': 'form-control',
+                'placeholder': 'e.g., 10K Tempo Run, Recovery Swim'
+            }),
+            'date': forms.DateInput(attrs={
+                'class': 'form-control',
+                'type': 'date'
+            }),
+            'start_time': forms.TimeInput(attrs={
+                'class': 'form-control',
+                'type': 'time'
+            }),
+            'duration_minutes': forms.NumberInput(attrs={
+                'class': 'form-control',
+                'placeholder': '60',
+                'min': '1',
+                'max': '600'
+            }),
+            'distance': forms.NumberInput(attrs={
+                'class': 'form-control',
+                'placeholder': '10.0',
+                'step': '0.1',
+                'min': '0'
+            }),
+            'description': forms.Textarea(attrs={
+                'class': 'form-control',
+                'rows': 3,
+                'placeholder': 'Workout details, target zones, instructions...'
+            }),
+        }

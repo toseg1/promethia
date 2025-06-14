@@ -9,6 +9,7 @@ from django.views.generic import RedirectView
 from django.contrib.auth import views as auth_views
 from user_management.views import simple_password_reset
 
+
 urlpatterns = [
     path('admin/', admin.site.urls),
     path('', RedirectView.as_view(url='/dashboard/', permanent=False)),
@@ -16,7 +17,7 @@ urlpatterns = [
     path('', include('user_management.urls')),
     path('training/', include('training_sessions.urls')),
     path('races/', include('race_events.urls')),
-     
+
     # Password reset URLs using Django's built-in views
     path('accounts/password_reset/', 
          simple_password_reset, 

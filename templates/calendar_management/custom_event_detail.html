@@ -20,12 +20,6 @@
           {{ event.title }}
         </h3>
         <div class="card-tools">
-          <a href="{% url 'calendar_management:view' %}" class="btn btn-sm btn-secondary">
-            <i class="fas fa-arrow-left"></i> Back to Calendar
-          </a>
-          <a href="{% url 'dashboard' %}" class="btn btn-sm btn-secondary">
-            <i class="fas fa-arrow-left"></i> Back to Dashboard
-          </a>
         </div>
       </div>
       
@@ -105,8 +99,8 @@
                 </h3>
               </div>
               <div class="card-body">
-                {% if event.note %}
-                  <p>{{ event.note|linebreaks }}</p>
+                {% if event.description %}
+                  <p>{{ event.description|linebreaks }}</p>
                 {% else %}
                   <p class="text-muted"><em>No notes added</em></p>
                 {% endif %}

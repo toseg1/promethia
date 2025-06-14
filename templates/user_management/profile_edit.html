@@ -10,49 +10,73 @@
 {% endblock %}
 
 {% block extra_css %}
-<!-- Cropper.js CSS -->
-<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.5.12/cropper.min.css">
+<!-- Remove Cropper.js CSS line -->
 <!-- Profile-specific styles -->
 <link rel="stylesheet" href="{% static 'css/profile.css' %}">
-{% endblock %}
+<style>
+.profile-image {
+    border: 3px solid #ddd;
+}
 
+#upload-progress .progress {
+    height: 20px;
+}
+</style>
+ 	{% endblock %}
 {% block content %}
 <div class="container-fluid">
   <div class="row">
-    <!-- Profile Image Section -->
-    <div class="col-md-4 col-lg-3">
-      <div class="card card-primary card-outline">
-        <div class="card-body box-profile">
-          <div class="text-center">
-            <div class="profile-image-container mb-3">
-              {{ user|profile_image_or_initials_large|safe }}
-            </div>
-            
-            <!-- File input (hidden) -->
-            <input type="file" id="profile-image-input" accept="image/*" style="display: none;">
-            
-            <div class="btn-group-vertical w-100">
-              <button type="button" class="btn btn-primary btn-sm" onclick="document.getElementById('profile-image-input').click()">
-                <i class="fas fa-camera"></i> Change
-              </button>
-              
-              {% if user.profile.profile_picture %}
-            <button type="button" class="btn btn-outline-danger btn-sm mt-1" data-toggle="modal" data-target="#confirmRemoveModal">
 
-                  <i class="fas fa-trash"></i> Remove
-                </button>
-              {% endif %}
+<!-- Profile Image Section -->
+<div class="col-md-4 col-lg-3">
+  <div class="card card-primary card-outline">
+    <div class="card-body box-profile">
+      <div class="text-center">
+        <div class="profile-image-container mb-3">
+          {% if user.profile.avatar_url %}
+            <img src="{{ user.profile.avatar_url }}" alt="Profile Picture" 
+                 class="profile-image img-circle elevation-2" 
+                 style="width: 150px; height: 150px; object-fit: cover;">
+          {% else %}
+            <div class="profile-initials-large" data-user-id="{{ user.id }}">
+    {{ user.first_name.0|default:user.username.0 }}{{ user.last_name.0|default:'' }}
+            </div>
+          {% endif %}
+        </div>
+        
+        <!-- File input (hidden) -->
+        <input type="file" id="profile-image-input" accept="image/*" style="display: none;">
+        
+        <div class="btn-group-vertical w-100">
+          <button type="button" class="btn btn-primary btn-sm" onclick="document.getElementById('profile-image-input').click()">
+            <i class="fas fa-camera"></i> Change Picture
+          </button>
+          
+          {% if user.profile.avatar_url %}
+            <button type="button" class="btn btn-outline-danger btn-sm mt-1" data-toggle="modal" data-target="#confirmRemoveModal">
+              <i class="fas fa-trash"></i> Remove Picture
+            </button>
+          {% endif %}
+        </div>
+        
+        <!-- Upload progress (hidden by default) -->
+        <div id="upload-progress" class="mt-2" style="display: none;">
+          <div class="progress">
+            <div class="progress-bar progress-bar-striped progress-bar-animated" role="progressbar" style="width: 100%">
+              Uploading...
             </div>
           </div>
         </div>
       </div>
     </div>
+  </div>
+</div>
 
     <!-- Main Content -->
     <div class="col-md-8 col-lg-9">
       <div class="card card-primary card-outline">
         
-        <form method="post" enctype="multipart/form-data" id="profile-form">
+        <form method="post" enctype="multipart/form-data" id="profile-form" novalidate>
           {% csrf_token %}
          <div class="card-body">
   
@@ -281,21 +305,23 @@
 </div>
 
 <!-- Image Cropper Modal -->
-<div class="modal fade" id="cropperModal" tabindex="-1" role="dialog">
-  <div class="modal-dialog modal-lg" role="document">
-    <div class="modal-content">
-      <div class="modal-header">
-        <h4 class="modal-title">Crop Your Profile Picture</h4>
-        <button type="button" class="close" data-dismiss="modal">&times;</button>
+<div class="modal fade" id="confirmRemoveModal" tabindex="-1" role="dialog" aria-labelledby="confirmRemoveModalLabel" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered" role="document">
+    <div class="modal-content border-danger">
+      <div class="modal-header bg-danger text-white">
+        <h5 class="modal-title" id="confirmRemoveModalLabel">
+          <i class="fas fa-exclamation-triangle mr-2"></i>Confirm Removal
+        </h5>
+        <button type="button" class="close text-white" data-dismiss="modal" aria-label="Close">
+          <span aria-hidden="true">&times;</span>
+        </button>
       </div>
       <div class="modal-body">
-        <div class="img-container">
-          <img id="crop-image" style="max-width: 100%;">
-        </div>
+        Are you sure you want to remove your profile picture?
       </div>
       <div class="modal-footer">
         <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancel</button>
-        <button type="button" class="btn btn-primary" id="crop-and-save">Crop & Save</button>
+        <button type="button" class="btn btn-danger" id="remove-avatar-btn">Yes, Remove</button>
       </div>
     </div>
   </div>
@@ -328,24 +354,149 @@
 {% endblock %}
 
 {% block extra_js %}
-<!-- Cropper.js Library -->
-<script src="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.5.12/cropper.min.js"></script>
 <!-- Profile-specific JavaScript -->
 <script src="{% static 'js/profile.js' %}"></script>
 <script>
-  document.addEventListener('DOMContentLoaded', function () {
-    const removeBtn = document.getElementById('remove-picture-btn');
-    if (removeBtn) {
-      removeBtn.addEventListener('click', function (e) {
-        const confirmDelete = confirm("Are you sure you want to remove your profile picture?");
-        if (!confirmDelete) {
-          e.preventDefault();
-        } else {
-          // Optionally submit a hidden form or trigger an AJAX call here
-          // For now, just proceed to let the default action happen
+document.addEventListener('DOMContentLoaded', function() {
+    // Handle avatar upload
+    const profileImageInput = document.getElementById('profile-image-input');
+    const profileImageContainer = document.querySelector('.profile-image-container');
+    
+    profileImageInput.addEventListener('change', function(e) {
+        const file = e.target.files[0];
+        if (!file) return;
+        
+        // Validate file type
+        const allowedTypes = ['image/jpeg', 'image/png', 'image/gif', 'image/webp'];
+        if (!allowedTypes.includes(file.type)) {
+            alert('Please select a valid image file (JPEG, PNG, GIF, or WebP)');
+            return;
         }
-      });
+        
+        // Validate file size (5MB max)
+        if (file.size > 5 * 1024 * 1024) {
+            alert('File size must be less than 5MB');
+            return;
+        }
+        
+        // Upload to server
+        uploadAvatar(file);
+    });
+    
+    // Handle avatar removal
+    const removeAvatarBtn = document.getElementById('remove-avatar-btn');
+    if (removeAvatarBtn) {
+        removeAvatarBtn.addEventListener('click', function() {
+            removeAvatar();
+        });
     }
-  });
+    
+    function uploadAvatar(file) {
+        const formData = new FormData();
+        formData.append('avatar', file);
+        formData.append('csrfmiddlewaretoken', document.querySelector('[name=csrfmiddlewaretoken]').value);
+        
+        // Show loading state
+        showMessage('Uploading...', 'info');
+        
+        fetch('{% url "upload_avatar" %}', {
+            method: 'POST',
+            body: formData
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                // Update the image display
+                updateProfileImage(data.url);
+                showMessage('Profile picture updated successfully!', 'success');
+            } else {
+                showMessage('Error: ' + data.error, 'error');
+            }
+        })
+        .catch(error => {
+            showMessage('Upload failed: ' + error.message, 'error');
+        });
+    }
+    
+    function removeAvatar() {
+        const formData = new FormData();
+        formData.append('csrfmiddlewaretoken', document.querySelector('[name=csrfmiddlewaretoken]').value);
+        
+        fetch('{% url "remove_avatar" %}', {
+            method: 'POST',
+            body: formData
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                // Update to show initials
+                updateProfileImage(null);
+                showMessage('Profile picture removed successfully!', 'success');
+                // Close modal
+                $('#confirmRemoveModal').modal('hide');
+            } else {
+                showMessage('Error removing profile picture', 'error');
+            }
+        })
+        .catch(error => {
+            showMessage('Error: ' + error.message, 'error');
+        });
+    }
+    
+    function updateProfileImage(url) {
+    const container = document.querySelector('.profile-image-container');
+    const removeButton = document.querySelector('[data-target="#confirmRemoveModal"]');
+    
+    if (url) {
+        container.innerHTML = `
+            <img src="${url}" alt="Profile Picture" 
+                 class="profile-image img-circle elevation-2" 
+                 style="width: 150px; height: 150px; object-fit: cover;">
+        `;
+        if (removeButton) {
+            removeButton.style.display = 'block';
+        }
+    } else {
+        const firstInitial = '{{ user.first_name.0|default:user.username.0 }}';
+        const lastInitial = '{{ user.last_name.0|default:"" }}';
+        const userId = '{{ user.id }}';
+        container.innerHTML = `
+            <div class="profile-initials-large" data-user-id="${userId}">
+                ${firstInitial}${lastInitial}
+            </div>
+        `;
+        if (removeButton) {
+            removeButton.style.display = 'none';
+        }
+    }
+}
+    
+    function showMessage(text, type) {
+        // Create or update message display
+        let messageDiv = document.getElementById('profile-message');
+        if (!messageDiv) {
+            messageDiv = document.createElement('div');
+            messageDiv.id = 'profile-message';
+            messageDiv.style.position = 'fixed';
+            messageDiv.style.top = '20px';
+            messageDiv.style.right = '20px';
+            messageDiv.style.zIndex = '9999';
+            messageDiv.style.padding = '10px 20px';
+            messageDiv.style.borderRadius = '5px';
+            messageDiv.style.fontWeight = 'bold';
+            document.body.appendChild(messageDiv);
+        }
+        
+        // Style based on type
+        messageDiv.className = `alert alert-${type === 'error' ? 'danger' : type === 'success' ? 'success' : 'info'}`;
+        messageDiv.textContent = text;
+        messageDiv.style.display = 'block';
+        
+        // Auto-hide after 5 seconds
+        setTimeout(() => {
+            messageDiv.style.display = 'none';
+        }, 5000);
+    }
+});
 </script>
 {% endblock %}

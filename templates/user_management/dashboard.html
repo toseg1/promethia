@@ -156,6 +156,7 @@
                       <th>Date</th>
                       <th>Athlete</th>
                       <th>Type</th>
+                      <th>Sport</th>
                       <th>Event</th>
                       <th>Status</th>
                       <th style="width: 40px">Actions</th>
@@ -166,7 +167,7 @@
                     <tr>
                       <td>
                         <span class="badge badge-info">
-                          {{ event.date|date:"M d" }}
+                          {{ event.date|date:"M d, Y" }}
                         </span>
                       </td>
                       <td>
@@ -177,9 +178,13 @@
                         {{ event.type }}
                       </td>
                       <td>
+                        {% include 'components/sport_icon.html' with event=event %}
+                        {{ event.sport}}
+                      </td>
+                      <td>
                         <strong>{{ event.title }}</strong>
-                        {% if event.description %}
-                          <br><small class="text-muted">{{ event.description|truncatechars:40 }}</small>
+                        {% if event.location %}
+                          <br><small class="text-muted">{{ event.location|truncatechars:40 }}</small>
                         {% endif %}
                       </td>
                       <td>
@@ -266,16 +271,23 @@
                     {% for athlete in my_athletes %}
                     <tr>
                       <td>
-                        <div class="d-flex align-items-center">
-                          <div class="mr-3">
-                            {% load profile_extras %}
-                            {{ athlete|profile_image_or_initials|safe }}
-                          </div>
-                          <div>
-                            <h6 class="mb-0">{{ athlete.get_full_name }}</h6>
-                            <small class="text-muted">{{ athlete.email }}</small>
-                          </div>
-                        </div>
+                      <div class="d-flex align-items-center">
+  <div class="mr-3">
+    {% if athlete.avatar_url %}
+      <img src="{{ athlete.profile.avatar_url }}" alt="{{ athlete.get_full_name }}" 
+           class="img-circle elevation-2" 
+           style="width: 40px; height: 40px; object-fit: cover;">
+    {% else %}
+      <div class="profile-initials-small"data-user-id="{{ athlete.id }}">
+    {{ athlete.first_name.0|default:athlete.username.0 }}{{ athlete.last_name.0|default:'' }}
+      </div>
+    {% endif %}
+  </div>
+  <div>
+    <h6 class="mb-0">{{ athlete.get_full_name }}</h6>
+    <small class="text-muted">{{ athlete.email }}</small>
+  </div>
+</div>
                       </td>
                       <td>
                         {% if athlete.profile.vma %}
@@ -356,12 +368,12 @@
               <div class="timeline">
                 {% for activity in recent_activities %}
                 <div class="time-label">
-                  <span class="bg-info">{{ activity.date|date:"M d" }}</span>
+                  <span class="bg-info">{{ activity.date|date:"M d, Y" }}</span>
                 </div>
                 <div>
                   <i class="fas fa-{{ activity.icon }} bg-{{ activity.color }}"></i>
                   <div class="timeline-item">
-                    <span class="time"><i class="fas fa-clock"></i> {{ activity.time|time:"H:i" }}</span>
+                    <span class="time"><i class="fas fa-clock"></i> {{ activity.start_time|time:"H:i" }}</span>
                     <h3 class="timeline-header">{{ activity.athlete_name }}</h3>
                     <div class="timeline-body">
                       {{ activity.description }}
@@ -387,9 +399,6 @@
     <div class="alert alert-info">
       <i class="fas fa-info-circle mr-2"></i>
       <strong>Viewing athlete:</strong> {{ selected_athlete.get_full_name }}
-      <a href="{% url 'dashboard' %}" class="btn btn-sm btn-secondary float-right">
-          <i class="fas fa-arrow-left"></i> Back to dashboard
-      </a>
     </div>
 
 
@@ -527,8 +536,9 @@
                     <tr>
                       <th style="width: 10px">#</th>
                       <th>Date</th>
-                      <th>Duration</th>
                       <th>Title</th>
+                      <th>Sport</th>
+                      <th>Duration</th>
                       <th>Status</th>
                       <th style="width: 40px">Actions</th>
                     </tr>
@@ -539,17 +549,22 @@
                       <td>{{ forloop.counter }}</td>
                       <td>
                         <span class="badge badge-info">
-                          {{ session.date|date:"M d" }}
+                          {{ session.date|date:"M d, Y" }}
                         </span>
                       </td>
+<td>
+  <div class="session-title text-truncate-title" title="{{ session.title }}">{{ session.title }}</div>
+  {% if session.description %}
+    <div class="session-description text-truncate-description" title="{{ session.description }}">{{ session.description }}</div>
+  {% endif %}
+</td>
                       <td>
-                        <strong>{{ session.duration_minutes|duration_hms }}</strong>
+                    {% include 'components/sport_icon.html' with event=session %}
+                      {{ session.get_sport_display }}
+                      
                       </td>
                       <td>
-                        <strong>{{ session.title }}</strong>
-                        {% if session.description %}
-                          <br><small class="text-muted">{{ session.description|truncatechars:60 }}</small>
-                        {% endif %}
+                      <strong>{{ session.duration_minutes|duration_hms }}</strong>
                       </td>
                       <td>
                         {% if session.status == 'completed' %}
@@ -630,14 +645,14 @@
                         </span>
                       </td>
                       <td>
-                        <strong>{{ race.name }}</strong>
+                        <strong>{% if race.title %}{{ race.title }}{% else %}Untitled Race{% endif %}</strong>
                         {% if race.distance %}
                           <br><small class="text-muted">{{ race.distance }}</small>
                         {% endif %}
                       </td>
                       <td>
-                        <i class="fas fa-running text-success mr-1"></i>
-                        {{ race.get_sport_type_display }}
+                     {% include 'components/sport_icon.html' with event=race %}
+                      {{ race.get_sport_display }}
                       </td>
                       <td>
                         <i class="fas fa-map-marker-alt text-danger mr-1"></i>
@@ -832,8 +847,9 @@
                   <tr>
                     <th style="width: 10px">#</th>
                     <th>Date</th>
-                    <th>Duration</th>
                     <th>Title</th>
+                    <th>Sport</th>
+                    <th>Duration</th>
                     <th>Status</th>
                     <th style="width: 40px">Actions</th>
                   </tr>
@@ -844,18 +860,23 @@
                     <td>{{ forloop.counter }}</td>
                     <td>
                       <span class="badge badge-info">
-                        {{ session.date|date:"M d" }}
+                        {{ session.date|date:"M d, Y" }}
                       </span>
                     </td>
-                    <td>
-                        <strong>{{ session.duration_minutes|duration_hms }}</strong>
-                    </td>
-                    <td>
+                   <td>
                       <strong>{{ session.title }}</strong>
                       {% if session.description %}
                         <br><small class="text-muted">{{ session.description|truncatechars:60 }}</small>
                       {% endif %}
                     </td>
+                        <td>
+                     {% include 'components/sport_icon.html' with event=session %}
+                      {{ session.get_sport_display }}
+                    </td>
+                    <td>
+                        <strong>{{ session.duration_minutes|duration_hms }}</strong>
+                    </td>
+ 
                     <td>
                       {% if session.status == 'completed' %}
                         <span class="badge badge-success">{{ session.get_status_display }}</span>
@@ -938,14 +959,14 @@
                       </span>
                     </td>
                     <td>
-                      <strong>{{ race.name }}</strong>
+                      <strong>{{ race.title }}</strong>
                       {% if race.distance %}
                         <br><small class="text-muted">{{ race.distance }}</small>
                       {% endif %}
                     </td>
                     <td>
-                      <i class="fas fa-running text-success mr-1"></i>
-                      {{ race.get_sport_type_display }}
+                     {% include 'components/sport_icon.html' with event=race %}
+                      {{ race.get_sport_display }}
                     </td>
                     <td>
                       <i class="fas fa-map-marker-alt text-danger mr-1"></i>
@@ -1003,25 +1024,23 @@
       <div class="card-body">
         {% for relationship in pending_requests %}
         <div class="alert alert-warning alert-dismissible">
-          <div class="d-flex align-items-center">
-            <div class="mr-3">
-              {% load profile_extras %}
-              {{ relationship.coach|profile_image_or_initials|safe }}
-            </div>
-            <div class="flex-grow-1">
-              <h5 class="alert-heading mb-1">{{ relationship.coach.get_full_name }}</h5>
-              <p class="mb-2">wants to be your coach</p>
-              <small class="text-muted">{{ relationship.created_at|timesince }} ago</small>
-            </div>
-            <div class="ml-3">
-              <a href="{% url 'accept_coach' relationship.id %}" class="btn btn-success btn-sm mr-2">
-                <i class="fas fa-check"></i> Accept
-              </a>
-              <a href="{% url 'decline_coach' relationship.id %}" class="btn btn-danger btn-sm">
-                <i class="fas fa-times"></i> Decline
-              </a>
-            </div>
-          </div>
+       <div class="d-flex align-items-center">
+  <div class="mr-3">
+    {% if relationship.coach.avatar_url %}
+      <img src="{{ relationship.coach.profile.avatar_url }}" alt="{{ relationship.coach.get_full_name }}" 
+           class="img-circle elevation-2" 
+           style="width: 50px; height: 50px; object-fit: cover;">
+    {% else %}
+      <div class="profile-initials-medium" data-user-id="{{ relationship.coach.id }}">
+    {{ relationship.coach.first_name.0|default:relationship.coach.username.0 }}{{ relationship.coach.last_name.0|default:'' }}
+      </div>
+    {% endif %}
+  </div>
+  <div class="flex-grow-1">
+    <h5 class="alert-heading mb-1">{{ relationship.coach.get_full_name }}</h5>
+    <p class="mb-2">wants to be your coach</p>
+    <small class="text-muted">{{ relationship.created_at|timesince }} ago</small>
+  </div>
         </div>
         {% endfor %}
       </div>

@@ -12,32 +12,26 @@
       <div class="card-header">
         <h3 class="card-title">
           <i class="fas fa-trophy mr-2"></i>
-          {{ race.name }}
+          {% if race.title %}{{ race.title }}{% else %}Untitled Race{% endif %}
         </h3>
         <div class="card-tools">
-          <a href="{% url 'calendar_management:view' %}" class="btn btn-sm btn-secondary">
-            <i class="fas fa-arrow-left"></i> Back to Calendar
-          </a>
-          <a href="{% url 'dashboard' %}" class="btn btn-sm btn-secondary">
-            <i class="fas fa-arrow-left"></i> Back to Dashboard
-          </a>
         </div>
       </div>
       
       <div class="card-body">
         <div class="row">
           <!-- Basic Info -->
-          <div class="col-md-6">
-            <div class="info-box">
-              <span class="info-box-icon bg-primary">
-                <i class="fas fa-running"></i>
-              </span>
-              <div class="info-box-content">
+     <div class="col-md-6">
+        <div class="info-box">
+            <span class="info-box-icon bg-primary">
+                {% include 'components/sport_icon_only.html' with event=race %}
+            </span>
+            <div class="info-box-content">
                 <span class="info-box-text">Sport Type</span>
-                <span class="info-box-number">{{ race.get_sport_type_display }}</span>
-              </div>
+                <span class="info-box-number">{{ race.get_sport_display }}</span>
             </div>
-          </div>
+        </div>
+    </div>
           
           <div class="col-md-6">
             <div class="info-box">
@@ -47,9 +41,9 @@
               <div class="info-box-content">
                 <span class="info-box-text">Race Date</span>
                 <span class="info-box-number">{{ race.date|date:"F d, Y" }}</span>
-                {% if race.time %}
-                  <span class="info-box-more">at {{ race.time|time:"H:i" }}</span>
-                {% endif %}
+                  {% if race.start_time %}{{ race.start_time|time:"g:i A" }}
+                  <span class="info-box-more">at {{ race.start_time|time:"H:i" }}</span>
+                  {% endif %}
               </div>
             </div>
           </div>
@@ -132,8 +126,8 @@
                 </h3>
               </div>
               <div class="card-body">
-                {% if race.notes %}
-                  <p>{{ race.notes|linebreaks }}</p>
+                {% if race.description %}
+                  <p>{{ race.description|linebreaks }}</p>
                 {% else %}
                   <p class="text-muted"><em>No notes added</em></p>
                 {% endif %}

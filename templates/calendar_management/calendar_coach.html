@@ -103,7 +103,8 @@
   <div class="col-12">
     <div class="card">
       <div class="card-body">
-        <div class="row align-items-center">
+        <!-- Desktop Layout: Title and buttons side by side -->
+        <div class="row align-items-center d-none d-md-flex">
           <div class="col-md-6">
             <h4 class="mb-0">
               <i class="fas fa-calendar-alt mr-2 text-primary"></i>
@@ -149,6 +150,61 @@
                    class="btn btn-outline-primary {% if view_type == 'week' %}active{% endif %}">
                   <i class="fas fa-calendar-week"></i> Week
                 </a>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Mobile Layout: Title on top, buttons below -->
+        <div class="d-block d-md-none">
+          <!-- Title Section -->
+          <div class="mb-3">
+            <h4 class="mb-1">
+              <i class="fas fa-calendar-alt mr-2 text-primary"></i>
+              Athletes' Race Calendar
+            </h4>
+          </div>
+
+          <!-- Buttons Section -->
+          <div class="row">
+            <div class="col-12">
+              <!-- Mobile View Toggle -->
+              <div class="btn-group btn-group-sm w-100 mb-2" role="group">
+                <a href="{% url 'calendar_management:coach_view' %}?view=month&year={{ year }}&month={{ month }}" 
+                   class="btn btn-outline-primary {% if view_type == 'month' %}active{% endif %}">
+                  <i class="fas fa-calendar"></i> Month
+                </a>
+                <a href="{% url 'calendar_management:coach_view' %}?view=week&week_start={{ week_start_date|date:'Y-m-d' }}" 
+                   class="btn btn-outline-primary {% if view_type == 'week' %}active{% endif %}">
+                  <i class="fas fa-calendar-week"></i> Week
+                </a>
+              </div>
+              
+              <!-- Mobile Athlete Selection -->
+              <div class="btn-group btn-group-sm w-100" role="group">
+                <button type="button" class="btn btn-info dropdown-toggle btn-block" data-toggle="dropdown">
+                  <i class="fas fa-users"></i> View Athlete
+                </button>
+                <div class="dropdown-menu w-100">
+                  {% for athlete in coach_athletes %}
+                    <a class="dropdown-item" href="{% url 'calendar_management:coach_athlete_view' athlete.id %}">
+                      <div class="d-flex align-items-center">
+                        {% if athlete.profile_picture %}
+                          <img src="{{ athlete.profile_picture.url }}" alt="{{ athlete.get_full_name }}" 
+                               class="img-circle mr-2" style="width: 20px; height: 20px;">
+                        {% else %}
+                          <div class="bg-secondary rounded-circle d-flex align-items-center justify-content-center mr-2" 
+                               style="width: 20px; height: 20px; font-size: 10px; color: white;">
+                            {{ athlete.first_name.0 }}{{ athlete.last_name.0 }}
+                          </div>
+                        {% endif %}
+                        {{ athlete.get_full_name }}
+                      </div>
+                    </a>
+                  {% empty %}
+                    <span class="dropdown-item-text text-muted">No athletes assigned</span>
+                  {% endfor %}
+                </div>
               </div>
             </div>
           </div>
@@ -289,7 +345,7 @@
   </div>
 
 {% else %}
-  <!-- Week View -->
+  <!-- Week View - Desktop and Mobile Responsive -->
   <div class="row">
     <div class="col-12">
       <div class="card card-primary">
@@ -329,7 +385,9 @@
           </div>
         </div>
         <div class="card-body p-0">
-          <div class="calendar-week-view">
+          
+          <!-- Desktop Week View (Hidden on Mobile) -->
+          <div class="calendar-week-view d-none d-md-block">
             <!-- Week Days Header -->
             <div class="calendar-header">
               {% if week_days %}
@@ -350,41 +408,78 @@
             </div>
             
             <!-- Week Days Body -->
-         <div class="calendar-body">
-            <div class="calendar-week">
-              {% if week_days %}
-                {% for day in week_days %}
-                  <div class="calendar-day week-day
-                      {% if day.date == today %}calendar-day-today{% endif %}"
-                      data-date="{{ day.date|date:'Y-m-d' }}"
-                      tabindex="0">
-                    <div class="day-number {% if day.date == today %}today{% endif %}">{{ day.day_num }}</div>
-                    <div class="day-events">
-                      {% for event in week_events %}
-                        {% if event.date == day.date %}
-                          <!-- Use coach-specific race card -->
-                          {% include 'calendar_management/partials/coach_race_card.html' with event=event %}
-                        {% endif %}
-                      {% endfor %}
+            <div class="calendar-body">
+              <div class="calendar-week">
+                {% if week_days %}
+                  {% for day in week_days %}
+                    <div class="calendar-day week-day
+                        {% if day.date == today %}calendar-day-today{% endif %}"
+                        data-date="{{ day.date|date:'Y-m-d' }}"
+                        tabindex="0">
+                      <div class="day-number {% if day.date == today %}today{% endif %}">{{ day.day_num }}</div>
+                      <div class="day-events">
+                        {% for event in week_events %}
+                          {% if event.date == day.date %}
+                            <!-- Use coach-specific race card -->
+                            {% include 'calendar_management/partials/coach_race_card.html' with event=event %}
+                          {% endif %}
+                        {% endfor %}
+                      </div>
                     </div>
-                  </div>
-                {% endfor %}
-              {% else %}
-                <!-- Fallback for 7 days if week_days is not available -->
-                {% for day_num in "1234567"|make_list %}
-                  <div class="calendar-day week-day" 
-                       data-date="{% now 'Y-m-d' %}"
-                       tabindex="0">
-                    <div class="day-number">{{ forloop.counter }}</div>
-                    <div class="day-events">
-                      <!-- Race events will be populated here -->
+                  {% endfor %}
+                {% else %}
+                  <!-- Fallback for 7 days if week_days is not available -->
+                  {% for day_num in "1234567"|make_list %}
+                    <div class="calendar-day week-day" 
+                         data-date="{% now 'Y-m-d' %}"
+                         tabindex="0">
+                      <div class="day-number">{{ forloop.counter }}</div>
+                      <div class="day-events">
+                        <!-- Race events will be populated here -->
+                      </div>
                     </div>
-                  </div>
-                {% endfor %}
-              {% endif %}
+                  {% endfor %}
+                {% endif %}
+              </div>
             </div>
           </div>
-        </div>
+
+          <!-- Mobile Week View (Vertical List) -->
+          <div class="calendar-week-mobile d-block d-md-none">
+            {% if week_days %}
+              {% for day in week_days %}
+                <div class="calendar-day mobile-vertical-day 
+                           {% if day.date == today %}calendar-day-today{% endif %}" 
+                     data-date="{{ day.date|date:'Y-m-d' }}"
+                     tabindex="0">
+                  
+                  <!-- Day Header with day number on left and day name on right -->
+                  <div class="mobile-day-header">
+                    <div class="day-number {% if day.date == today %}today{% endif %}">{{ day.day_num }}</div>
+                    <div class="mobile-day-label">
+                      {{ day.date|date:"l, F j" }}
+                    </div>
+                  </div>
+                  
+                  <!-- Day Events - coach race cards -->
+                  <div class="day-events">
+                    {% for event in week_events %}
+                      {% if event.date == day.date %}
+                        <!-- Use coach-specific race card -->
+                        {% include 'calendar_management/partials/coach_race_card.html' with event=event %}
+                      {% endif %}
+                    {% endfor %}
+                  </div>
+                </div>
+              {% endfor %}
+            {% else %}
+              <!-- Fallback mobile view -->
+              <div class="text-center p-4">
+                <p class="text-muted">No week data available</p>
+              </div>
+            {% endif %}
+          </div>
+
         </div>
       </div>
     </div>

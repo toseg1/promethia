@@ -114,10 +114,10 @@
                   <i class="fas fa-clock mr-1"></i>
                   Time
                 </label>
-                {{ form.time }}
+                {{ form.start_time }}
                 <small class="form-text text-muted">Optional session time</small>
-                {% if form.time.errors %}
-                  <div class="text-danger">{{ form.time.errors.0 }}</div>
+                {% if form.start_time.errors %}
+                  <div class="text-danger">{{ form.start_time.errors.0 }}</div>
                 {% endif %}
               </div>
             </div>
@@ -136,19 +136,6 @@
               </div>
             </div>
           </div>
-
-          <!-- Notes -->
-          <div class="form-group">
-            <label for="{{ form.notes.id_for_label }}">
-              <i class="fas fa-sticky-note mr-1"></i>
-              Additional Notes
-            </label>
-            {{ form.notes }}
-            {% if form.notes.errors %}
-              <div class="text-danger">{{ form.notes.errors.0 }}</div>
-            {% endif %}
-          </div>
-        </div>
         
         <div class="card-footer">
           <button type="submit" class="btn btn-primary" >
