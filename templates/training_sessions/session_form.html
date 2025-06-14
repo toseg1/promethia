@@ -140,7 +140,7 @@
         <div class="card-footer">
           <button type="submit" class="btn btn-primary" >
             <i class="fas fa-save mr-1"></i>
-            Save Session
+ {% if race %}Update Session{% else %}Save Session{% endif %}
           </button>
           <a href="{% url 'dashboard' %}" class="btn btn-secondary"onclick="goBack()">
             <i class="fas fa-times mr-1"></i>

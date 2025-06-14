@@ -228,9 +228,10 @@ def race_edit(request, race_id):
         goal_seconds = time_parts[2] if len(time_parts) > 2 else ''
     
     if request.method == 'POST':
-        form = RaceForm(request.POST, instance=race)
+        form = RaceForm(request.POST, instance=race, user=request.user)
         if form.is_valid():
             updated_race = form.save(commit=False)
+            updated_race.athlete = request.user
             
             # Handle separate goal time fields
             goal_hours = request.POST.get('goal_hours', '') or '0'
@@ -247,7 +248,7 @@ def race_edit(request, race_id):
             messages.success(request, f'Race "{updated_race.title}" updated successfully!')
             return redirect('race_events:race_list')
     else:
-        form = RaceForm(instance=race)
+        form = RaceForm(instance=race, user=request.user)
     
     context = {
         'form': form,
