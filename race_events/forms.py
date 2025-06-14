@@ -19,6 +19,7 @@ class RaceForm(forms.ModelForm):
     goal_type = forms.ChoiceField(
         choices=RACE_GOAL_CHOICES,
         required=False,
+        initial='experience',
         widget=forms.Select(attrs={'class': 'form-control'})
     )
     

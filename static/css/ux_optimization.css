@@ -347,6 +347,10 @@ small-box .icon i {
     padding: 8px 45px 8px 12px !important;
   }
   
+.small-box {
+  margin-bottom: 10px !important; /* Reduce spacing between widgets */
+}
+
   .small-box .inner h3 {
     font-size: 1.6rem !important;
   }
@@ -406,4 +410,31 @@ small-box .icon i {
     .card-tools {
         display: none !important;
     }
+}
+
+.small-box .icon {
+  display: block !important;
+  position: absolute !important;
+  top: 10px !important;
+  right: 10px !important;
+  bottom: auto !important;
+  z-index: 5 !important;
+  font-size: 2rem !important;
+  color: rgba(255, 255, 255, 0.3) !important;
+  opacity: 1 !important;
+  visibility: visible !important;
+}
+
+.small-box .icon i {
+  font-size: inherit !important;
+  display: inline-block !important;
+  visibility: visible !important;
+  opacity: 1 !important;
+}
+
+.mobile-vertical-day .text-truncate-title {
+    white-space: normal !important;
+    text-overflow: inherit !important;
+    overflow: visible !important;
+    max-width: none !important;
 }
