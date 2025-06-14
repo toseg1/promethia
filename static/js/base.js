@@ -26,16 +26,21 @@ function initializeTooltips() {
  * Initialize navigation enhancements
  */
 function initializeNavigation() {
-    // Add smooth scrolling for anchor links
+    // Add smooth scrolling for anchor links - FIXED
     const anchorLinks = document.querySelectorAll('a[href^="#"]');
     anchorLinks.forEach(anchor => {
         anchor.addEventListener('click', function (e) {
-            const target = document.querySelector(this.getAttribute('href'));
-            if (target) {
-                e.preventDefault();
-                target.scrollIntoView({
-                    behavior: 'smooth'
-                });
+            const href = this.getAttribute('href');
+            
+            // Check if href is valid and not just '#'
+            if (href && href !== '#' && href.length > 1) {
+                const target = document.querySelector(href);
+                if (target) {
+                    e.preventDefault();
+                    target.scrollIntoView({
+                        behavior: 'smooth'
+                    });
+                }
             }
         });
     });
@@ -341,3 +346,28 @@ function showButtonLoading($btn) {
     $btn.html(loadingContent);
     $btn.prop('disabled', true);
 }
+
+/**
+ * Simple fix for mobile navigation links
+ */
+$(document).ready(function() {
+    // Only fix navigation on mobile, don't interfere with AdminLTE pushmenu
+    if (window.innerWidth <= 800) {
+        $('.main-sidebar .nav-sidebar .nav-item .nav-link').each(function() {
+            const $link = $(this);
+            const href = $link.attr('href');
+            
+            // Only add click handler if it has a valid href
+            if (href && href !== '#' && href !== 'javascript:void(0)') {
+                $link.off('click.mobilefix').on('click.mobilefix', function(e) {
+                    // Let the original click work, just ensure it processes
+                    setTimeout(() => {
+                        if (!e.isDefaultPrevented()) {
+                            window.location.href = href;
+                        }
+                    }, 50);
+                });
+            }
+        });
+    }
+});

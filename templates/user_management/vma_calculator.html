@@ -274,26 +274,5 @@
      {% endif %}
      style="display: none;">
 </div>
-<script>
-// Temporary fix to ensure view state is correct on VMA calculator
-document.addEventListener('DOMContentLoaded', function() {
-    // Check if there's a mismatch between session view and displayed view
-    const vmaDataElement = document.getElementById('vma-data');
-    const currentViewFromTemplate = vmaDataElement.dataset.currentView;
-    const activeButton = document.querySelector('.view-toggle-btn.active');
-    const currentViewFromButton = activeButton ? activeButton.dataset.view : 'athlete';
-    
-    console.log('Template view:', currentViewFromTemplate, 'Button view:', currentViewFromButton);
-    
-    // If there's a mismatch, trust the button state (which comes from session)
-    if (currentViewFromTemplate !== currentViewFromButton && activeButton) {
-        console.log('View mismatch detected, updating template data');
-        vmaDataElement.dataset.currentView = currentViewFromButton;
-        
-        // Update navbar indicator to match
-        updateViewIndicator(currentViewFromButton);
-    }
-});
-</script>
 <script src="{% static 'js/vma_calculator.js' %}"></script>
 {% endblock %}

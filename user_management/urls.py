@@ -26,7 +26,9 @@ urlpatterns = [
     path('accounts/signup/', views.signup, name='signup'),
     path('signup/', views.signup, name='signup'),
     path('accounts/password_reset/', CustomPasswordResetView.as_view(), name='password_reset'),
-
+    path('upload-avatar/', views.upload_avatar, name='upload_avatar'),
+    path('remove-avatar/', views.remove_avatar, name='remove_avatar'),
+    path('profile/', views.profile_view, name='profile'),
     path('accounts/login/', views.custom_login, name='login'),  # Override Django's login
     path('accounts/logout/', views.custom_logout, name='logout'),
 

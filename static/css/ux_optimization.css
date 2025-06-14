@@ -248,28 +248,123 @@
 
 
 /* ===== SMALL BOX WIDGETS (DASHBOARD) ===== */
+/* ===== SMALL BOX WIDGETS (DASHBOARD) ===== */
 .small-box h3 {
-    font-size: 2rem;
-    font-weight: 600;
-    margin: 0;
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
+  font-size: 2rem;
+  font-weight: 600;
+  margin: 0;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
-
 .small-box p {
-    font-size: 0.9rem;
-    margin: 0;
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
+  font-size: 0.9rem;
+  margin: 0;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.small-box .small-box-footer {
+  font-size: 0.8rem;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
-.small-box .small-box-footer {
-    font-size: 0.8rem;
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
+/* ADD THE ICON CSS HERE */
+/* ===== SMALL BOX ICONS FIX ===== */
+.small-box .icon {
+  position: absolute;
+  top: auto;
+  bottom: 0;
+  right: 10px;
+  z-index: 1;
+  font-size: 70px;
+  color: rgba(0, 0, 0, 0.15);
+  transition: all 0.3s ease;
+}
+
+small-box .icon i {
+  display: inline-block !important;
+  font-style: normal;
+  font-variant: normal;
+  text-rendering: auto;
+  line-height: 1;
+  -webkit-font-smoothing: antialiased;
+  visibility: visible !important;
+}
+
+/* ===== MOBILE RESPONSIVE FIXES ===== */
+
+/* Mobile icon styling - force icons to show */
+@media (max-width: 767.98px) {
+  /* Fix text alignment on mobile */
+  .small-box .inner {
+    text-align: left !important; /* Override AdminLTE centering */
+    padding: 10px 50px 10px 15px !important; /* Make room for icon */
+  }
+  
+  .small-box .inner h3 {
+    text-align: left !important;
+    font-size: 1.8rem !important;
+  }
+  
+  .small-box .inner p {
+    text-align: left !important;
+    font-size: 0.85rem !important;
+  }
+  
+  .small-box-footer {
+    text-align: left !important;
+    font-size: 0.75rem !important;
+  }
+  
+  /* Force icons to show on mobile */
+  .small-box .icon {
+    display: block !important;
+    position: absolute !important;
+    top: 10px !important;
+    right: 10px !important;
+    bottom: auto !important;
+    z-index: 5 !important;
+    font-size: 2rem !important;
+    color: rgba(255, 255, 255, 0.3) !important;
+    opacity: 1 !important;
+    visibility: visible !important;
+  }
+  
+  .small-box .icon i {
+    font-size: inherit !important;
+    display: inline-block !important;
+    visibility: visible !important;
+    opacity: 1 !important;
+  }
+}
+
+/* Extra small devices */
+@media (max-width: 575.98px) {
+  .small-box .inner {
+    padding: 8px 45px 8px 12px !important;
+  }
+  
+  .small-box .inner h3 {
+    font-size: 1.6rem !important;
+  }
+  
+  .small-box .inner p {
+    font-size: 0.8rem !important;
+  }
+  
+  .small-box .icon {
+    font-size: 1.8rem !important;
+    top: 8px !important;
+    right: 8px !important;
+  }
+  
+  .small-box-footer {
+    font-size: 0.7rem !important;
+    padding: 3px 10px !important;
+  }
 }
 
 /* ===== LOADING STATES ===== */
@@ -312,4 +407,3 @@
         display: none !important;
     }
 }
-

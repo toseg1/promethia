@@ -47,19 +47,22 @@ document.addEventListener('DOMContentLoaded', function() {
         $('[title]').tooltip();
     }
     
-    // Add smooth scrolling for anchor links
-    document.querySelectorAll('a[href^="#"]').forEach(anchor => {
-        anchor.addEventListener('click', function (e) {
-            e.preventDefault();
-            const target = document.querySelector(this.getAttribute('href'));
+document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+    anchor.addEventListener('click', function (e) {
+        e.preventDefault();
+        const href = this.getAttribute('href');
+        
+        // Check if href is valid and not just '#'
+        if (href && href !== '#' && href.length > 1) {
+            const target = document.querySelector(href);
             if (target) {
                 target.scrollIntoView({
                     behavior: 'smooth'
                 });
             }
-        });
+        }
     });
-    
+});
     console.log('Coach dashboard loaded');
 });
 

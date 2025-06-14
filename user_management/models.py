@@ -23,6 +23,7 @@ class Profile(models.Model):
     phone_number = models.CharField(max_length=20, blank=True)
     bio = models.TextField(max_length=500, blank=True)
     profile_picture = models.ImageField(upload_to='profile_pics/', blank=True, null=True)
+    avatar_url = models.URLField(blank=True, null=True)
     
     date_of_birth = models.DateField(blank=True, null=True, help_text="Used to calculate age automatically")
     club = models.CharField(max_length=100, blank=True, help_text="Sports club or team")
@@ -61,8 +62,7 @@ class Profile(models.Model):
             today = date.today()
             return today.year - self.date_of_birth.year - ((today.month, today.day) < (self.date_of_birth.month, self.date_of_birth.day))
         return None
-
-
+    
 class CoachAthleteRelationship(models.Model):
     """
     Relationship between coaches and athletes.

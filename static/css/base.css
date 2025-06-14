@@ -1,65 +1,66 @@
 /* Base Styles for the Application */
 
-
 /* Sidebar Bottom Toggle Styles */
 .sidebar-bottom {
     background-color: rgba(255,255,255,0.05);
     border-top: 1px solid rgba(255,255,255,0.1) !important;
     margin-top: auto;
-  }
-  
-  .toggle-view-btn {
+}
+
+.toggle-view-btn {
     font-size: 11px;
     padding: 4px 8px;
-  }
-  
-  .toggle-view-btn.active {
+}
+
+.toggle-view-btn.active {
     background-color: #007bff !important;
     border-color: #007bff !important;
     color: white !important;
-  }
-  
-  .toggle-view-btn:hover {
+}
+
+.toggle-view-btn:hover {
     background-color: #0056b3 !important;
     border-color: #0056b3 !important;
     color: white !important;
-  }
+}
 
-  /* Make sidebar fixed */
+/* Make sidebar fixed */
 .main-sidebar {
     position: fixed !important;
     height: 100vh !important;
     overflow-y: auto !important;
     z-index: 1000;
 }
-  
-  /* Additional base styles can be added here */
-  .nav-header {
+
+/* Additional base styles */
+.nav-header {
     font-size: 11px;
     color: #6c757d;
     margin-top: 15px;
-  }
-  
-  /* Custom utility classes */
-  .text-shadow {
-    text-shadow: 1px 1px 2px rgba(0,0,0,0.1);
-  }
-  
-  /* Brand logo improvements */
-  .brand-image {
-    transition: opacity 0.3s ease;
-  }
-  
-  .brand-image:hover {
-    opacity: 1 !important;
-  }
+}
 
-  /* Sidebar bottom section for view toggle */
+/* Custom utility classes */
+.text-shadow {
+    text-shadow: 1px 1px 2px rgba(0,0,0,0.1);
+}
+
+/* Brand logo improvements */
+.brand-image {
+    transition: opacity 0.3s ease;
+}
+
+.brand-image:hover {
+    opacity: 1 !important;
+}
+
+/* Sidebar bottom section for view toggle */
 .sidebar-bottom {
     margin-top: auto;
     padding: 15px;
     border-top: 1px solid #495057;
     background: rgba(0, 0, 0, 0.1);
+    position: relative;
+    min-height: 60px;
 }
 
 /* View toggle container */
@@ -79,6 +80,10 @@
     color: #c2c7d0;
     font-size: 12px;
     padding: 6px 12px;
+    border-radius: 3px;
+    position: relative;
+    white-space: nowrap;
+    overflow: hidden;
 }
 
 .view-toggle-btn:hover {
@@ -145,85 +150,9 @@
     }
 }
 
-/* Responsive adjustments */
-@media (max-width: 768px) {
-    .navbar-text {
-        display: none;
-    }
-    
-    .view-toggle-btn {
-        font-size: 11px;
-        padding: 4px 8px;
-    }
-}
-
-/* Dark theme compatibility */
-.sidebar-dark-primary .view-toggle-btn {
-    border-color: #495057;
-    color: #c2c7d0;
-}
-
-.sidebar-dark-primary .view-toggle-btn:hover {
-    background: #495057;
-    border-color: #6c757d;
-    color: #fff;
-}
-
-.sidebar-dark-primary .toggle-label {
-    color: #c2c7d0;
-}
-
-/* Sidebar bottom section - always visible */
-.sidebar-bottom {
-    margin-top: auto;
-    padding: 10px;
-    border-top: 1px solid #495057;
-    background: rgba(0, 0, 0, 0.1);
-    position: relative;
-    min-height: 60px;
-}
-
 /* View toggle container adjustments */
 .view-toggle-container {
     transition: all 0.3s ease;
-}
-
-/* View toggle label - hide when collapsed */
-.view-toggle-container .toggle-label {
-    font-size: 11px;
-    color: #c2c7d0;
-    text-transform: uppercase;
-    letter-spacing: 0.5px;
-    margin-bottom: 8px;
-    transition: opacity 0.3s ease;
-}
-
-/* Enhanced view toggle buttons */
-.view-toggle-btn {
-    transition: all 0.3s ease;
-    border: 1px solid #495057;
-    background: transparent;
-    color: #c2c7d0;
-    font-size: 11px;
-    padding: 6px 8px;
-    border-radius: 3px;
-    position: relative;
-    white-space: nowrap;
-    overflow: hidden;
-}
-
-.view-toggle-btn:hover {
-    background: #495057;
-    color: #fff;
-    border-color: #6c757d;
-    transform: translateY(-1px);
-}
-
-.view-toggle-btn.active {
-    background: #007bff;
-    border-color: #007bff;
-    color: #fff;
-    box-shadow: 0 0 0 0.2rem rgba(0, 123, 255, 0.25);
 }
 
 /* COLLAPSED SIDEBAR STYLES */
@@ -314,23 +243,6 @@
     }
 }
 
-/* Responsive adjustments */
-@media (max-width: 768px) {
-    .sidebar-bottom {
-        padding: 8px;
-    }
-    
-    .view-toggle-btn {
-        font-size: 10px;
-        padding: 4px 6px;
-    }
-    
-    .sidebar-collapse .view-toggle-btn {
-        width: 30px;
-        height: 30px;
-    }
-}
-
 /* Dark theme compatibility */
 .sidebar-dark-primary .sidebar-bottom {
     border-top-color: #495057;
@@ -350,4 +262,105 @@
 
 .sidebar-dark-primary .toggle-label {
     color: #c2c7d0;
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+    .navbar-text {
+        display: none;
+    }
+    
+    .view-toggle-btn {
+        font-size: 11px;
+        padding: 4px 8px;
+    }
+    
+    .sidebar-bottom {
+        padding: 8px;
+    }
+    
+    .view-toggle-btn {
+        font-size: 10px;
+        padding: 4px 6px;
+    }
+    
+    .sidebar-collapse .view-toggle-btn {
+        width: 30px;
+        height: 30px;
+    }
+}
+
+/* Mobile Navigation Dropdown */
+@media (max-width: 767.98px) {
+    /* Mobile navigation dropdown styling */
+    .navbar-nav .dropdown-menu {
+        position: absolute;
+        top: 100%;
+        left: 0;
+        right: 0;
+        margin: 0;
+        border: none;
+        border-radius: 0 0 8px 8px;
+        box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+        max-height: 80vh;
+        overflow-y: auto;
+    }
+    
+    .navbar-nav .dropdown-item {
+        padding: 12px 20px;
+        font-size: 16px;
+        color: #495057;
+        border-bottom: 1px solid #f8f9fa;
+    }
+    
+    .navbar-nav .dropdown-item:hover,
+    .navbar-nav .dropdown-item:focus {
+        background-color: #f8f9fa;
+        color: #007bff;
+    }
+    
+    .navbar-nav .dropdown-item i {
+        width: 20px;
+        color: #6c757d;
+    }
+    
+    .navbar-nav .dropdown-header {
+        font-size: 12px;
+        font-weight: 600;
+        color: #6c757d;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        padding: 8px 20px 4px;
+    }
+    
+    .navbar-nav .dropdown-divider {
+        margin: 8px 0;
+    }
+    
+    /* Mobile nav button styling */
+    .navbar-nav .nav-link {
+        color: #495057 !important;
+        font-weight: 500;
+    }
+    
+    .navbar-nav .nav-link:hover {
+        color: #007bff !important;
+    }
+    
+    /* Hide sidebar completely on mobile if needed */
+    .main-sidebar {
+        display: none !important;
+    }
+    
+    /* Adjust content margin since no sidebar */
+    .content-wrapper {
+        margin-left: 0 !important;
+    }
+}
+
+/* Desktop: hide mobile navigation */
+@media (min-width: 768px) {
+    .d-md-none {
+        display: none !important;
+    }
 }

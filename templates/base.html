@@ -19,7 +19,57 @@
   <link rel="stylesheet" href="{% static 'css/ux_optimization.css' %}">
   
   <!-- Page-specific CSS -->
-  {% block extra_css %}{% endblock %}
+{% block extra_css %}{% endblock %}
+
+<!-- Global Profile Color CSS (always loaded) -->
+<style>
+.profile-initials-small,
+.profile-initials-medium, 
+.profile-initials-large {
+    color: white;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: bold;
+    border-radius: 50%;
+}
+
+/* Consistent colors based on user ID last digit */
+[data-user-id$="1"], [data-user-id$="9"] { background: #3498db; } /* Blue */
+[data-user-id$="2"], [data-user-id$="0"] { background: #e74c3c; } /* Red */
+[data-user-id$="3"] { background: #2ecc71; } /* Green */
+[data-user-id$="4"] { background: #f39c12; } /* Orange */
+[data-user-id$="5"] { background: #9b59b6; } /* Purple */
+[data-user-id$="6"] { background: #1abc9c; } /* Teal */
+[data-user-id$="7"] { background: #34495e; } /* Dark Gray */
+[data-user-id$="8"] { background: #e67e22; } /* Dark Orange */
+
+.profile-initials-small {
+    width: 40px;
+    height: 40px;
+    font-size: 16px;
+}
+
+.profile-initials-medium {
+    width: 50px;
+    height: 50px;
+    font-size: 18px;
+}
+
+.profile-initials-large {
+    width: 150px;
+    height: 150px;
+    font-size: 48px;
+}
+
+/* Sidebar specific styling */
+.user-panel .image .profile-initials-small {
+    width: 35px;
+    height: 35px;
+    font-size: 14px;
+}
+</style>
+
 </head>
 
 <!-- Add layout-fixed, layout-navbar-fixed, and sidebar-mini-md classes -->
@@ -29,11 +79,57 @@
  <nav class="main-header navbar navbar-expand navbar-white navbar-light navbar-fixed-top">
   <!-- Left navbar links -->
   <ul class="navbar-nav">
-    <!-- Pushmenu toggle button -->
-    <li class="nav-item">
-      <a class="nav-link" data-widget="pushmenu" href="#" role="button">
-        <i class="fas fa-bars"></i>
+
+
+      <!-- NEW: Mobile Navigation Dropdown -->
+    <li class="nav-item dropdown d-md-none">
+      <a class="nav-link dropdown-toggle" href="#" id="mobileNavDropdown" role="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+        <i class="fa-solid fa-bars"></i> Menu
       </a>
+      <div class="dropdown-menu" aria-labelledby="mobileNavDropdown">
+        <a class="dropdown-item" href="{% url 'dashboard' %}">
+          <i class="fas fa-tachometer-alt mr-2"></i>Dashboard
+        </a>
+        
+        {% if current_view == 'coach' %}
+          <a class="dropdown-item" href="{% url 'calendar_management:coach_view' %}">
+            <i class="fas fa-calendar-alt mr-2"></i> Athletes' Calendar
+          </a>
+        {% else %}
+          <a class="dropdown-item" href="{% url 'calendar_management:view' %}">
+            <i class="fas fa-calendar-alt mr-2"></i> My Calendar
+          </a>
+        {% endif %}
+        
+          <a class="dropdown-item" href="{% url 'race_events:race_list' %}">
+            <i class="fas fa-trophy"></i> Athletes' Races
+          </a>
+
+          <a class="dropdown-item" href="{% url 'vma_calculator' %}">
+            <i class="fas fa-heart-pulse"></i> MAS Calculator
+          </a>
+  
+        <div class="dropdown-divider"></div>
+        <a class="dropdown-item" href="{% url 'profile_edit' %}">
+          <i class="fas fa-user mr-2"></i> Profile
+        </a>
+
+      <div class="dropdown-divider"></div>
+      {% if current_view == 'coach' or user.profile.is_coach and not current_view %}
+        <a class="dropdown-item" href="{% url 'add_athlete' %}">
+          <i class="nav-icon fas fa-user-plus"></i> Add New Athlete
+        </a>
+      {% endif %}
+        {% if current_view == 'coach' or user.profile.is_coach and not current_view %}
+            <a class="dropdown-item dropdown-view-switch" href="#" data-view="athlete">
+                <i class="fas fa-toggle-on"></i> Athlete View
+            </a>
+        {% else %}
+            <a class="dropdown-item dropdown-view-switch" href="#" data-view="coach">
+                <i class="fas fa-toggle-on"></i> Coach View
+            </a>
+        {% endif %}
+      </div>
     </li>
   </ul>
 
@@ -72,24 +168,31 @@
 
     <!-- Sidebar -->
     <div class="sidebar d-flex flex-column" style="height: calc(100vh - 60px);">
-      {% load profile_extras %}
       
-      <!-- Sidebar user panel -->
-      <div class="user-panel mt-3 pb-3 mb-3 d-flex">
-        <div class="image">
-          {{ user|profile_image_or_initials|safe }}
-        </div>
-        <div class="info">
-          <a href="{% url 'profile_edit' %}" class="d-block">{{ user.get_full_name }}</a>
-          <small class="text-muted current-role-display">
-            {% if current_view == 'coach' %}
-              Coach
-            {% else %}
-              Athlete
-            {% endif %}
-          </small>
-        </div>
+<!-- Sidebar user panel -->
+<div class="user-panel mt-3 pb-3 mb-3 d-flex">
+  <div class="image">
+    {% if user.profile.avatar_url %}
+      <img src="{{ user.profile.avatar_url }}" alt="{{ user.get_full_name }}" 
+           class="img-circle elevation-2" 
+           style="width: 35px; height: 35px; object-fit: cover;">
+    {% else %}
+      <div class="profile-initials-small" data-user-id="{{ user.id }}">
+        {{ user.first_name.0|default:user.username.0 }}{{ user.last_name.0|default:'' }}
       </div>
+    {% endif %}
+  </div>
+  <div class="info">
+    <a href="{% url 'profile_edit' %}" class="d-block">{{ user.get_full_name }}</a>
+    <small class="text-muted current-role-display">
+      {% if current_view == 'coach' %}
+        Coach
+      {% else %}
+        Athlete
+      {% endif %}
+    </small>
+  </div>
+</div>
 
       <!-- Sidebar Menu -->
       <nav class="mt-2 flex-grow-1">
@@ -135,7 +238,7 @@
           </li>
           <li class="nav-item">
         <a href="{% url 'vma_calculator' %}" class="nav-link">
-          <i class="nav-icon fas fa-calculator"></i>
+          <i class="nav-icon fas fa-heart-pulse"></i>
           <p>MAS Calculator</p>
         </a>
       </li>
@@ -296,6 +399,44 @@ $(document).ready(function() {
                 alert('Error switching view mode. Please try again.');
             }
         });
+    });
+});
+// Handle dropdown view switching (same logic as buttons)
+$('.dropdown-view-switch').on('click', function(e) {
+    e.preventDefault();
+    
+    var viewMode = $(this).data('view');
+    var $dropdownItem = $(this);
+    
+    // Don't do anything if already in this view
+    var currentActiveView = $('.view-toggle-btn.active').data('view');
+    if (currentActiveView === viewMode) {
+        return;
+    }
+    
+    // Show loading state
+    var originalHtml = $dropdownItem.html();
+    $dropdownItem.html('<i class="fas fa-spinner fa-spin"></i> Switching...');
+    
+    // Submit the form via AJAX (same as buttons)
+    $.ajax({
+        url: '{% url "switch_view" %}',
+        type: 'POST',
+        data: {
+            'view_mode': viewMode,
+            'csrfmiddlewaretoken': $('[name=csrfmiddlewaretoken]').val()
+        },
+        success: function(response) {
+            if (response.success) {
+                // Redirect to appropriate page
+                window.location.href = response.redirect_url;
+            }
+        },
+        error: function() {
+            // Restore original text on error
+            $dropdownItem.html(originalHtml);
+            alert('Error switching view mode. Please try again.');
+        }
     });
 });
 </script>

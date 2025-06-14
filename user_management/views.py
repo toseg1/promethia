@@ -40,7 +40,8 @@ from django.urls import reverse_lazy
 from django.contrib.auth.views import LoginView
 from .forms import CustomPasswordResetForm
 from django.contrib.auth.views import PasswordResetView
-
+import cloudinary.uploader
+import os
 
 logger = get_logger('user_management')
 
@@ -98,6 +99,82 @@ def signup(request):
         form = SignUpForm()
     
     return render(request, 'registration/signup.html', {'form': form})
+
+
+@login_required
+def upload_avatar(request):
+    """Upload avatar to Cloudinary and save URL to profile."""
+    
+    if request.method == 'POST':
+        avatar_file = request.FILES.get('avatar')
+        
+        if not avatar_file:
+            return JsonResponse({'success': False, 'error': 'No file provided'})
+        
+        # Validate file type
+        allowed_types = ['image/jpeg', 'image/png', 'image/gif', 'image/webp']
+        if avatar_file.content_type not in allowed_types:
+            return JsonResponse({'success': False, 'error': 'Invalid file type'})
+        
+        # Validate file size (max 5MB)
+        if avatar_file.size > 5 * 1024 * 1024:
+            return JsonResponse({'success': False, 'error': 'File too large'})
+        
+        try:
+            
+            # Upload to Cloudinary
+            upload_result = cloudinary.uploader.upload(
+                avatar_file,
+                folder="user_avatars",
+                public_id=f"user_{request.user.id}",
+                overwrite=True,
+                resource_type="image",
+                transformation=[
+                    {'width': 300, 'height': 300, 'crop': 'fill'},
+                    {'quality': 'auto'},
+                    {'fetch_format': 'auto'}
+                ]
+            )
+            
+            # Save URL to user profile
+            request.user.profile.avatar_url = upload_result['secure_url']
+            request.user.profile.save()
+            
+        
+            return JsonResponse({
+                'success': True, 
+                'url': upload_result['secure_url']
+            })
+            
+        except Exception as e:
+            return JsonResponse({'success': False, 'error': str(e)})
+    
+    return JsonResponse({'success': False, 'error': 'Invalid request method'})
+
+@login_required
+def remove_avatar(request):
+    """Remove avatar from Cloudinary and profile."""
+    if request.method == 'POST':
+        try:
+            # Delete from Cloudinary if URL exists
+            if request.user.profile.avatar_url:
+                public_id = f"user_avatars/user_{request.user.id}"
+                cloudinary.uploader.destroy(public_id)
+            
+            # Remove URL from profile
+            request.user.profile.avatar_url = None
+            request.user.profile.save()
+            
+            return JsonResponse({'success': True})
+            
+        except Exception as e:
+            return JsonResponse({'success': False, 'error': str(e)})
+    
+    return JsonResponse({'success': False, 'error': 'Invalid request method'})
+
+@login_required
+def profile_view(request):
+    return render(request, 'profile.html', {'user': request.user})
 
 
 @login_required
@@ -989,7 +1066,6 @@ This email was sent to {email} because you requested a password reset.
     # GET request - show the form
     return render(request, 'registration/password_reset_form.html')
 
-
 def custom_login(request: HttpRequest) -> HttpResponse:
     """Custom login view with comprehensive error handling and logging."""
     
@@ -1143,32 +1219,118 @@ class CustomLoginView(LoginView):
 class CustomPasswordResetView(PasswordResetView):
     """
     Custom password reset view with styled form and messages.
+    MODIFIED: Now sends plain text emails instead of HTML
     """
     form_class = CustomPasswordResetForm
     template_name = 'registration/password_reset_form.html'
-    email_template_name = 'registration/password_reset_email.html'
-    subject_template_name = 'registration/password_reset_subject.txt'
+    
+    # REMOVED: email_template_name = 'registration/password_reset_email.html'  # This was causing HTML emails
+    # REMOVED: subject_template_name = 'registration/password_reset_subject.txt'
+    
     success_url = reverse_lazy('password_reset_done')
     
     def form_valid(self, form):
         """
         Handle successful form submission with custom success message.
+        MODIFIED: Now sends plain text email manually
         """
         # Get the email from the form
         email = form.cleaned_data['email']
         
-        # Add success message
-        messages.success(
-            self.request, 
-            f'Password reset instructions have been sent to {email}. Please check your email.'
-        )
+        # Check if user exists
+        try:
+            from django.contrib.auth.models import User
+            user = User.objects.get(email=email)
+            
+            # Send plain text email manually
+            self.send_plain_text_email(user, email)
+            
+            # Add success message
+            messages.success(
+                self.request,
+                f'Password reset instructions have been sent to {email}. Please check your email.'
+            )
+            
+            return redirect(self.success_url)
+            
+        except User.DoesNotExist:
+            # Handle non-existent user (security: don't reveal if email exists)
+            messages.success(
+                self.request,
+                f'If an account with {email} exists, password reset instructions have been sent.'
+            )
+            return redirect(self.success_url)
+    
+    def send_plain_text_email(self, user, email):
+        """Send plain text password reset email"""
+        from django.contrib.auth.tokens import default_token_generator
+        from django.utils.http import urlsafe_base64_encode
+        from django.utils.encoding import force_bytes
+        from django.contrib.sites.shortcuts import get_current_site
+        from django.core.mail import send_mail
+        from django.conf import settings
+        import threading
         
-        return super().form_valid(form)
+        def send_reset_email():
+            try:
+                
+                # Generate token
+                token = default_token_generator.make_token(user)
+                uid = urlsafe_base64_encode(force_bytes(user.pk))
+                
+                # Get domain
+                current_site = get_current_site(self.request)
+                domain = current_site.domain
+                protocol = 'https' if self.request.is_secure() else 'http'
+                
+                # Create reset URL
+                reset_url = f"{protocol}://{domain}/accounts/reset/{uid}/{token}/"
+                
+                # Plain text email message
+                subject = "Reset your Promethia password"
+                message = f"""Hello {user.get_full_name() or user.username},
+
+You requested a password reset for your Promethia Training Calendar account.
+
+Click this link to reset your password:
+{reset_url}
+
+This link will expire in 24 hours.
+
+If you didn't request this password reset, please ignore this email.
+
+Best regards,
+The Promethia Team
+
+---
+This email was sent to {email} because you requested a password reset.
+"""
+                
+                
+                # Send email
+                result = send_mail(
+                    subject=subject,
+                    message=message,
+                    from_email=settings.DEFAULT_FROM_EMAIL,
+                    recipient_list=[email],
+                    fail_silently=False,
+                )
+                
+                
+            except Exception as e:
+                import traceback
+                traceback.print_exc()
+        
+        # Send email in background thread
+        email_thread = threading.Thread(target=send_reset_email)
+        email_thread.daemon = False
+        email_thread.start()
     
     def form_invalid(self, form):
         """
         Handle form validation errors.
         """
+        
         # Add error message for general form issues
         if form.non_field_errors():
             for error in form.non_field_errors():

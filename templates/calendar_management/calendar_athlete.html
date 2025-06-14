@@ -2,7 +2,6 @@
 {% load static %}
 {% load calendar_extras %}
 
-
 {% block page_title %}
   {% if is_coach_view %}
     {{ viewing_athlete.get_full_name }}'s Calendar
@@ -32,7 +31,8 @@
   <div class="col-12">
     <div class="card">
       <div class="card-body">
-        <div class="row align-items-center">
+        <!-- Desktop Layout: Title and buttons side by side -->
+        <div class="row align-items-center d-none d-md-flex">
           <div class="col-md-6">
             <h4 class="mb-0">
               <i class="fas fa-calendar-alt mr-2 text-primary"></i>
@@ -53,7 +53,6 @@
             <div class="float-right">
               {% if is_coach_view %}
                 <!-- Coach viewing athlete - different navigation -->
-
                 <!-- View Toggle for Coach -->
                 <div class="btn-group mr-3" role="group">
                   <a href="{% url 'calendar_management:coach_athlete_view' viewing_athlete.id %}?view=month&year={{ year }}&month={{ month }}" 
@@ -92,6 +91,83 @@
                     <i class="fas fa-plus"></i> Add Event
                   </button>
                   <div class="dropdown-menu">
+                    <a class="dropdown-item" href="{% url 'session_create' %}">
+                      <i class="fas fa-running"></i> Training Session
+                    </a>
+                    <a class="dropdown-item" href="{% url 'race_events:race_create' %}">
+                      <i class="fas fa-trophy"></i> Race
+                    </a>
+                    <div class="dropdown-divider"></div>
+                    <a class="dropdown-item" href="{% url 'calendar_management:create_custom_event' %}">
+                      <i class="fas fa-star"></i> Custom Event
+                    </a>
+                  </div>
+                </div>
+              {% endif %}
+            </div>
+          </div>
+        </div>
+
+        <!-- Mobile Layout: Title on top, buttons below -->
+        <div class="d-block d-md-none">
+          <!-- Title Section -->
+          <div class="mb-3">
+            <h4 class="mb-1">
+              <i class="fas fa-calendar-alt mr-2 text-primary"></i>
+              {% if is_coach_view %}
+                {{ viewing_athlete.get_full_name }}'s Calendar
+              {% else %}
+                My Training Calendar
+              {% endif %}
+            </h4>
+            {% if is_coach_view %}
+              <small class="text-muted">
+                <i class="fas fa-user-tie mr-1"></i>
+                Viewing as coach
+              </small>
+            {% endif %}
+          </div>
+
+          <!-- Buttons Section -->
+          <div class="row">
+            <div class="col-12">
+              {% if is_coach_view %}
+                <!-- Coach Mobile Controls -->
+                <div class="btn-group btn-group-sm w-100 mb-2" role="group">
+                  <a href="{% url 'calendar_management:coach_athlete_view' viewing_athlete.id %}?view=month&year={{ year }}&month={{ month }}" 
+                     class="btn btn-outline-primary {% if view_type == 'month' %}active{% endif %}">
+                    <i class="fas fa-calendar"></i> Month
+                  </a>
+                  <a href="{% url 'calendar_management:coach_athlete_view' viewing_athlete.id %}?view=week&week_start={{ week_start_date|date:'Y-m-d' }}" 
+                     class="btn btn-outline-primary {% if view_type == 'week' %}active{% endif %}">
+                    <i class="fas fa-calendar-week"></i> Week
+                  </a>
+                </div>
+                
+                <div class="btn-group btn-group-sm w-100" role="group">
+                  <a href="{% url 'session_create' %}?athlete={{ viewing_athlete.id }}" class="btn btn-success btn-block">
+                    <i class="fas fa-plus"></i> Add Training
+                  </a>
+                </div>
+              {% else %}
+                <!-- Athlete Mobile Controls -->
+                <div class="btn-group btn-group-sm w-100 mb-2" role="group">
+                  <a href="{% url 'calendar_management:view' %}?view=month&year={{ year }}&month={{ month }}" 
+                     class="btn btn-outline-primary {% if view_type == 'month' %}active{% endif %}">
+                    <i class="fas fa-calendar"></i> Month
+                  </a>
+                  <a href="{% url 'calendar_management:view' %}?view=week&week_start={{ week_start_date|date:'Y-m-d' }}" 
+                     class="btn btn-outline-primary {% if view_type == 'week' %}active{% endif %}">
+                    <i class="fas fa-calendar-week"></i> Week
+                  </a>
+                </div>
+                
+                <!-- Mobile Add Event Dropdown -->
+                <div class="btn-group btn-group-sm w-100" role="group">
+                  <button type="button" class="btn btn-success dropdown-toggle btn-block" data-toggle="dropdown">
+                    <i class="fas fa-plus"></i> Add Event
+                  </button>
+                  <div class="dropdown-menu w-100">
                     <a class="dropdown-item" href="{% url 'session_create' %}">
                       <i class="fas fa-running"></i> Training Session
                     </a>
@@ -266,7 +342,7 @@
   </div>
 
 {% else %}
-  <!-- Week View - Using Same Style as Monthly View -->
+  <!-- Week View - Desktop and Mobile Responsive -->
   <div class="row">
     <div class="col-12">
       <div class="card card-primary">
@@ -327,7 +403,9 @@
           </div>
         </div>
         <div class="card-body p-0">
-          <div class="calendar-week-view">
+          
+          <!-- Desktop Week View (Hidden on Mobile) -->
+          <div class="calendar-week-view d-none d-md-block">
             <!-- Week Days Header -->
             <div class="calendar-header">
               {% if week_days %}
@@ -348,46 +426,84 @@
             </div>
             
             <!-- Week Days Body -->
-          <div class="calendar-body">
-            <div class="calendar-week">
-              {% if week_days %}
-                {% for day in week_days %}
-                  <div class="calendar-day week-day
-                      {% if day.date == today %}calendar-day-today{% endif %}"
-                      data-date="{{ day.date|date:'Y-m-d' }}"
-                      tabindex="0">
-                    <div class="day-number {% if day.date == today %}today{% endif %}">{{ day.day_num }}</div>
-                    <div class="day-events">
-                      {% for event in week_events %}
-                        {% if event.date == day.date %}
-                          <!-- FIXED: Corrected conditional logic -->
-                          {% if is_coach_view %}
-                            {% include 'calendar_management/partials/event_card.html' with event=event %}
-                          {% else %}
-                            {% include 'calendar_management/partials/event_card.html' with event=event %}
+            <div class="calendar-body">
+              <div class="calendar-week">
+                {% if week_days %}
+                  {% for day in week_days %}
+                    <div class="calendar-day week-day
+                        {% if day.date == today %}calendar-day-today{% endif %}"
+                        data-date="{{ day.date|date:'Y-m-d' }}"
+                        data-day-name="{{ day.date|date:'l, F j' }}"
+                        tabindex="0">
+                      <div class="day-number {% if day.date == today %}today{% endif %}">{{ day.day_num }}</div>
+                      <div class="day-events">
+                        {% for event in week_events %}
+                          {% if event.date == day.date %}
+                            {% if is_coach_view %}
+                              {% include 'calendar_management/partials/event_card.html' with event=event %}
+                            {% else %}
+                              {% include 'calendar_management/partials/event_card.html' with event=event %}
+                            {% endif %}
                           {% endif %}
-                        {% endif %}
-                      {% endfor %}
+                        {% endfor %}
+                      </div>
                     </div>
-                  </div>
-                {% endfor %}
-              {% else %}
-                <!-- Fallback for 7 days if week_days is not available -->
-                {% for day_num in "1234567"|make_list %}
-                  <div class="calendar-day week-day" 
-                       data-date="{% now 'Y-m-d' %}"
-                       tabindex="0">
-                    <div class="day-number">{{ forloop.counter }}</div>
-                    <div class="day-events">
-                      <!-- Events will be populated here -->
+                  {% endfor %}
+                {% else %}
+                  <!-- Fallback for 7 days if week_days is not available -->
+                  {% for day_num in "1234567"|make_list %}
+                    <div class="calendar-day week-day" 
+                         data-date="{% now 'Y-m-d' %}"
+                         tabindex="0">
+                      <div class="day-number">{{ forloop.counter }}</div>
+                      <div class="day-events">
+                        <!-- Events will be populated here -->
+                      </div>
                     </div>
-                  </div>
-                {% endfor %}
-              {% endif %}
+                  {% endfor %}
+                {% endif %}
+              </div>
             </div>
           </div>
-          </div>
         </div>
+  <!-- Mobile Week View (Vertical List) -->
+          <div class="calendar-week-mobile d-block d-md-none">
+            {% if week_days %}
+              {% for day in week_days %}
+                <div class="calendar-day mobile-vertical-day 
+                           {% if day.date == today %}calendar-day-today{% endif %}" 
+                     data-date="{{ day.date|date:'Y-m-d' }}"
+                     tabindex="0">
+                  
+                  <!-- Day Header with day number on left and day name on right -->
+                  <div class="mobile-day-header">
+                    <div class="day-number {% if day.date == today %}today{% endif %}">{{ day.day_num }}</div>
+                    <div class="mobile-day-label">
+                      {{ day.date|date:"l, F j" }}
+                    </div>
+                  </div>
+                  
+                  <!-- Day Events -->
+                  <div class="day-events">
+                    {% for event in week_events %}
+                      {% if event.date == day.date %}
+                        {% if is_coach_view %}
+                          {% include 'calendar_management/partials/event_card.html' with event=event %}
+                        {% else %}
+                          {% include 'calendar_management/partials/event_card.html' with event=event %}
+                        {% endif %}
+                      {% endif %}
+                    {% endfor %}
+                  </div>
+                </div>
+              {% endfor %}
+            {% else %}
+              <!-- Fallback mobile view -->
+              <div class="text-center p-4">
+                <p class="text-muted">No week data available</p>
+              </div>
+            {% endif %}
+          </div>
       </div>
     </div>
   </div>
@@ -482,12 +598,11 @@
     </div>
   </div>
 </div>
-
 {% if volume_data %}
 <!-- Volume Widgets Row -->
 <div class="row">
   <!-- Total Volume -->
-  <div class="col-lg-3 col-md-6 col-12">
+  <div class="col-lg-3 col-md-6 col-12 mb-3">
     <div class="small-box bg-primary">
       <div class="inner">
         <h3>{{ volume_data.total.sessions }}</h3>
@@ -503,7 +618,7 @@
   </div>
 
   <!-- Running Volume (including trail) -->
-  <div class="col-lg-3 col-md-6 col-12">
+  <div class="col-lg-3 col-md-6 col-12 mb-3">
     <div class="small-box bg-success">
       <div class="inner">
         <h3>{{ volume_data.running.sessions }}</h3>
@@ -519,7 +634,7 @@
   </div>
 
   <!-- Cycling Volume -->
-  <div class="col-lg-3 col-md-6 col-12">
+  <div class="col-lg-3 col-md-6 col-12 mb-3">
     <div class="small-box bg-info">
       <div class="inner">
         <h3>{{ volume_data.cycling.sessions }}</h3>
@@ -535,7 +650,7 @@
   </div>
 
   <!-- Swimming Volume -->
-  <div class="col-lg-3 col-md-6 col-12">
+  <div class="col-lg-3 col-md-6 col-12 mb-3">
     <div class="small-box bg-warning">
       <div class="inner">
         <h3>{{ volume_data.swimming.sessions }}</h3>
@@ -549,6 +664,7 @@
       </div>
     </div>
   </div>
+</div>
 </div>
 
 <!-- Visual Chart and Breakdown -->
@@ -928,7 +1044,7 @@
                             if (viewType === 'month') {
                                 return 'Monthly Training Distribution';
                             } else if (viewType === 'week') {
-                                return 'Week Training Distribution';
+                                return 'Weekly Training Distribution';
                             } else {
                                 return 'Training Distribution';
                             }
@@ -1034,5 +1150,6 @@
     // Also make chart creation available globally for debugging
     window.createTrainingChart = createTrainingChart;
     window.showChartFallback = showChartFallback;
+
 </script>
 {% endblock %}
