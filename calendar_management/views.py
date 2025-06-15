@@ -246,7 +246,7 @@ def get_month_events(user, start_date, end_date):
                     'event_type': 'custom',
                     'sport': 'custom',
                     'athlete': custom_event.user,
-                    'description': custom_event.note or '',
+                    'description': custom_event.description or '',
                     'color': custom_event.color or '#6c757d',
                     'duration_days': (custom_event.end_date - custom_event.start_date).days + 1,
                     'start_time': datetime_time(0, 0),
@@ -302,7 +302,7 @@ def create_custom_event(request, event_id=None):
             title = form.cleaned_data['title']
             start_date = form.cleaned_data['start_date']
             end_date = form.cleaned_data['end_date']
-            note = form.cleaned_data.get('note', '')
+            description = form.cleaned_data.get('description', '')
             color = form.cleaned_data.get('color', '#6c757d')
             
             if event_id:
@@ -310,7 +310,7 @@ def create_custom_event(request, event_id=None):
                 event.title = title
                 event.start_date = start_date
                 event.end_date = end_date
-                event.note = note
+                event.description = description
                 event.color = color
                 event.save()
                 
@@ -327,7 +327,7 @@ def create_custom_event(request, event_id=None):
                         title=title,
                         start_date=current_date,
                         end_date=current_date,  # Each entry is single-day
-                        note=note,
+                        description=description,
                         color=color
                     )
                     custom_event.save()
