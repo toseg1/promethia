@@ -25,7 +25,7 @@ class CustomEventAdmin(admin.ModelAdmin):
     ]
     search_fields = [
         'title',
-        'note',
+        'description',
         'user__username',
         'user__first_name',
         'user__last_name',
@@ -41,7 +41,7 @@ class CustomEventAdmin(admin.ModelAdmin):
     
     fieldsets = (
         ('Event Information', {
-            'fields': ('title', 'note', 'user')
+            'fields': ('title', 'description', 'user')
         }),
         ('Schedule', {
             'fields': ('start_date', 'end_date', 'duration_days_display')
@@ -127,7 +127,7 @@ class CustomEventAdmin(admin.ModelAdmin):
                         <div style="font-size: 11px; color: #6c757d; margin-top: 2px;">
                             {obj.date_range}
                         </div>
-                        {f'<div style="font-size: 11px; color: #6c757d; margin-top: 2px; line-height: 1.2;">{obj.note[:50]}{"..." if len(obj.note) > 50 else ""}</div>' if obj.note else ''}
+                        {f'<div style="font-size: 11px; color: #6c757d; margin-top: 2px; line-height: 1.2;">{obj.description[:50]}{"..." if len(obj.description) > 50 else ""}</div>' if obj.description else ''}
                     </div>
                 </div>
             </div>
@@ -201,7 +201,7 @@ class CustomEventAdmin(admin.ModelAdmin):
             new_event = CustomEvent(
                 user=event.user,
                 title=f"{event.title} (Copy)",
-                note=event.note,
+                description=event.description,
                 color=event.color,
                 start_date=event.start_date + timedelta(days=7),
                 end_date=event.end_date + timedelta(days=7)
@@ -237,7 +237,7 @@ class CustomEventAdmin(admin.ModelAdmin):
                 event.end_date,
                 event.duration_days,
                 event.color,
-                event.note,
+                event.description,
                 event.created_at.strftime('%Y-%m-%d %H:%M:%S')
             ])
         

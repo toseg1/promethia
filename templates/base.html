@@ -101,9 +101,16 @@
           </a>
         {% endif %}
         
+        {% if current_view == 'coach' %}
           <a class="dropdown-item" href="{% url 'race_events:race_list' %}">
             <i class="fas fa-trophy"></i> Athletes' Races
           </a>
+        {% else %}
+          <a class="dropdown-item" href="{% url 'race_events:race_list' %}">
+            <i class="fas fa-trophy"></i> My Races
+          </a>
+
+          {% endif %}
 
           <a class="dropdown-item" href="{% url 'vma_calculator' %}">
             <i class="fas fa-heart-pulse"></i> MAS Calculator

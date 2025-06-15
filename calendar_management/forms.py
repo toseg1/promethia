@@ -9,14 +9,14 @@ class CustomEventForm(forms.ModelForm):
     
     class Meta:
         model = CustomEvent
-        fields = ['title', 'note', 'color', 'start_date', 'end_date']
+        fields = ['title', 'description', 'color', 'start_date', 'end_date']
         widgets = {
             'title': forms.TextInput(attrs={
                 'class': 'form-control',
                 'placeholder': 'Enter event title...',
                 'maxlength': 200,
             }),
-            'note': forms.Textarea(attrs={
+            'description': forms.Textarea(attrs={
                 'class': 'form-control',
                 'rows': 3,
                 'placeholder': 'Add any additional notes...',
@@ -35,14 +35,14 @@ class CustomEventForm(forms.ModelForm):
         }
         labels = {
             'title': 'Event Title',
-            'note': 'Notes',
+            'description': 'Notes',
             'color': 'Calendar Color',
             'start_date': 'Start Date',
             'end_date': 'End Date',
         }
         help_texts = {
             'title': 'Give your event a descriptive title',
-            'note': 'Add any relevant details about this event',
+            'description': 'Add any relevant details about this event',
             'color': 'Choose a color to help identify this event type',
             'start_date': 'When does this event start?',
             'end_date': 'When does this event end? (can be same day)',
@@ -73,7 +73,7 @@ class CustomEventForm(forms.ModelForm):
         self.fields['end_date'].required = True
         
         # Optional fields
-        self.fields['note'].required = False
+        self.fields['description'].required = False
         self.fields['color'].required = False
         
         # Add CSS classes for better styling

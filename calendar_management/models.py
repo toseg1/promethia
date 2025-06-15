@@ -34,7 +34,7 @@ class CustomEvent(models.Model):
         max_length=200,
         help_text="Title of your custom event"
     )
-    note = models.TextField(
+    description = models.TextField(
         blank=True,
         help_text="Additional notes about this event"
     )
