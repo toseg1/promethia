@@ -11,6 +11,7 @@ SPORT_CHOICES = [
     ('trail', 'Trail Running'),
     ('triathlon', 'Triathlon'),
     ('duathlon', 'Duathlon'),
+    ('strength', 'Strength'),
     ('other', 'Other'),
 ]
 
@@ -50,6 +51,7 @@ SPORT_COLORS = {
     'trail': '#6f42c1',        # Purple
     'triathlon': '#fd7e14',    # Orange
     'other': '#6c757d',        # Gray
+    'strength': '#e83e8c',       # Pink
 }
 
 # Sport icons for UI consistency  
@@ -59,7 +61,8 @@ SPORT_ICONS = {
     'cycling': 'fas fa-bicycle',
     'trail': 'fas fa-mountain',
     'triathlon': 'fas fa-fire',
-    'other': 'fas fa-dumbbell',
+    'other': 'fa-solid fa-stopwatch-20',
+    'strength': 'fas fa-dumbbell',
 }
 
 # Common field names - for reference during standardization
