@@ -1,0 +1,45 @@
+{% extends 'base.html' %}
+
+{% block title %}Delete Account - Promethia{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="row justify-content-center">
+        <div class="col-md-6">
+            <div class="card border-danger">
+                <div class="card-header bg-danger text-white">
+                    <h3>Delete Account</h3>
+                </div>
+                <div class="card-body">
+                    <div class="alert alert-warning">
+                        <strong>Warning:</strong> This action cannot be undone!
+                    </div>
+                    
+                    <p>Deleting your account will permanently remove:</p>
+                    <ul>
+                        <li>Your profile and personal information</li>
+                        <li>All training sessions and data</li>
+                        <li>Race results and events</li>
+                        <li>Coach-athlete relationships</li>
+                        <li>All calendar events</li>
+                    </ul>
+                    
+                    <p><strong>This action complies with GDPR Article 17 (Right to Erasure).</strong></p>
+                    
+                    <form method="post">
+                        {% csrf_token %}
+                        <div class="d-grid gap-2">
+                            <button type="submit" class="btn btn-danger">
+                                Yes, Delete My Account and All Data
+                            </button>
+                            <a href="{% url 'dashboard' %}" class="btn btn-secondary">
+                                Cancel
+                            </a>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

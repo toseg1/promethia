@@ -31,5 +31,7 @@ urlpatterns = [
     path('profile/', views.profile_view, name='profile'),
     path('accounts/login/', views.custom_login, name='login'),  # Override Django's login
     path('accounts/logout/', views.custom_logout, name='logout'),
-
+    path('privacy-policy/', views.privacy_policy, name='privacy_policy'),
+    path('delete-account/', views.delete_account, name='delete_account'),
+    path('remove-coach/<int:coach_id>/', views.remove_coach, name='remove_coach'),
 ]

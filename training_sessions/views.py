@@ -490,4 +490,3 @@ def session_completed(request, session_id):
         return redirect('session_detail', session_id=session.id)
     
     return render(request, 'training_sessions/session_confirm_complete.html', {'session': session})
-

@@ -10,7 +10,6 @@
 {% endblock %}
 
 {% block extra_css %}
-<!-- Remove Cropper.js CSS line -->
 <!-- Profile-specific styles -->
 <link rel="stylesheet" href="{% static 'css/profile.css' %}">
 <style>
@@ -22,7 +21,8 @@
     height: 20px;
 }
 </style>
- 	{% endblock %}
+{% endblock %}
+
 {% block content %}
 <div class="container-fluid">
   <div class="row">
@@ -53,7 +53,7 @@
           </button>
           
           {% if user.profile.avatar_url %}
-            <button type="button" class="btn btn-outline-danger btn-sm mt-1" data-toggle="modal" data-target="#confirmRemoveModal">
+            <button type="button" class="btn btn-outline-danger btn-sm mt-1" data-toggle="modal" data-target="#confirmRemovePictureModal">
               <i class="fas fa-trash"></i> Remove Picture
             </button>
           {% endif %}
@@ -304,33 +304,129 @@
   </div>
 </div>
 
-<!-- Image Cropper Modal -->
-<div class="modal fade" id="confirmRemoveModal" tabindex="-1" role="dialog" aria-labelledby="confirmRemoveModalLabel" aria-hidden="true">
-  <div class="modal-dialog modal-dialog-centered" role="document">
-    <div class="modal-content border-danger">
-      <div class="modal-header bg-danger text-white">
-        <h5 class="modal-title" id="confirmRemoveModalLabel">
-          <i class="fas fa-exclamation-triangle mr-2"></i>Confirm Removal
-        </h5>
-        <button type="button" class="close text-white" data-dismiss="modal" aria-label="Close">
-          <span aria-hidden="true">&times;</span>
-        </button>
-      </div>
-      <div class="modal-body">
-        Are you sure you want to remove your profile picture?
-      </div>
-      <div class="modal-footer">
-        <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancel</button>
-        <button type="button" class="btn btn-danger" id="remove-avatar-btn">Yes, Remove</button>
+<!-- Privacy Policy and Account Management Section -->
+<div class="container-fluid mt-5">
+  <div class="row">
+    <div class="col-12">
+      <div class="card border-secondary">
+        <div class="card-header bg-light">
+          <h6 class="mb-0 text-secondary">
+            <i class="fas fa-shield-alt mr-2"></i>Privacy & Account Management
+          </h6>
+        </div>
+        <div class="card-body">
+          
+          <!-- Current Coaches Section -->
+          {% if user.profile.is_athlete %}
+            {% with active_coaches=user.coaches.all %}
+              {% if active_coaches %}
+                <div class="mb-4">
+                  <h6 class="text-primary">
+                    <i class="fas fa-users mr-2"></i>Your Coaches
+                  </h6>
+                  <p class="text-muted small mb-3">These coaches have access to your training data. You can withdraw consent at any time.</p>
+                  
+                  {% for relationship in active_coaches %}
+                    {% if relationship.status == 'active' %}
+                      <div class="alert alert-light border" role="alert">
+                        <div class="row align-items-center">
+                          <div class="col-8">
+                            <h6 class="mb-1">
+                              <i class="fas fa-user-tie mr-2"></i>
+                              {{ relationship.coach.get_full_name }}
+                            </h6>
+                            <small class="text-muted">
+                              <i class="fas fa-calendar mr-1"></i>
+                              Coaching since {{ relationship.created_at|date:"M d, Y" }}
+                            </small>
+                          </div>
+                          <div class="col-4 text-right">
+                            <button type="button" class="btn btn-warning btn-sm" 
+                                    data-toggle="modal" 
+                                    data-target="#removeCoachModal{{ relationship.id }}"
+                                    onclick="console.log('Button clicked for coach: {{ relationship.coach.get_full_name }}')">
+                              <i class="fas fa-user-minus mr-1"></i>
+                              Remove Coach
+                            </button>
+                          </div>
+                        </div>
+                      </div>
+                      
+                      <!-- Individual Remove Coach Modal for each relationship -->
+                      <div class="modal fade" id="removeCoachModal{{ relationship.id }}" tabindex="-1" role="dialog">
+                        <div class="modal-dialog modal-dialog-centered" role="document">
+                          <div class="modal-content border-warning">
+                            <div class="modal-header bg-warning text-dark">
+                              <h5 class="modal-title">
+                                <i class="fas fa-user-minus mr-2"></i>Remove Coach
+                              </h5>
+                              <button type="button" class="close" data-dismiss="modal">
+                                <span>&times;</span>
+                              </button>
+                            </div>
+                            <div class="modal-body">
+                              <div class="alert alert-info">
+                                <strong><i class="fas fa-info-circle mr-1"></i>GDPR Notice:</strong> This withdraws your consent for data sharing.
+                              </div>
+                              <p>Are you sure you want to remove <strong>{{ relationship.coach.get_full_name }}</strong> as your coach?</p>
+                              <p>After removal:</p>
+                              <ul>
+                                <li>They will no longer have access to your training data</li>
+                                <li>They cannot create training sessions for you</li>
+                                <li>They cannot view your performance metrics</li>
+                              </ul>
+                            </div>
+                            <div class="modal-footer">
+                              <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancel</button>
+                              <form method="post" action="{% url 'remove_coach' relationship.coach.id %}" style="display: inline;">
+                                {% csrf_token %}
+                                <button type="submit" class="btn btn-warning">
+                                  <i class="fas fa-user-minus mr-1"></i>Yes, Remove Coach
+                                </button>
+                              </form>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    {% endif %}
+                  {% endfor %}
+                  <hr>
+                </div>
+              {% endif %}
+            {% endwith %}
+          {% endif %}
+          
+          <!-- Privacy Policy and Delete Account Row -->
+          <div class="row align-items-center">
+            <div class="col-md-6">
+              <div>
+                <i class="fas fa-file-alt mr-2 text-info"></i>
+                <a href="{% url 'privacy_policy' %}" class="text-decoration-none" target="_blank">
+                  Privacy Policy
+                </a>
+                <br>
+                <small class="text-muted">Learn how we protect and use your data</small>
+              </div>
+            </div>
+            <div class="col-md-6 text-md-right mt-3 mt-md-0">
+              <button type="button" class="btn btn-outline-danger btn-sm" data-toggle="modal" data-target="#deleteAccountModal">
+                <i class="fas fa-user-times mr-1"></i>
+                Delete Account
+              </button>
+            </div>
+          </div>
+        </div>
       </div>
     </div>
   </div>
 </div>
-<div class="modal fade" id="confirmRemoveModal" tabindex="-1" role="dialog" aria-labelledby="confirmRemoveModalLabel" aria-hidden="true">
+
+<!-- Remove Picture Modal -->
+<div class="modal fade" id="confirmRemovePictureModal" tabindex="-1" role="dialog" aria-labelledby="confirmRemovePictureModalLabel" aria-hidden="true">
   <div class="modal-dialog modal-dialog-centered" role="document">
     <div class="modal-content border-danger">
       <div class="modal-header bg-danger text-white">
-        <h5 class="modal-title" id="confirmRemoveModalLabel">
+        <h5 class="modal-title" id="confirmRemovePictureModalLabel">
           <i class="fas fa-exclamation-triangle mr-2"></i>Confirm Removal
         </h5>
         <button type="button" class="close text-white" data-dismiss="modal" aria-label="Close">
@@ -342,7 +438,7 @@
       </div>
       <div class="modal-footer">
         <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancel</button>
-        <form method="post" action="{% url 'remove_profile_picture' %}">
+        <form method="post" action="{% url 'remove_profile_picture' %}" style="display: inline;">
           {% csrf_token %}
           <button type="submit" class="btn btn-danger">Yes, Remove</button>
         </form>
@@ -351,6 +447,46 @@
   </div>
 </div>
 
+<!-- Delete Account Modal -->
+<div class="modal fade" id="deleteAccountModal" tabindex="-1" role="dialog">
+  <div class="modal-dialog modal-dialog-centered" role="document">
+    <div class="modal-content border-danger">
+      <div class="modal-header bg-danger text-white">
+        <h5 class="modal-title">
+          <i class="fas fa-exclamation-triangle mr-2"></i>Delete Account
+        </h5>
+        <button type="button" class="close text-white" data-dismiss="modal">
+          <span>&times;</span>
+        </button>
+      </div>
+      <div class="modal-body">
+        <div class="alert alert-warning">
+          <strong>Warning:</strong> This action cannot be undone!
+        </div>
+        <p>This will permanently remove all your data including training sessions, race results, and coach relationships.</p>
+        <p><strong>GDPR Article 17 (Right to Erasure)</strong></p>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancel</button>
+        <a href="{% url 'delete_account' %}" class="btn btn-danger">Yes, Delete My Account</a>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+$(document).ready(function() {
+    console.log('Page loaded, ready for interactions');
+    
+    // Test if jQuery and Bootstrap are working
+    $('[data-toggle="tooltip"]').tooltip();
+    
+    // Simple click test
+    $('button[data-target*="removeCoachModal"]').on('click', function() {
+        console.log('Remove coach button clicked');
+    });
+});
+</script>
 {% endblock %}
 
 {% block extra_js %}
@@ -433,7 +569,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 updateProfileImage(null);
                 showMessage('Profile picture removed successfully!', 'success');
                 // Close modal
-                $('#confirmRemoveModal').modal('hide');
+                $('#confirmRemovePictureModal').modal('hide');
             } else {
                 showMessage('Error removing profile picture', 'error');
             }
@@ -445,7 +581,7 @@ document.addEventListener('DOMContentLoaded', function() {
     
     function updateProfileImage(url) {
     const container = document.querySelector('.profile-image-container');
-    const removeButton = document.querySelector('[data-target="#confirmRemoveModal"]');
+    const removeButton = document.querySelector('[data-target="#confirmRemovePictureModal"]');
     
     if (url) {
         container.innerHTML = `
