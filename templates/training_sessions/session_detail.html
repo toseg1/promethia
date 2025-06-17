@@ -138,7 +138,444 @@
         </div>
     </div>
        </div>
+
+  <!-- ENHANCED: Training Repetitions Section with improved design -->
+<div class="row">
+  <div class="col-12">
+    <div class="card card-warning card-outline">
+      <div class="card-header">
+        <h3 class="card-title">
+          <i class="fas fa-repeat mr-2"></i>
+          Training Structure
+        </h3>
+        <div class="card-tools">
+          {% if can_edit %}
+          <a href="{% url 'session_edit' session.id %}" class="btn btn-sm btn-warning">
+            <i class="fas fa-edit mr-1"></i>
+            Edit Structure
+          </a>
+          {% endif %}
+        </div>
+      </div>
+      <div class="card-body">
+        {% if session.repetitions.exists %}
+          {% regroup session.repetitions.all by block_number as block_groups %}
+          {% for block_group in block_groups %}
+          <div class="training-block-display mb-4">
+            <div class="training-block-detail">
+              <!-- Enhanced Block Header -->
+              <div class="training-block-header-detail">
+                <div class="d-flex justify-content-between align-items-center">
+                  <div class="d-flex align-items-center">
+                    <i class="fas fa-cube mr-3"></i>
+                    <div>
+                     <h5 class="mb-1">Training Block {{ block_group.grouper }}</h5>
+{% with block_group.list.0 as first_rep %}
+  {% if first_rep.block_repeat_count > 1 %}
+    <small class="text-light">
+      <i class="fas fa-redo mr-1"></i>
+      Repeat this entire block {{ first_rep.block_repeat_count }} times
+    </small>
+  {% endif %}
+  {% if first_rep.block_rest_time_value %}
+    <small class="text-light d-block">
+      <i class="fas fa-pause mr-1"></i>
+      Block rest: {{ first_rep.block_rest_time_value }}{{ first_rep.block_rest_time_unit }}
+    </small>
+  {% endif %}
+{% endwith %}
+                    </div>
+                  </div>
+                </div>
+              </div>
+              
+              <!-- Enhanced Block Content -->
+              <div class="training-block-content-detail">
+                {% for rep in block_group.list %}
+                <div class="repetition-detail-row">
+                  <!-- Repetition Header -->
+                  <div class="repetition-header-detail">
+                    <div class="d-flex justify-content-between align-items-center">
+                      <div class="d-flex align-items-center">
+                        <div class="rep-number-badge">
+                          {{ rep.repetition_number }}
+                        </div>
+                        <div class="ml-3">
+                          <strong>Repetition {{ rep.repetition_number }}</strong>
+                          {% if rep.repetition_count > 1 %}
+                            <span class="badge badge-info ml-2">{{ rep.repetition_count }}x</span>
+                          {% endif %}
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                  
+                  <!-- Parameter Groups Display -->
+                  <div class="parameter-groups-display">
+                    <!-- Training Parameters -->
+                    <div class="parameter-group-display training-display">
+                      <div class="parameter-group-header-display">
+                        <i class="fas fa-running mr-2"></i>
+                        <strong>Training Target</strong>
+                      </div>
+                      <div class="parameter-group-content-display">
+                        <div class="parameter-row">
+                          <div class="parameter-item">
+                            <label class="parameter-label">Distance</label>
+                            <div class="parameter-value">
+                              {% if rep.distance %}
+                                <span class="value-highlight">{{ rep.distance }}{{ rep.distance_unit }}</span>
+                              {% else %}
+                                <span class="text-muted">—</span>
+                              {% endif %}
+                            </div>
+                          </div>
+                          <div class="parameter-item">
+                            <label class="parameter-label">Duration</label>
+                            <div class="parameter-value">
+                              {% if rep.duration_value %}
+                                <span class="value-highlight">{{ rep.duration_value }}{{ rep.duration_unit }}</span>
+                              {% else %}
+                                <span class="text-muted">—</span>
+                              {% endif %}
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                    
+                    <!-- Rest Parameters -->
+                    <div class="parameter-group-display rest-display">
+                      <div class="parameter-group-header-display">
+                        <i class="fas fa-pause mr-2"></i>
+                        <strong>Recovery</strong>
+                      </div>
+                      <div class="parameter-group-content-display">
+                        <div class="parameter-row">
+                          <div class="parameter-item">
+                            <label class="parameter-label">Rest Time</label>
+                            <div class="parameter-value">
+                              {% if rep.rest_time_value %}
+                                <span class="value-highlight rest-value">{{ rep.rest_time_value }}{{ rep.rest_time_unit }}</span>
+                              {% else %}
+                                <span class="text-muted">—</span>
+                              {% endif %}
+                            </div>
+                          </div>
+                          <div class="parameter-item">
+                            <label class="parameter-label">Rest Distance</label>
+                            <div class="parameter-value">
+                              {% if rep.rest_distance_value %}
+                                <span class="value-highlight rest-value">{{ rep.rest_distance_value }}{{ rep.rest_distance_unit }}</span>
+                              {% else %}
+                                <span class="text-muted">—</span>
+                              {% endif %}
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                    
+                    <!-- Intensity Parameters -->
+                    <div class="parameter-group-display intensity-display">
+                      <div class="parameter-group-header-display">
+                        <i class="fas fa-tachometer-alt mr-2"></i>
+                        <strong>Intensity</strong>
+                      </div>
+                      <div class="parameter-group-content-display">
+                        <div class="parameter-row">
+                          <div class="parameter-item">
+                            <label class="parameter-label">Percentage</label>
+                            <div class="parameter-value">
+                              {% if rep.intensity_percentage %}
+                                <span class="value-highlight intensity-value">{{ rep.intensity_percentage }}%</span>
+                              {% else %}
+                                <span class="text-muted">—</span>
+                              {% endif %}
+                            </div>
+                          </div>
+                          <div class="parameter-item">
+                            <label class="parameter-label">Level</label>
+                            <div class="parameter-value">
+                              {% if rep.intensity %}
+                                <span class="badge badge-intensity-{{ rep.intensity }}">{{ rep.get_intensity_display }}</span>
+                              {% else %}
+                                <span class="text-muted">—</span>
+                              {% endif %}
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                  
+                  <!-- Notes Section -->
+                  {% if rep.notes %}
+                  <div class="notes-display">
+                    <div class="notes-header">
+                      <i class="fas fa-sticky-note mr-2"></i>
+                      <strong>Notes</strong>
+                    </div>
+                    <div class="notes-content">
+                      {{ rep.notes }}
+                    </div>
+                  </div>
+                  {% endif %}
+                </div>
+                {% endfor %}
+              </div>
+            </div>
+          </div>
+          {% endfor %}
+        {% else %}
+          <div class="text-center py-5">
+            <div class="empty-state">
+              <i class="fas fa-repeat fa-4x text-muted mb-4"></i>
+              <h4 class="text-muted">No Training Structure Defined</h4>
+              <p class="text-muted mb-4">Add training blocks and repetitions to structure this workout with specific targets, intensities, and rest periods.</p>
+              {% if can_edit %}
+              <a href="{% url 'session_edit' session.id %}" class="btn btn-warning btn-lg">
+                <i class="fas fa-plus mr-2"></i>
+                Add Training Structure
+              </a>
+              {% endif %}
+            </div>
+          </div>
+        {% endif %}
+      </div>
     </div>
+  </div>
+</div>
+
+<style>
+/* ENHANCED: Session Detail Display Styles */
+.training-block-detail {
+  border: 2px solid #e9ecef;
+  border-radius: 12px;
+  margin-bottom: 25px;
+  background: #ffffff;
+  box-shadow: 0 3px 6px rgba(0,0,0,0.1);
+  overflow: hidden;
+}
+
+.training-block-header-detail {
+  background: linear-gradient(135deg, #ffc107, #ffb300);
+  color: #212529;
+  padding: 20px 25px;
+  font-weight: 600;
+}
+
+.training-block-content-detail {
+  padding: 0;
+}
+
+.repetition-detail-row {
+  border-bottom: 1px solid #e9ecef;
+  background: #ffffff;
+}
+
+.repetition-detail-row:last-child {
+  border-bottom: none;
+}
+
+.repetition-header-detail {
+  background: linear-gradient(90deg, #f8f9fa, #e9ecef);
+  padding: 15px 25px;
+  border-bottom: 1px solid #dee2e6;
+}
+
+.rep-number-badge {
+  background: linear-gradient(135deg, #007bff, #0056b3);
+  color: white;
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: bold;
+  font-size: 16px;
+}
+
+/* Parameter Groups Display */
+.parameter-groups-display {
+  display: flex;
+  padding: 20px 25px;
+  gap: 20px;
+  flex-wrap: wrap;
+}
+
+.parameter-group-display {
+  flex: 1;
+  min-width: 200px;
+  border: 1px solid #dee2e6;
+  border-radius: 8px;
+  overflow: hidden;
+  background: #ffffff;
+}
+
+.parameter-group-header-display {
+  padding: 12px 15px;
+  font-size: 14px;
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+}
+
+.training-display .parameter-group-header-display {
+  background: linear-gradient(90deg, #d4edda, #c3e6cb);
+  color: #155724;
+  border-bottom: 1px solid #c3e6cb;
+}
+
+.rest-display .parameter-group-header-display {
+  background: linear-gradient(90deg, #fff3cd, #ffeaa7);
+  color: #856404;
+  border-bottom: 1px solid #ffeaa7;
+}
+
+.intensity-display .parameter-group-header-display {
+  background: linear-gradient(90deg, #f8d7da, #f5c6cb);
+  color: #721c24;
+  border-bottom: 1px solid #f5c6cb;
+}
+
+.parameter-group-content-display {
+  padding: 15px;
+}
+
+.parameter-row {
+  display: flex;
+  gap: 15px;
+  flex-wrap: wrap;
+}
+
+.parameter-item {
+  flex: 1;
+  min-width: 80px;
+}
+
+.parameter-label {
+  display: block;
+  font-size: 11px;
+  color: #6c757d;
+  margin-bottom: 5px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.parameter-value {
+  font-size: 14px;
+}
+
+.value-highlight {
+  background: #f8f9fa;
+  padding: 4px 8px;
+  border-radius: 4px;
+  font-weight: 600;
+  color: #495057;
+  border: 1px solid #e9ecef;
+}
+
+.rest-value {
+  background: #fff3cd !important;
+  border-color: #ffeaa7 !important;
+  color: #856404 !important;
+}
+
+.intensity-value {
+  background: #f8d7da !important;
+  border-color: #f5c6cb !important;
+  color: #721c24 !important;
+}
+
+/* Intensity Level Badges */
+.badge-intensity-easy {
+  background: #28a745;
+  color: white;
+}
+
+.badge-intensity-moderate {
+  background: #ffc107;
+  color: #212529;
+}
+
+.badge-intensity-hard {
+  background: #fd7e14;
+  color: white;
+}
+
+.badge-intensity-very_hard {
+  background: #dc3545;
+  color: white;
+}
+
+.badge-intensity-recovery {
+  background: #6c757d;
+  color: white;
+}
+
+/* Notes Display */
+.notes-display {
+  background: #f8f9fa;
+  padding: 15px 25px;
+  border-top: 1px solid #e9ecef;
+}
+
+.notes-header {
+  font-size: 13px;
+  font-weight: 600;
+  color: #495057;
+  margin-bottom: 8px;
+  display: flex;
+  align-items: center;
+}
+
+.notes-content {
+  color: #6c757d;
+  font-style: italic;
+  line-height: 1.4;
+}
+
+/* Block Stats */
+.block-stats {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+/* Empty State */
+.empty-state {
+  max-width: 400px;
+  margin: 0 auto;
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+  .parameter-groups-display {
+    flex-direction: column;
+    padding: 15px 20px;
+  }
+  
+  .parameter-group-display {
+    min-width: 100%;
+  }
+  
+  .training-block-header-detail,
+  .repetition-header-detail,
+  .notes-display {
+    padding-left: 15px;
+    padding-right: 15px;
+  }
+  
+  .parameter-row {
+    flex-direction: column;
+    gap: 10px;
+  }
+}
+</style>
+</div>
   <!-- Session Status & Actions -->
   <div class="col-lg-4">
     <div class="card card-success card-outline">

@@ -7,7 +7,7 @@ from django.contrib import messages
 from datetime import datetime, timedelta
 import calendar
 from .models import TrainingSession
-from .forms import TrainingSessionForm
+from .forms import TrainingSessionForm, TrainingRepetitionFormSet
 from user_management.models import CoachAthleteRelationship
 from datetime import datetime, timedelta, date, time as datetime_time
 from collections import defaultdict
@@ -228,12 +228,12 @@ def get_month_events(user, start_date, end_date):
 
 @login_required
 def session_create(request):
-    # Get current view mode
-    current_view = get_current_view_mode(request)
-    
-    # Get athlete from URL parameter if provided
-    athlete_id = request.GET.get('athlete')
+    """Create new training session with optional repetitions."""
+    # Get parameters from URL
     date_param = request.GET.get('date')
+    athlete_id = request.GET.get('athlete_id')
+    current_view = request.GET.get('view', 'athlete')
+    
     selected_athlete = None
     
     initial_data = {}
@@ -266,14 +266,12 @@ def session_create(request):
     athlete_choices = None
     if request.user.profile.role == 'coach':
         if current_view == 'coach':
-            # Coach view - show coached athletes
             coached_relationships = CoachAthleteRelationship.objects.filter(
                 coach=request.user,
                 status='active'
             )
             athlete_choices = [(rel.athlete.id, rel.athlete.get_full_name()) 
                              for rel in coached_relationships]
-        # For athlete view, the form will handle adding the coach themselves
     
     if request.method == 'POST':
         form = TrainingSessionForm(
@@ -282,9 +280,21 @@ def session_create(request):
             user=request.user,
             current_view=current_view
         )
-        if form.is_valid():
-            session = form.save(commit=False)
+        
+        repetition_formset = TrainingRepetitionFormSet(request.POST, prefix='repetitions')
 
+        # SIMPLE DEBUG: Just check the POST data
+        print("🔍 DEBUG: Raw POST data:")
+        for key, value in request.POST.items():
+            if 'repetitions' in key:
+                print(f"  {key} = {value}")
+
+        print(f"🔍 DEBUG: Formset is bound: {repetition_formset.is_bound}")
+        print(f"🔍 DEBUG: Formset prefix: {repetition_formset.prefix}")
+
+        
+        if form.is_valid() and repetition_formset.is_valid():
+            session = form.save(commit=False)
             session.created_by = request.user
             
             # Auto-assign athlete for athlete users if not specified
@@ -292,6 +302,17 @@ def session_create(request):
                 session.athlete = request.user
             
             session.save()
+            
+            # Save repetitions
+            repetitions = repetition_formset.save(commit=False)
+            for repetition in repetitions:
+                repetition.session = session
+                repetition.save()
+            
+            # Handle deleted repetitions
+            for obj in repetition_formset.deleted_objects:
+                obj.delete()
+            
             messages.success(request, 'Training session created successfully!')
             return redirect('session_detail', session.id)
     else:
@@ -301,9 +322,11 @@ def session_create(request):
             user=request.user,
             current_view=current_view
         )
+        repetition_formset = TrainingRepetitionFormSet(prefix='repetitions')
     
     context = {
         'form': form,
+        'repetition_formset': repetition_formset,
         'selected_athlete': selected_athlete,
         'current_view': current_view,
         'page_title': 'Create Training Session'
@@ -315,10 +338,39 @@ def session_create(request):
 @login_required
 def session_detail(request, session_id):
     """View training session details."""
+    session = get_object_or_404(
+        TrainingSession.objects.prefetch_related('repetitions'), 
+        id=session_id
+    )
+    
+    # Check if user can edit this session
+    can_edit = (
+        session.athlete == request.user or
+        session.created_by == request.user or
+        (hasattr(request.user, 'profile') and 
+         request.user.profile.role == 'coach' and 
+         CoachAthleteRelationship.objects.filter(
+             coach=request.user, 
+             athlete=session.athlete, 
+             status='active'
+         ).exists())
+    )
+    
+    context = {
+        'session': session,
+        'can_edit': can_edit
+    }
+    
+    return render(request, 'training_sessions/session_detail.html', context)
+
+
+@login_required
+def session_edit(request, session_id):
+    """Edit training session with optional repetitions."""
     session = get_object_or_404(TrainingSession, id=session_id)
     
     # Check permissions
-    can_view = (
+    can_edit = (
         session.athlete == request.user or
         session.created_by == request.user or
         (request.user.profile.is_coach and 
@@ -329,69 +381,56 @@ def session_detail(request, session_id):
          ).exists())
     )
     
-    if not can_view:
-        messages.error(request, 'You do not have permission to view this session.')
-        return redirect('dashboard')
-    
-    return render(request, 'training_sessions/session_detail.html', {'session': session})
-
-
-@login_required
-def session_edit(request, session_id):
-    """Edit training session."""
-    session = get_object_or_404(TrainingSession, id=session_id)
-    
-    # Check permissions
-    can_edit = (
-        session.athlete == request.user or  # Athlete can edit their own
-        session.created_by == request.user or  # Creator can edit
-        (request.user.profile.is_coach and
-         CoachAthleteRelationship.objects.filter(
-             coach=request.user,
-             athlete=session.athlete,
-             status='active'
-         ).exists())  # Coach can edit their athlete's sessions
-    )
-    
     if not can_edit:
         messages.error(request, 'You do not have permission to edit this session.')
         return redirect('dashboard')
     
-    # Set athlete choices based on user role
-    if request.user.profile.is_athlete:
-        athlete_choices = [(request.user.id, request.user.get_full_name())]
-    else:
-        my_athletes = CoachAthleteRelationship.objects.filter(
+    # Prepare athlete choices
+    athlete_choices = None
+    if request.user.profile.role == 'coach':
+        coached_relationships = CoachAthleteRelationship.objects.filter(
             coach=request.user,
             status='active'
         )
-        athlete_choices = [(rel.athlete.id, rel.athlete.get_full_name()) for rel in my_athletes]
+        athlete_choices = [(rel.athlete.id, rel.athlete.get_full_name()) 
+                          for rel in coached_relationships]
     
     if request.method == 'POST':
-        form = TrainingSessionForm(request.POST, instance=session, athlete_choices=athlete_choices)
-        if form.is_valid():
-            form.save()
-            messages.success(request, 'Training session updated successfully!')
-            return redirect('session_detail', session_id=session.id)  # Better to redirect to session detail
-    else:
-        # Create form with instance (this automatically populates fields)
-        form = TrainingSessionForm(instance=session, athlete_choices=athlete_choices)
+        form = TrainingSessionForm(
+            request.POST, 
+            instance=session, 
+            athlete_choices=athlete_choices
+        )
         
-        # Optional: Explicitly set initial values if needed
-        form.initial.update({
-            'title': session.title,
-            'athlete': session.athlete.id if session.athlete else None,
-            'date': session.date,
-            'start_time': session.start_time,
-            'duration_minutes': session.duration_minutes,
-            'description': session.description,
-            'status': session.status,
-        })
+        repetition_formset = TrainingRepetitionFormSet(
+            request.POST, 
+            instance=session
+        )
+        
+        if form.is_valid() and repetition_formset.is_valid():
+            session = form.save()
+            
+            # Save repetitions
+            repetitions = repetition_formset.save(commit=False)
+            for repetition in repetitions:
+                repetition.session = session
+                repetition.save()
+            
+            # Handle deleted repetitions
+            for obj in repetition_formset.deleted_objects:
+                obj.delete()
+            
+            messages.success(request, 'Training session updated successfully!')
+            return redirect('session_detail', session_id=session.id)
+    else:
+        form = TrainingSessionForm(instance=session, athlete_choices=athlete_choices)
+        repetition_formset = TrainingRepetitionFormSet(instance=session)
     
     return render(request, 'training_sessions/session_form.html', {
         'form': form, 
+        'repetition_formset': repetition_formset,
         'title': 'Edit Training Session',
-        'session': session  # Pass session for additional context in template
+        'session': session
     })
 
 
