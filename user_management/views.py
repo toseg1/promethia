@@ -54,6 +54,12 @@ def signup(request):
         email = request.POST.get('email', 'unknown')
         username = request.POST.get('username', 'unknown')
         log_info(logger, f"Registration attempt", username=username, email=email)
+
+        # Check if privacy policy was accepted
+        privacy_accepted = request.POST.get('privacy_policy_accepted')
+        if not privacy_accepted:
+            messages.error(request, "You must accept the Privacy Policy to create an account.")
+            return render(request, 'registration/signup.html', {'form': form})
         
         if form.is_valid():
             try:
@@ -100,6 +106,21 @@ def signup(request):
     
     return render(request, 'registration/signup.html', {'form': form})
 
+@login_required
+def delete_account(request):
+    """Allow users to delete their account and all associated data."""
+    if request.method == 'POST':
+        user = request.user
+        # Log the deletion for audit purposes
+        logger.info(f"User {user.username} requested account deletion")
+        
+        # Delete the user account (this will cascade and delete related data)
+        user.delete()
+        
+        messages.success(request, "Your account and all associated data have been permanently deleted.")
+        return redirect('login')  # or wherever you want to redirect
+    
+    return render(request, 'user_management/delete_account_confirm.html')
 
 @login_required
 def upload_avatar(request):
@@ -176,7 +197,6 @@ def remove_avatar(request):
 def profile_view(request):
     return render(request, 'profile.html', {'user': request.user})
 
-
 @login_required
 def profile_edit(request):
     """Edit user profile."""
@@ -211,6 +231,27 @@ def profile_edit(request):
                 return JsonResponse({'success': False, 'errors': form.errors})
     else:
         form = ProfileForm(instance=request.user.profile)
+
+
+    # Prepare context
+    context = {'form': form}
+    
+    # Debug: Let's see what relationships exist
+    print(f"DEBUG: User {request.user.username} is_athlete: {request.user.profile.is_athlete}")
+    
+    # Add coach relationships for athletes - FIXED the related_name
+    if request.user.profile.is_athlete:
+        # Use the correct related_name from your model: 'coaches'
+        active_coaches = CoachAthleteRelationship.objects.filter(
+            athlete=request.user,
+            status='active'
+        ).select_related('coach', 'coach__profile')
+        
+        print(f"DEBUG: Found {active_coaches.count()} active coaches")
+        for coach_rel in active_coaches:
+            print(f"DEBUG: Coach: {coach_rel.coach.get_full_name()}, Status: {coach_rel.status}")
+        
+        context['active_coaches'] = active_coaches
     
     return render(request, 'user_management/profile_edit.html', {'form': form})
 
@@ -1337,3 +1378,45 @@ This email was sent to {email} because you requested a password reset.
                 messages.error(self.request, error)
         
         return super().form_invalid(form)
+    
+
+def privacy_policy(request):
+    """Display the privacy policy page."""
+    return render(request, 'user_management/privacy_policy.html')
+
+@login_required
+def remove_coach(request, coach_id):
+    """
+    Allow athletes to remove themselves from a coach relationship (withdraw consent)
+    """
+    try:
+        # Get the coach
+        coach = get_object_or_404(User, id=coach_id)
+        
+        # Find and delete the relationship where this user is the athlete
+        relationship = get_object_or_404(
+            CoachAthleteRelationship,
+            coach=coach,
+            athlete=request.user,
+            status='active'
+        )
+        
+        # Store coach name for the message
+        coach_name = coach.get_full_name()
+        
+        # Delete the relationship (withdraw consent)
+        relationship.delete()
+        
+        # Success message
+        messages.success(request, f'You have successfully removed {coach_name} as your coach. They no longer have access to your training data.')
+        
+        # Redirect back to profile edit
+        return redirect('profile_edit')
+        
+    except CoachAthleteRelationship.DoesNotExist:
+        messages.error(request, 'You are not being coached by this person.')
+        return redirect('profile_edit')
+        
+    except Exception as e:
+        messages.error(request, f'Error removing coach: {str(e)}')
+        return redirect('profile_edit')
