@@ -3,9 +3,10 @@ Forms for training sessions - FIXED with athlete field visible.
 """
 from django import forms
 from django.contrib.auth.models import User
-from .models import TrainingSession
+from .models import TrainingSession, TrainingRepetition
 from user_management.models import CoachAthleteRelationship
 from training_calendar.constants import SPORT_CHOICES, INTENSITY_CHOICES, STATUS_CHOICES
+from django.forms import inlineformset_factory
 
 
 class TrainingSessionForm(forms.ModelForm):
@@ -136,3 +137,118 @@ class TrainingSessionForm(forms.ModelForm):
                 'placeholder': 'Workout details, target zones, instructions...'
             }),
         }
+
+class TrainingRepetitionForm(forms.ModelForm):
+    """Simple form for individual training repetitions."""
+    
+    class Meta:
+        model = TrainingRepetition
+        fields = [
+            'block_number', 'block_repeat_count', 'repetition_number', 'repetition_count',
+            'distance', 'distance_unit', 'duration_value', 'duration_unit',
+            'intensity_percentage', 'intensity', 'rest_time_value', 'rest_time_unit', 
+            'rest_distance_value', 'rest_distance_unit', 'notes',
+            'block_rest_time_value', 'block_rest_time_unit'
+        ]
+        
+        widgets = {
+            'block_number': forms.NumberInput(attrs={
+                'class': 'form-control form-control-sm',
+                'min': '1',
+                'style': 'width: 60px;'
+            }),
+            'block_repeat_count': forms.NumberInput(attrs={
+                'class': 'form-control form-control-sm',
+                'min': '1',
+                'value': '1',
+                'style': 'width: 60px;'
+            }),
+            'repetition_number': forms.NumberInput(attrs={
+                'class': 'form-control form-control-sm',
+                'min': '1',
+                'style': 'width: 60px;'
+            }),
+            'distance': forms.NumberInput(attrs={
+                'class': 'form-control form-control-sm',
+                'placeholder': '800',
+                'step': '0.1',
+                'min': '0',
+                'style': 'width: 70px;'
+            }),
+            'distance_unit': forms.Select(attrs={
+                'class': 'form-control form-control-sm',
+                'style': 'width: 50px;'
+            }),
+            'duration_value': forms.NumberInput(attrs={
+                'class': 'form-control form-control-sm',
+                'placeholder': '5',
+                'min': '1',
+                'style': 'width: 60px;'
+            }),
+            'duration_unit': forms.Select(attrs={
+                'class': 'form-control form-control-sm',
+                'style': 'width: 60px;'
+            }),
+            'intensity_percentage': forms.NumberInput(attrs={
+                'class': 'form-control form-control-sm',
+                'placeholder': '85',
+                'min': '1',
+                'max': '100',
+                'style': 'width: 60px;'
+            }),
+            'intensity': forms.Select(attrs={
+                'class': 'form-control form-control-sm'
+            }),
+            'rest_time_value': forms.NumberInput(attrs={
+                'class': 'form-control form-control-sm',
+                'placeholder': '2',
+                'min': '0',
+                'style': 'width: 60px;'
+            }),
+            'rest_time_unit': forms.Select(attrs={
+                'class': 'form-control form-control-sm',
+                'style': 'width: 60px;'
+            }),
+            'rest_distance_value': forms.NumberInput(attrs={
+                'class': 'form-control form-control-sm',
+                'placeholder': '200',
+                'step': '0.1',
+                'min': '0',
+                'style': 'width: 70px;'
+            }),
+            'rest_distance_unit': forms.Select(attrs={
+                'class': 'form-control form-control-sm',
+                'style': 'width: 50px;'
+            }),
+            'notes': forms.TextInput(attrs={
+                'class': 'form-control form-control-sm',
+                'placeholder': '5K pace...'
+            }),
+            'repetition_count': forms.NumberInput(attrs={
+                'class': 'form-control form-control-sm',
+                'min': '1',
+                'value': '1',
+                'style': 'width: 60px;'
+            }),
+            'block_rest_time_value': forms.NumberInput(attrs={
+                'class': 'form-control form-control-sm',
+                'placeholder': '2',
+                'min': '0',
+                'style': 'width: 60px;'
+            }),
+            'block_rest_time_unit': forms.Select(attrs={
+                'class': 'form-control form-control-sm',
+                'style': 'width: 60px;'
+            }),
+        }
+
+# Create inline formset for repetitions directly on session
+TrainingRepetitionFormSet = inlineformset_factory(
+    TrainingSession,
+    TrainingRepetition,
+    form=TrainingRepetitionForm,
+    extra=0,
+    can_delete=True,
+    min_num=0,
+    validate_min=True
+)

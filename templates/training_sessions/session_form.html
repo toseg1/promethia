@@ -136,13 +136,79 @@
               </div>
             </div>
           </div>
+
+    <!-- Block-Grouped Repetitions Section -->
+          <div class="form-group">
+            <div class="d-flex justify-content-between align-items-center mb-3">
+              <h5 class="mb-0">
+                <i class="fas fa-repeat mr-2"></i>
+                Training Repetitions
+                <small class="text-muted">(Optional)</small>
+              </h5>
+              <button type="button" id="toggle-repetitions" class="btn btn-sm btn-outline-primary">
+                <i class="fas fa-plus mr-1"></i>
+                Add Repetitions
+              </button>
+            </div>
+            
+            <div id="repetitions-section" class="collapse">
+              <div class="alert alert-info">
+                <i class="fas fa-info-circle mr-2"></i>
+                Create blocks of repetitions. Fill in all fields manually to structure your workout.
+                You can group repetitions into blocks and set how many times each block repeats.
+              </div>
+              
+              {{ repetition_formset.management_form }}
+              
+              <div id="blocks-container">
+                <!-- Blocks will be dynamically grouped here -->
+              </div>
+              
+              <!-- Hidden template forms -->
+              <div id="form-templates" style="display: none;">
+                {% for form in repetition_formset %}
+                  <div class="template-form" 
+                       data-block="{{ form.block_number.value|default:'1' }}"
+                       data-form-index="{{ forloop.counter0 }}">
+                    {{ form.block_number }}
+                    {{ form.block_repeat_count }}
+                    {{ form.repetition_number }}
+                    {{ form.repetition_count }} 
+                    {{ form.distance }}
+                    {{ form.distance_unit }}
+                    {{ form.duration_value }}
+                    {{ form.duration_unit }}
+                    {{ form.intensity_percentage }}
+                    {{ form.intensity }}
+                    {{ form.rest_time_value }}
+                    {{ form.rest_time_unit }}
+                    {{ form.rest_distance_value }}
+                    {{ form.rest_distance_unit }}
+                    {{ form.notes }}
+                    {{ form.block_rest_time_value }}    <!-- ADD THIS -->
+                    {{ form.block_rest_time_unit }}
+                    {% for hidden in form.hidden_fields %}
+                      {{ hidden }}
+                    {% endfor %}
+                    
+                    {% if form.errors %}
+                      <div class="form-errors">{{ form.errors }}</div>
+                    {% endif %}
+                  </div>
+                {% endfor %}
+              </div>
+              
+              
+            </div>
+          </div>
+        </div>
         
         <div class="card-footer">
-          <button type="submit" class="btn btn-primary" >
+          <button type="submit" class="btn btn-primary">
             <i class="fas fa-save mr-1"></i>
- {% if race %}Update Session{% else %}Save Session{% endif %}
+            Save Session
           </button>
-          <a href="{% url 'dashboard' %}" class="btn btn-secondary"onclick="goBack()">
+          <a href="{% url 'dashboard' %}" class="btn btn-secondary" onclick="goBack()">
             <i class="fas fa-times mr-1"></i>
             Cancel
           </a>
@@ -153,14 +219,1376 @@
 </div>
 {% endblock %}
 {% block extra_js %}
+{{ block.super }}
+<style>
+/* ENHANCED: Improved repetition styling with better mobile organization */
+.training-block {
+    border: 2px solid #e9ecef;
+    border-radius: 12px;
+    margin-bottom: 25px;
+    background: #f8f9fa;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+
+.training-block-header {
+    background: linear-gradient(135deg, #007bff, #0056b3);
+    color: white;
+    padding: 15px 20px;
+    border-radius: 10px 10px 0 0;
+    font-weight: bold;
+}
+
+.training-block-content {
+    padding: 20px;
+    background: white;
+    border-radius: 0 0 10px 10px;
+}
+
+.repetition-row {
+    border: 2px solid #e9ecef;
+    border-radius: 8px;
+    margin-bottom: 15px;
+    background: #ffffff;
+    overflow: hidden;
+    transition: all 0.2s ease;
+}
+
+.repetition-row:hover {
+    border-color: #007bff;
+    box-shadow: 0 2px 8px rgba(0,123,255,0.15);
+}
+
+.repetition-row.has-errors {
+    border-color: #dc3545;
+    background-color: #fff5f5;
+}
+
+.repetition-header {
+    background: linear-gradient(90deg, #f8f9fa, #e9ecef);
+    padding: 12px 15px;
+    border-bottom: 1px solid #dee2e6;
+}
+
+.repetition-content {
+    /* Container for all repetition content */
+}
+
+/* Parameter Groups Layout */
+.parameter-groups {
+    display: flex;
+    gap: 15px;
+    padding: 15px;
+    flex-wrap: wrap;
+}
+
+.parameter-group {
+    flex: 1;
+    min-width: 200px;
+    border: 1px solid #dee2e6;
+    border-radius: 6px;
+    overflow: hidden;
+}
+
+.parameter-group-header {
+    background: #f8f9fa;
+    padding: 8px 12px;
+    font-size: 13px;
+    font-weight: 600;
+    display: flex;
+    align-items: center;
+    border-bottom: 1px solid #dee2e6;
+}
+
+.training-group .parameter-group-header {
+    background: linear-gradient(90deg, #d4edda, #c3e6cb);
+    color: #155724;
+}
+
+.rest-group .parameter-group-header {
+    background: linear-gradient(90deg, #fff3cd, #ffeaa7);
+    color: #856404;
+}
+
+.intensity-group .parameter-group-header {
+    background: linear-gradient(90deg, #f8d7da, #f5c6cb);
+    color: #721c24;
+}
+
+.parameter-group-content {
+    padding: 12px;
+    background: #ffffff;
+}
+
+.parameter-section {
+    margin-bottom: 12px;
+}
+
+.parameter-section:last-child {
+    margin-bottom: 0;
+}
+
+.section-label {
+    display: block;
+    font-size: 11px;
+    color: #6c757d;
+    margin-bottom: 4px;
+    font-weight: 500;
+}
+
+/* Notes Section */
+.notes-section {
+    padding: 12px 15px;
+    background: #f8f9fa;
+    border-top: 1px solid #dee2e6;
+}
+
+.notes-section .section-label {
+    margin-bottom: 6px;
+    color: #495057;
+    font-weight: 500;
+}
+
+/* Form Controls */
+.field-group {
+    display: inline-block;
+    margin-right: 15px;
+    vertical-align: top;
+}
+
+.field-group label {
+    display: block;
+    font-size: 11px;
+    color: #6c757d;
+    margin-bottom: 3px;
+    font-weight: 500;
+}
+
+.field-group input,
+.field-group select {
+    width: auto !important;
+    display: inline-block !important;
+}
+
+/* Add Controls */
+.add-controls {
+    background: linear-gradient(135deg, #f8f9fa, #e9ecef);
+    padding: 20px;
+    border-radius: 8px;
+    margin-bottom: 20px;
+    border: 2px dashed #dee2e6;
+}
+
+.add-controls:hover {
+    border-color: #007bff;
+    background: linear-gradient(135deg, #e3f2fd, #bbdefb);
+}
+
+/* Form Errors */
+.form-errors {
+    background-color: #f8d7da;
+    border: 1px solid #f5c6cb;
+    color: #721c24;
+    padding: 10px;
+    border-radius: 4px;
+    margin: 10px 0;
+    font-size: 12px;
+}
+
+.form-errors ul {
+    margin: 0;
+    padding-left: 20px;
+}
+
+/* Badges */
+.rep-count-badge {
+    font-size: 10px !important;
+}
+
+.repeat-badge {
+    font-size: 11px !important;
+}
+
+/* Button Improvements */
+.btn-sm {
+    border-radius: 4px;
+    font-weight: 500;
+}
+
+.add-rep-to-block {
+    background: linear-gradient(135deg, #28a745, #20c997);
+    border: none;
+    transition: all 0.2s ease;
+}
+
+.add-rep-to-block:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 2px 4px rgba(40,167,69,0.3);
+}
+
+/* ENHANCED: Mobile Design Improvements */
+@media (max-width: 768px) {
+    /* Block Header Mobile Layout */
+    .training-block-header {
+        padding: 12px 15px;
+    }
+    
+    .training-block-header .d-flex {
+        flex-direction: column;
+        gap: 12px;
+    }
+    
+    /* Mobile Block Controls Container */
+    .mobile-block-controls {
+        display: flex;
+        flex-direction: column;
+        gap: 8px;
+        width: 100%;
+    }
+    
+    /* Mobile Block Info Row */
+    .mobile-block-info {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 8px;
+        align-items: center;
+        justify-content: space-between;
+    }
+    
+    /* Mobile Block Actions Row */
+    .mobile-block-actions {
+        display: flex;
+        gap: 8px;
+        justify-content: stretch;
+    }
+    
+    .mobile-block-actions .btn {
+        flex: 1;
+        font-size: 12px;
+        padding: 6px 8px;
+    }
+    
+    /* Parameter Groups Mobile */
+    .parameter-groups {
+        flex-direction: column;
+        padding: 12px;
+        gap: 12px;
+    }
+    
+    .parameter-group {
+        min-width: 100%;
+    }
+    
+    .parameter-group-content {
+        padding: 10px;
+    }
+    
+    /* Repetition Header Mobile */
+    .repetition-header {
+        padding: 10px 12px;
+    }
+    
+    .repetition-header .d-flex {
+        flex-direction: column;
+        gap: 8px;
+    }
+    
+    .repetition-header .d-flex > div:first-child {
+        flex-direction: row;
+        flex-wrap: wrap;
+    }
+    
+    /* Field Groups Mobile */
+    .field-group {
+        margin-right: 8px;
+        margin-bottom: 6px;
+    }
+    
+    /* Notes Section Mobile */
+    .notes-section {
+        padding: 10px 12px;
+    }
+    
+    /* Add Controls Mobile */
+    .add-controls {
+        padding: 15px;
+        margin-bottom: 15px;
+    }
+    
+    .add-controls .btn {
+        font-size: 14px;
+        padding: 8px 16px;
+    }
+}
+
+/* ENHANCED: Small Mobile (phones) */
+@media (max-width: 576px) {
+    .training-block {
+        margin-bottom: 20px;
+        border-radius: 8px;
+    }
+    
+    .training-block-header {
+        padding: 10px 12px;
+        border-radius: 6px 6px 0 0;
+    }
+    
+    .training-block-content {
+        padding: 12px;
+    }
+    
+    /* Ultra-compact block controls */
+    .mobile-block-info {
+        flex-direction: column;
+        align-items: stretch;
+        gap: 6px;
+    }
+    
+    .mobile-block-info > div {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        font-size: 11px;
+    }
+    
+    .mobile-block-actions .btn {
+        font-size: 11px;
+        padding: 5px 6px;
+    }
+    
+    /* Smaller form controls */
+    .form-control-sm {
+        font-size: 12px;
+        padding: 4px 6px;
+    }
+    
+    /* Compact parameter sections */
+    .parameter-section {
+        margin-bottom: 8px;
+    }
+    
+    .parameter-group-header {
+        padding: 6px 10px;
+        font-size: 12px;
+    }
+    
+    .parameter-group-content {
+        padding: 8px;
+    }
+    
+    /* Badges smaller */
+    .rep-count-badge,
+    .repeat-badge {
+        font-size: 9px !important;
+        padding: 2px 4px;
+    }
+    
+    /* Field labels smaller */
+    .field-group label,
+    .section-label {
+        font-size: 10px;
+    }
+}
+
+/* ENHANCED: Extra small screens */
+@media (max-width: 480px) {
+    .training-block-header span {
+        font-size: 14px;
+    }
+    
+    .mobile-block-info > div {
+        font-size: 10px;
+    }
+    
+    .mobile-block-actions .btn {
+        font-size: 10px;
+        padding: 4px 5px;
+    }
+    
+    /* Stack form controls vertically on very small screens */
+    .d-flex.align-items-center {
+        flex-direction: column !important;
+        align-items: stretch !important;
+        gap: 4px;
+    }
+    
+    .d-flex.align-items-center input,
+    .d-flex.align-items-center select {
+        width: 100% !important;
+        margin: 0 !important;
+    }
+}
+</style>
+
 <script>
 function goBack() {
     if (document.referrer) {
         history.back();
     } else {
-        // Fallback if no referrer (like if user came directly to the page)
         window.location.href = "{% url 'dashboard' %}";
     }
 }
+
+document.addEventListener('DOMContentLoaded', function() {
+    const toggleBtn = document.getElementById('toggle-repetitions');
+    const repetitionsSection = document.getElementById('repetitions-section');
+    const addButton = document.getElementById('add-repetition');
+    const addBlockButton = document.getElementById('add-block');
+    const blocksContainer = document.getElementById('blocks-container');
+    const totalForms = document.getElementById('id_repetitions-TOTAL_FORMS');
+    
+    // Remove old buttons immediately
+    if (addButton) addButton.style.display = 'none';
+    if (addBlockButton) addBlockButton.style.display = 'none';
+    
+    // SIMPLE: Just read the value directly like Django does for other fields
+    function getFormValue(form, fieldName) {
+        const input = form.querySelector(`[name$="-${fieldName}"]`);
+        if (!input) return '';
+        
+        if (input.type === 'checkbox') {
+            return input.checked;
+        }
+        
+        // For select elements, check the selected option
+        if (input.tagName === 'SELECT') {
+            const selectedOption = input.querySelector('option[selected]');
+            if (selectedOption) return selectedOption.value;
+            return input.value || '';
+        }
+        
+        // For regular inputs, just return the value
+        return input.value || '';
+    }
+    
+    // Helper function to get selected option value from Django-rendered selects
+    function getSelectValue(form, fieldName) {
+        const select = form.querySelector(`select[name$="-${fieldName}"]`);
+        if (!select) return '';
+        
+        // Check if there's a selected option
+        const selectedOption = select.querySelector('option[selected]');
+        if (selectedOption) {
+            return selectedOption.value;
+        }
+        
+        // Fallback to the current value
+        return select.value || '';
+    }
+    
+    // Helper function to get form errors
+    function getFormErrors(form) {
+        const errorsDiv = form.querySelector('.form-errors');
+        return errorsDiv ? errorsDiv.innerHTML : '';
+    }
+    
+    // Helper function to check if form has any field errors
+    function hasFormErrors(form) {
+        return form.querySelector('.form-errors') !== null ||
+               form.querySelector('.errorlist') !== null ||
+               form.querySelector('.field-error') !== null ||
+               form.querySelector('.alert-danger') !== null ||
+               form.querySelector('.text-danger') !== null ||
+               form.querySelector('.invalid-feedback') !== null;
+    }
+    
+    // Helper function to set value to form element
+    function setFormValue(form, fieldName, value) {
+        const input = form.querySelector(`[name$="-${fieldName}"]`);
+        if (input) {
+            if (input.type === 'checkbox') {
+                input.checked = value;
+            } else {
+                input.value = value;
+            }
+        }
+    }
+    
+    // FIXED: Better detection for when to show repetitions
+    function shouldAutoShowRepetitions() {
+        const templateForms = document.querySelectorAll('.template-form');
+        
+        console.log('🔍 Auto-show check - found forms:', templateForms.length);
+        
+        // 1. ALWAYS show if there are template forms (user created blocks)
+        if (templateForms.length > 0) {
+            console.log('✅ Auto-show: Template forms exist');
+            return true;
+        }
+        
+        // 2. Check for any form errors on the page (Django validation errors)
+        const hasPageErrors = document.querySelector('.form-errors') || 
+                             document.querySelector('.alert-danger') ||
+                             document.querySelector('.text-danger') ||
+                             document.querySelector('.invalid-feedback') ||
+                             document.querySelector('.errorlist') ||
+                             document.querySelector('.has-error');
+        
+        if (hasPageErrors) {
+            console.log('✅ Auto-show: Page has errors');
+            return true;
+        }
+        
+        // 3. Check if we're in edit mode (URL contains edit)
+        const isEditMode = window.location.href.includes('/edit/') || 
+                          window.location.href.includes('/update/') ||
+                          document.querySelector('input[name$="-id"][value!=""]'); // Hidden ID fields with values
+        
+        if (isEditMode) {
+            console.log('✅ Auto-show: Edit mode detected');
+            return true;
+        }
+        
+        // 4. Check for any hidden form fields with meaningful values
+        const hiddenFields = document.querySelectorAll('input[type="hidden"][name*="repetitions-"]');
+        let hasHiddenData = false;
+        
+        hiddenFields.forEach(field => {
+            // Skip empty values and default values
+            if (field.value && 
+                field.value.trim() !== '' && 
+                field.value !== '0' && 
+                field.value !== 'None' &&
+                !field.name.includes('TOTAL_FORMS') &&
+                !field.name.includes('INITIAL_FORMS')) {
+                
+                console.log('🔍 Found hidden field with data:', field.name, '=', field.value);
+                hasHiddenData = true;
+            }
+        });
+        
+        if (hasHiddenData) {
+            console.log('✅ Auto-show: Hidden form data exists');
+            return true;
+        }
+        
+        // 5. Check if TOTAL_FORMS is greater than 0 (Django sent forms)
+        const totalFormsElement = document.getElementById('id_repetitions-TOTAL_FORMS');
+        if (totalFormsElement) {
+            const totalForms = parseInt(totalFormsElement.value) || 0;
+            if (totalForms > 0) {
+                console.log('✅ Auto-show: TOTAL_FORMS =', totalForms);
+                return true;
+            }
+        }
+        
+        console.log('❌ Auto-show: No conditions met, keeping collapsed');
+        return false;
+    }
+    
+    // FIXED: More reliable initialization that always shows existing data
+    function initializeRepetitionsSection() {
+        if (!toggleBtn || !repetitionsSection) {
+            console.log('❌ Missing required elements for initialization');
+            return;
+        }
+        
+        const templateForms = document.querySelectorAll('.template-form');
+        const shouldShow = shouldAutoShowRepetitions();
+        
+        console.log('🚀 Initialization check:', {
+            templateFormsCount: templateForms.length,
+            shouldShow: shouldShow,
+            currentlyVisible: repetitionsSection.classList.contains('show'),
+            url: window.location.href
+        });
+        
+        // FORCE show if any conditions are met
+        if (shouldShow || templateForms.length > 0) {
+            // Force show the section
+            repetitionsSection.classList.add('show');
+            repetitionsSection.style.display = 'block'; // ADDED: Force display
+            
+            // Update button state
+            toggleBtn.innerHTML = '<i class="fas fa-minus mr-1"></i>Hide Repetitions';
+            toggleBtn.classList.remove('btn-outline-primary');
+            toggleBtn.classList.add('btn-outline-secondary');
+            
+            console.log('✅ FORCED repetitions section to show');
+            
+            // Organize blocks after a longer delay to ensure DOM is fully ready
+            setTimeout(() => {
+                organizeBlocksDisplay();
+                console.log('🔄 Organized blocks after initialization');
+                
+                // Double-check visibility after organization
+                if (!repetitionsSection.classList.contains('show')) {
+                    repetitionsSection.classList.add('show');
+                    repetitionsSection.style.display = 'block';
+                    console.log('🔧 Re-forced visibility after organization');
+                }
+            }, 200); // Increased delay for reliability
+            
+            return true;
+            
+        } else {
+            // Keep collapsed only if really no data
+            repetitionsSection.classList.remove('show');
+            repetitionsSection.style.display = ''; // Reset display
+            
+            toggleBtn.innerHTML = '<i class="fas fa-plus mr-1"></i>Add Repetitions';
+            toggleBtn.classList.remove('btn-outline-secondary');
+            toggleBtn.classList.add('btn-outline-primary');
+            
+            console.log('ℹ️ Keeping repetitions section collapsed');
+            return false;
+        }
+    }
+    
+    function syncValuesToTemplates() {
+        console.log('🔄 Syncing visual forms to template forms...');
+        const visualRows = document.querySelectorAll('.repetition-row[data-form-index]');
+        
+        visualRows.forEach(row => {
+            const formIndex = row.dataset.formIndex;
+            const templateForm = document.querySelector(`.template-form[data-form-index="${formIndex}"]`);
+            
+            if (templateForm) {
+                const fields = [
+                    'block_number', 'repetition_number', 'repetition_count',
+                    'distance', 'distance_unit', 'duration_value', 'duration_unit',
+                    'intensity_percentage', 'intensity', 'rest_time_value', 'rest_time_unit',
+                    'rest_distance_value', 'rest_distance_unit', 'notes',
+                    'block_rest_time_value', 'block_rest_time_unit'
+                ];
+                
+                fields.forEach(field => {
+                    const visualInput = row.querySelector(`[name="repetitions-${formIndex}-${field}"]`);
+                    const templateInput = templateForm.querySelector(`[name="repetitions-${formIndex}-${field}"]`);
+                    
+                    if (visualInput && templateInput) {
+                        if (templateInput.type === 'checkbox') {
+                            templateInput.checked = visualInput.checked;
+                        } else {
+                            templateInput.value = visualInput.value;
+                        }
+                        
+                        console.log(`  ✅ Synced ${field}: "${visualInput.value}" → template`);
+                    }
+                });
+            } else {
+                console.log(`  ❌ No template form found for index ${formIndex}`);
+            }
+        });
+    }
+    
+    function organizeBlocksDisplay() {
+        const templateForms = document.querySelectorAll('.template-form');
+        const blockGroups = {};
+        
+        // Simple grouping - Django has already set the values
+        templateForms.forEach(form => {
+            const blockNum = getFormValue(form, 'block_number') || form.dataset.block || '1';
+            form.dataset.block = blockNum;
+            
+            if (!blockGroups[blockNum]) {
+                blockGroups[blockNum] = [];
+            }
+            blockGroups[blockNum].push(form);
+        });
+        
+        // Clear and rebuild display
+        blocksContainer.innerHTML = '';
+        
+        if (Object.keys(blockGroups).length > 0 || repetitionsSection.classList.contains('show')) {
+            createAddControls();
+            
+            Object.keys(blockGroups).sort((a, b) => parseInt(a) - parseInt(b)).forEach(blockNum => {
+                createBlockDisplay(blockNum, blockGroups[blockNum]);
+            });
+        }
+    }
+    
+    // IMPROVED: Simplified add controls (remove block selection since it's now in block header)
+    function createAddControls() {
+    const controlsDiv = document.createElement('div');
+    controlsDiv.className = 'add-controls';
+    controlsDiv.innerHTML = `
+        <div class="text-center">
+            <button type="button" class="add-new-block-btn btn btn-primary">
+                <i class="fas fa-layer-group mr-1"></i>
+                <span class="d-none d-sm-inline">Add New Block</span>
+                <span class="d-sm-none">New Block</span>
+            </button>
+            <small class="d-block text-muted mt-2">
+                <span class="d-none d-sm-inline">Or use the "Add Repetition" button in each block header</span>
+                <span class="d-sm-none">Or use "Add Rep" in block headers</span>
+            </small>
+        </div>
+    `;
+    
+    blocksContainer.appendChild(controlsDiv);
+}
+    
+    function getBlockOptions() {
+        const templateForms = document.querySelectorAll('.template-form');
+        const blockNumbers = new Set();
+        
+        templateForms.forEach(form => {
+            const blockNum = getFormValue(form, 'block_number') || form.dataset.block || '1';
+            blockNumbers.add(parseInt(blockNum));
+        });
+        
+        if (blockNumbers.size === 0) {
+            blockNumbers.add(1);
+        }
+        
+        const sortedBlocks = Array.from(blockNumbers).sort((a, b) => a - b);
+        
+        return sortedBlocks.map(blockNum => 
+            `<option value="${blockNum}">Block ${blockNum}</option>`
+        ).join('');
+    }
+    
+    function getNextRepetitionNumber(blockNumber) {
+        const templateForms = document.querySelectorAll('.template-form');
+        let maxRep = 0;
+        
+        templateForms.forEach(form => {
+            const formBlockNum = getFormValue(form, 'block_number') || form.dataset.block;
+            if (formBlockNum == blockNumber) {
+                const repNum = parseInt(getFormValue(form, 'repetition_number')) || 0;
+                if (repNum > maxRep) maxRep = repNum;
+            }
+        });
+        
+        return maxRep + 1;
+    }
+    
+    function addRepetitionToBlock(blockNumber) {
+        syncValuesToTemplates();
+        
+        const formCount = parseInt(totalForms.value);
+        const nextRepNum = getNextRepetitionNumber(blockNumber);
+        const newForm = createNewFormTemplate(formCount, blockNumber, nextRepNum);
+        document.getElementById('form-templates').appendChild(newForm);
+        
+        totalForms.value = formCount + 1;
+        organizeBlocksDisplay();
+    }
+    
+    function addNewBlock(blockNumber) {
+        syncValuesToTemplates();
+        
+        const formCount = parseInt(totalForms.value);
+        const newForm = createNewFormTemplate(formCount, blockNumber, 1);
+        document.getElementById('form-templates').appendChild(newForm);
+        
+        totalForms.value = formCount + 1;
+        organizeBlocksDisplay();
+    }
+    
+    // IMPROVED: Enhanced block display with better organization
+    function createBlockDisplay(blockNum, forms) {
+    const blockDiv = document.createElement('div');
+    blockDiv.className = 'training-block';
+    blockDiv.dataset.blockNumber = blockNum;
+    
+    // Get values from first form
+    const firstForm = forms[0];
+    const repeatCount = getFormValue(firstForm, 'block_repeat_count') || '1';
+    
+    // GET BLOCK REST VALUES FROM DJANGO FORM
+    const blockRestValue = getFormValue(firstForm, 'block_rest_time_value') || '';
+    const blockRestUnit = getFormValue(firstForm, 'block_rest_time_unit') || 'sec';
+    
+    blockDiv.innerHTML = `
+        <div class="training-block-header">
+            <!-- Desktop Layout -->
+            <div class="d-none d-md-flex justify-content-between align-items-center">
+                <div class="d-flex align-items-center">
+                    <i class="fas fa-cube mr-2"></i>
+                    <span class="mr-3">Training Block ${blockNum}</span>
+                    <div class="d-flex align-items-center mr-3">
+                        <label class="text-white mr-2 mb-0" style="font-size: 12px;">×Count:</label>
+                        <input type="number" class="form-control form-control-sm block-repeat-input" 
+                               value="${repeatCount}" min="1" style="width: 60px;" 
+                               data-block="${blockNum}">
+                        <span class="badge badge-light ml-2 repeat-badge" style="display: ${repeatCount > 1 ? 'inline' : 'none'}">
+                            Repeat ${repeatCount}x
+                        </span>
+                    </div>
+                    <div class="d-flex align-items-center mr-3">
+                        <label class="text-white mr-2 mb-0" style="font-size: 12px;">Block Rest:</label>
+                        <input type="number" class="form-control form-control-sm block-rest-input" 
+                               value="${blockRestValue}" placeholder="2" min="0" style="width: 60px;" 
+                               data-block="${blockNum}">
+                        <select class="form-control form-control-sm ml-1 block-rest-unit" 
+                                style="width: 60px;" data-block="${blockNum}">
+                            <option value="sec" ${blockRestUnit === 'sec' ? 'selected' : ''}>sec</option>
+                            <option value="min" ${blockRestUnit === 'min' ? 'selected' : ''}>min</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="d-flex align-items-center">
+                    <button type="button" class="btn btn-sm btn-success mr-2 add-rep-to-block" data-block="${blockNum}">
+                        <i class="fas fa-plus mr-1"></i>Add Repetition
+                    </button>
+                    <button type="button" class="btn btn-sm btn-outline-light delete-block" data-block="${blockNum}">
+                        <i class="fas fa-trash mr-1"></i>Delete Block
+                    </button>
+                </div>
+            </div>
+            
+            <!-- Mobile Layout -->
+            <div class="d-md-none mobile-block-controls">
+                <!-- Block Title -->
+                <div class="text-center">
+                    <i class="fas fa-cube mr-2"></i>
+                    <span>Training Block ${blockNum}</span>
+                </div>
+                
+                <!-- Block Info Row -->
+                <div class="mobile-block-info">
+                    <div>
+                        <label class="text-white mb-0">×Count:</label>
+                        <div class="d-flex align-items-center">
+                            <input type="number" class="form-control form-control-sm block-repeat-input" 
+                                   value="${repeatCount}" min="1" style="width: 50px;" 
+                                   data-block="${blockNum}">
+                            <span class="badge badge-light ml-1 repeat-badge" style="display: ${repeatCount > 1 ? 'inline' : 'none'}">
+                                ${repeatCount}x
+                            </span>
+                        </div>
+                    </div>
+                    
+                    <div>
+                        <label class="text-white mb-0">Block Rest:</label>
+                        <div class="d-flex align-items-center">
+                            <input type="number" class="form-control form-control-sm block-rest-input" 
+                                   value="${blockRestValue}" placeholder="2" min="0" style="width: 50px;" 
+                                   data-block="${blockNum}">
+                            <select class="form-control form-control-sm ml-1 block-rest-unit" 
+                                    style="width: 50px;" data-block="${blockNum}">
+                                <option value="sec" ${blockRestUnit === 'sec' ? 'selected' : ''}>sec</option>
+                                <option value="min" ${blockRestUnit === 'min' ? 'selected' : ''}>min</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Block Actions Row -->
+                <div class="mobile-block-actions">
+                    <button type="button" class="btn btn-sm btn-success add-rep-to-block" data-block="${blockNum}">
+                        <i class="fas fa-plus mr-1"></i>Add Rep
+                    </button>
+                    <button type="button" class="btn btn-sm btn-outline-light delete-block" data-block="${blockNum}">
+                        <i class="fas fa-trash mr-1"></i>Delete
+                    </button>
+                </div>
+            </div>
+        </div>
+        <div class="training-block-content">
+            <div class="repetitions-list"></div>
+        </div>
+    `;
+
+    const repetitionsList = blockDiv.querySelector('.repetitions-list');
+    
+    // Sort forms by repetition number
+    forms.sort((a, b) => {
+        const repA = parseInt(getFormValue(a, 'repetition_number')) || 0;
+        const repB = parseInt(getFormValue(b, 'repetition_number')) || 0;
+        return repA - repB;
+    });
+    
+    forms.forEach((form) => {
+        const repDiv = createRepetitionDisplay(form, blockNum);
+        repetitionsList.appendChild(repDiv);
+    });
+    
+    blocksContainer.appendChild(blockDiv);
+}
+    
+    // IMPROVED: Better organized repetition display with clear parameter separation
+   function createRepetitionDisplay(form, blockNum) {
+    const repDiv = document.createElement('div');
+    repDiv.className = 'repetition-row';
+    repDiv.dataset.formIndex = form.dataset.formIndex;
+    
+    // Extract values from Django-rendered form fields
+    const distance = getFormValue(form, 'distance');
+    const distanceUnit = getSelectValue(form, 'distance_unit') || getFormValue(form, 'distance_unit') || 'm';
+    const timeValue = getFormValue(form, 'duration_value');
+    const timeUnit = getSelectValue(form, 'duration_unit') || getFormValue(form, 'duration_unit') || 'sec';
+    const intensityPercentage = getFormValue(form, 'intensity_percentage');
+    const intensity = getSelectValue(form, 'intensity') || getFormValue(form, 'intensity');
+    const restTimeValue = getFormValue(form, 'rest_time_value');
+    const restTimeUnit = getSelectValue(form, 'rest_time_unit') || getFormValue(form, 'rest_time_unit') || 'sec';
+    const restDistValue = getFormValue(form, 'rest_distance_value');
+    const restDistUnit = getSelectValue(form, 'rest_distance_unit') || getFormValue(form, 'rest_distance_unit') || 'm';
+    const notes = getFormValue(form, 'notes');
+    const repetitionCount = getFormValue(form, 'repetition_count') || '1';
+    const repNum = getFormValue(form, 'repetition_number') || '1';
+    const formId = getFormValue(form, 'id');
+    
+    // Check for errors
+    const hasErrors = hasFormErrors(form);
+    const errorMessages = getFormErrors(form);
+    
+    if (hasErrors) {
+        repDiv.classList.add('has-errors');
+    }
+    
+    repDiv.innerHTML = `
+        <div class="repetition-content">
+            <!-- Repetition Header -->
+            <div class="repetition-header">
+                <!-- Desktop Layout -->
+                <div class="d-none d-md-flex align-items-center justify-content-between">
+                    <div class="d-flex align-items-center">
+                        <div class="field-group">
+                            <label>Rep #</label>
+                            <input type="number" name="repetitions-${form.dataset.formIndex}-repetition_number" 
+                                   class="form-control form-control-sm" value="${repNum}" 
+                                   min="1" style="width: 60px;">
+                        </div>
+                        
+                        <div class="field-group ml-3">
+                            <label>×Rep Count</label>
+                            <div class="d-flex align-items-center">
+                                <input type="number" name="repetitions-${form.dataset.formIndex}-repetition_count" 
+                                       class="form-control form-control-sm rep-count-input" value="${repetitionCount}" 
+                                       min="1" style="width: 60px;" data-form-index="${form.dataset.formIndex}">
+                                <span class="badge badge-info ml-1 rep-count-badge" style="display: ${repetitionCount > 1 ? 'inline' : 'none'}; font-size: 10px;">
+                                    ${repetitionCount}x
+                                </span>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <button type="button" class="btn btn-sm btn-outline-danger remove-repetition" 
+                            data-form-index="${form.dataset.formIndex}">
+                        <i class="fas fa-trash mr-1"></i>Remove
+                    </button>
+                </div>
+                
+                <!-- Mobile Layout -->
+                <div class="d-md-none">
+                    <div class="d-flex align-items-center justify-content-between mb-2">
+                        <div class="d-flex align-items-center">
+                            <div class="field-group mr-2">
+                                <label>Rep #</label>
+                                <input type="number" name="repetitions-${form.dataset.formIndex}-repetition_number" 
+                                       class="form-control form-control-sm" value="${repNum}" 
+                                       min="1" style="width: 50px;">
+                            </div>
+                            
+                            <div class="field-group">
+                                <label>×Count</label>
+                                <div class="d-flex align-items-center">
+                                    <input type="number" name="repetitions-${form.dataset.formIndex}-repetition_count" 
+                                           class="form-control form-control-sm rep-count-input" value="${repetitionCount}" 
+                                           min="1" style="width: 50px;" data-form-index="${form.dataset.formIndex}">
+                                    <span class="badge badge-info ml-1 rep-count-badge" style="display: ${repetitionCount > 1 ? 'inline' : 'none'}; font-size: 9px;">
+                                        ${repetitionCount}x
+                                    </span>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <button type="button" class="btn btn-sm btn-outline-danger remove-repetition" 
+                                data-form-index="${form.dataset.formIndex}">
+                            <i class="fas fa-trash"></i>
+                        </button>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Parameter Groups -->
+            <div class="parameter-groups">
+                <!-- Training Parameters -->
+                <div class="parameter-group training-group">
+                    <div class="parameter-group-header">
+                        <i class="fas fa-running mr-2"></i>
+                        <strong>Training</strong>
+                    </div>
+                    <div class="parameter-group-content">
+                        <div class="parameter-section">
+                            <label class="section-label">Distance</label>
+                            <div class="d-flex align-items-center">
+                                <input type="number" name="repetitions-${form.dataset.formIndex}-distance" 
+                                       class="form-control form-control-sm" value="${distance}" 
+                                       step="0.1" min="0" placeholder="800" style="width: 80px;">
+                                <select name="repetitions-${form.dataset.formIndex}-distance_unit" 
+                                        class="form-control form-control-sm ml-1" style="width: 60px;">
+                                    <option value="m" ${distanceUnit === 'm' ? 'selected' : ''}>m</option>
+                                    <option value="km" ${distanceUnit === 'km' ? 'selected' : ''}>km</option>
+                                </select>
+                            </div>
+                        </div>
+                        
+                        <div class="parameter-section">
+                            <label class="section-label">Time</label>
+                            <div class="d-flex align-items-center">
+                                <input type="number" name="repetitions-${form.dataset.formIndex}-duration_value" 
+                                       class="form-control form-control-sm" value="${timeValue}" 
+                                       min="1" placeholder="5" style="width: 80px;">
+                                <select name="repetitions-${form.dataset.formIndex}-duration_unit" 
+                                        class="form-control form-control-sm ml-1" style="width: 60px;">
+                                    <option value="sec" ${timeUnit === 'sec' ? 'selected' : ''}>sec</option>
+                                    <option value="min" ${timeUnit === 'min' ? 'selected' : ''}>min</option>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Rest Parameters -->
+                <div class="parameter-group rest-group">
+                    <div class="parameter-group-header">
+                        <i class="fas fa-pause mr-2"></i>
+                        <strong>Rest</strong>
+                    </div>
+                    <div class="parameter-group-content">
+                        <div class="parameter-section">
+                            <label class="section-label">Time</label>
+                            <div class="d-flex align-items-center">
+                                <input type="number" name="repetitions-${form.dataset.formIndex}-rest_time_value" 
+                                       class="form-control form-control-sm" value="${restTimeValue}" 
+                                       min="0" placeholder="2" style="width: 80px;">
+                                <select name="repetitions-${form.dataset.formIndex}-rest_time_unit" 
+                                        class="form-control form-control-sm ml-1" style="width: 60px;">
+                                    <option value="sec" ${restTimeUnit === 'sec' ? 'selected' : ''}>sec</option>
+                                    <option value="min" ${restTimeUnit === 'min' ? 'selected' : ''}>min</option>
+                                </select>
+                            </div>
+                        </div>
+                        
+                        <div class="parameter-section">
+                            <label class="section-label">Distance</label>
+                            <div class="d-flex align-items-center">
+                                <input type="number" name="repetitions-${form.dataset.formIndex}-rest_distance_value" 
+                                       class="form-control form-control-sm" value="${restDistValue}" 
+                                       step="0.1" min="0" placeholder="200" style="width: 80px;">
+                                <select name="repetitions-${form.dataset.formIndex}-rest_distance_unit" 
+                                        class="form-control form-control-sm ml-1" style="width: 60px;">
+                                    <option value="m" ${restDistUnit === 'm' ? 'selected' : ''}>m</option>
+                                    <option value="km" ${restDistUnit === 'km' ? 'selected' : ''}>km</option>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Intensity Parameters -->
+                <div class="parameter-group intensity-group">
+                    <div class="parameter-group-header">
+                        <i class="fas fa-tachometer-alt mr-2"></i>
+                        <strong>Intensity</strong>
+                    </div>
+                    <div class="parameter-group-content">
+                        <div class="parameter-section">
+                            <label class="section-label">Percentage</label>
+                            <div class="d-flex align-items-center">
+                                <input type="number" name="repetitions-${form.dataset.formIndex}-intensity_percentage" 
+                                       class="form-control form-control-sm" value="${intensityPercentage}" 
+                                       min="1" max="100" placeholder="85" style="width: 80px;">
+                                <span class="ml-1 text-muted">%</span>
+                            </div>
+                        </div>
+                        
+                        <div class="parameter-section">
+                            <label class="section-label">Level</label>
+                            <select name="repetitions-${form.dataset.formIndex}-intensity" 
+                                    class="form-control form-control-sm" style="width: 120px;">
+                                <option value="">---</option>
+                                <option value="easy" ${intensity === 'easy' ? 'selected' : ''}>Easy</option>
+                                <option value="moderate" ${intensity === 'moderate' ? 'selected' : ''}>Moderate</option>
+                                <option value="hard" ${intensity === 'hard' ? 'selected' : ''}>Hard</option>
+                                <option value="very_hard" ${intensity === 'very_hard' ? 'selected' : ''}>Very Hard</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Notes Section -->
+            <div class="notes-section">
+                <label class="section-label">
+                    <i class="fas fa-sticky-note mr-1"></i>
+                    Notes
+                </label>
+                <input type="text" name="repetitions-${form.dataset.formIndex}-notes" 
+                       class="form-control form-control-sm" value="${notes}" 
+                       placeholder="5K pace, target splits, specific instructions...">
+            </div>
+            
+            <!-- Error Messages -->
+            ${hasErrors ? `<div class="form-errors mt-2"><strong>Errors:</strong> ${errorMessages}</div>` : ''}
+            
+            <!-- Hidden fields -->
+            <input type="hidden" name="repetitions-${form.dataset.formIndex}-block_number" value="${blockNum}">
+            <input type="hidden" name="repetitions-${form.dataset.formIndex}-id" value="${formId}">
+        </div>
+    `;
+    
+    return repDiv;
+}
+    
+    function getNextBlockNumber() {
+        const templateForms = document.querySelectorAll('.template-form');
+        let maxBlock = 0;
+        templateForms.forEach(form => {
+            const blockNum = parseInt(getFormValue(form, 'block_number') || form.dataset.block) || 0;
+            if (blockNum > maxBlock) maxBlock = blockNum;
+        });
+        return maxBlock + 1;
+    }
+    
+    // FIXED: Template creation with block rest fields
+    function createNewFormTemplate(index, blockNum = 1, repNum = 1) {
+        const div = document.createElement('div');
+        div.className = 'template-form';
+        div.dataset.block = blockNum.toString();
+        div.dataset.formIndex = index;
+        
+        div.innerHTML = `
+            <input type="hidden" name="repetitions-${index}-block_number" value="${blockNum}">
+            <input type="hidden" name="repetitions-${index}-block_repeat_count" value="1">
+            <input type="hidden" name="repetitions-${index}-repetition_number" value="${repNum}">
+            <input type="hidden" name="repetitions-${index}-repetition_count" value="1">
+            <input type="hidden" name="repetitions-${index}-distance" value="">
+            <select name="repetitions-${index}-distance_unit" style="display:none;">
+                <option value="m" selected>m</option>
+                <option value="km">km</option>
+            </select>
+            <input type="hidden" name="repetitions-${index}-duration_value" value="">
+            <select name="repetitions-${index}-duration_unit" style="display:none;">
+    <option value="min">min</option>
+    <option value="sec" selected>sec</option>
+</select>
+            <input type="hidden" name="repetitions-${index}-intensity_percentage" value="">
+            <select name="repetitions-${index}-intensity" style="display:none;">
+                <option value="" selected>---</option>
+                <option value="easy">Easy</option>
+                <option value="moderate">Moderate</option>
+                <option value="hard">Hard</option>
+                <option value="very_hard">Very Hard</option>
+            </select>
+            <input type="hidden" name="repetitions-${index}-rest_time_value" value="">
+            <select name="repetitions-${index}-rest_time_unit" style="display:none;">
+       <option value="min">min</option>
+    <option value="sec" selected>sec</option>
+</select>
+            <input type="hidden" name="repetitions-${index}-rest_distance_value" value="">
+            <select name="repetitions-${index}-rest_distance_unit" style="display:none;">
+                <option value="m" selected>m</option>
+                <option value="km">km</option>
+            </select>
+            <input type="hidden" name="repetitions-${index}-notes" value="">
+            <input type="hidden" name="repetitions-${index}-block_rest_time_value" value="">
+          <select name="repetitions-${index}-block_rest_time_unit" style="display:none;">
+    <option value="min">min</option>
+    <option value="sec" selected>sec</option>
+</select>
+            <input type="hidden" name="repetitions-${index}-id" value="">
+        `;
+        
+        return div;
+    }
+    
+    // FIXED: Event delegation with proper event stopping + toggle functionality
+    document.addEventListener('click', function(e) {
+        // Handle toggle repetitions button
+        if (e.target.closest('#toggle-repetitions')) {
+            e.preventDefault();
+            e.stopPropagation();
+            
+            const isCollapsed = !repetitionsSection.classList.contains('show');
+            
+            if (isCollapsed) {
+                repetitionsSection.classList.add('show');
+                repetitionsSection.style.display = 'block';
+                toggleBtn.innerHTML = '<i class="fas fa-minus mr-1"></i>Hide Repetitions';
+                toggleBtn.classList.remove('btn-outline-primary');
+                toggleBtn.classList.add('btn-outline-secondary');
+                organizeBlocksDisplay();
+                console.log('✅ Repetitions section shown');
+            } else {
+                repetitionsSection.classList.remove('show');
+                repetitionsSection.style.display = '';
+                toggleBtn.innerHTML = '<i class="fas fa-plus mr-1"></i>Add Repetitions';
+                toggleBtn.classList.remove('btn-outline-secondary');
+                toggleBtn.classList.add('btn-outline-primary');
+                console.log('✅ Repetitions section hidden');
+            }
+            return false;
+        }
+        
+        // Handle "Add Repetition" buttons in block headers
+        if (e.target.closest('.add-rep-to-block')) {
+            e.preventDefault();
+            e.stopPropagation();
+            e.stopImmediatePropagation(); // ADDED: Prevents other handlers
+            
+            const button = e.target.closest('.add-rep-to-block');
+            const blockNum = button.dataset.block;
+            console.log('🎯 Adding repetition to block:', blockNum);
+            addRepetitionToBlock(blockNum);
+            return false; // ADDED: Extra prevention
+        }
+        
+        // Handle "Add New Block" button
+        if (e.target.closest('.add-new-block-btn')) {
+            e.preventDefault();
+            e.stopPropagation();
+            e.stopImmediatePropagation(); // ADDED: Prevents other handlers
+            
+            console.log('🎯 Adding new block...');
+            const nextBlockNum = getNextBlockNumber();
+            addNewBlock(nextBlockNum);
+            return false; // ADDED: Extra prevention
+        }
+        
+        // Handle repetition removal
+        if (e.target.closest('.remove-repetition')) {
+            e.preventDefault();
+            e.stopPropagation();
+            
+            const formIndex = e.target.closest('.remove-repetition').dataset.formIndex;
+            const templateForm = document.querySelector(`.template-form[data-form-index="${formIndex}"]`);
+            
+            if (templateForm) {
+                const deleteField = templateForm.querySelector('input[name$="-DELETE"]');
+                if (deleteField) {
+                    deleteField.checked = true;
+                } else {
+                    templateForm.remove();
+                    const currentCount = parseInt(totalForms.value);
+                    totalForms.value = Math.max(0, currentCount - 1);
+                }
+            }
+            
+            organizeBlocksDisplay();
+            return false;
+        }
+        
+        // Handle block deletion
+        if (e.target.closest('.delete-block')) {
+            e.preventDefault();
+            e.stopPropagation();
+            
+            const blockNum = e.target.closest('.delete-block').dataset.block;
+            const formsInBlock = document.querySelectorAll(`.template-form[data-block="${blockNum}"]`);
+            
+            formsInBlock.forEach(form => {
+                const deleteField = form.querySelector('input[name$="-DELETE"]');
+                if (deleteField) {
+                    deleteField.checked = true;
+                } else {
+                    form.remove();
+                    const currentCount = parseInt(totalForms.value);
+                    totalForms.value = Math.max(0, currentCount - 1);
+                }
+            });
+            
+            organizeBlocksDisplay();
+            return false;
+        }
+    }, true); // ADDED: Use capture phase to handle events early
+
+    // Enhanced input handling for block and repetition counts + block rest
+    document.addEventListener('input', function(e) {
+        // Block repeat count handling
+        if (e.target.classList.contains('block-repeat-input')) {
+            const blockNum = e.target.dataset.block;
+            const newCount = parseInt(e.target.value) || 1;
+            
+            const badge = e.target.parentElement.querySelector('.repeat-badge');
+            if (newCount > 1) {
+                badge.style.display = 'inline';
+                badge.textContent = `Repeat ${newCount}x`;
+            } else {
+                badge.style.display = 'none';
+            }
+            
+            // Update template forms
+            const formsInBlock = document.querySelectorAll(`.template-form[data-block="${blockNum}"]`);
+            formsInBlock.forEach(form => {
+                setFormValue(form, 'block_repeat_count', newCount);
+            });
+
+            console.log('📝 Block repeat count changed to:', newCount);
+            setTimeout(syncValuesToTemplates, 100);
+        }
+        
+        // Block rest handling
+        if (e.target.classList.contains('block-rest-input') || e.target.classList.contains('block-rest-unit')) {
+            const blockNum = e.target.dataset.block;
+            const restInput = document.querySelector(`.block-rest-input[data-block="${blockNum}"]`);
+            const restUnit = document.querySelector(`.block-rest-unit[data-block="${blockNum}"]`);
+            
+            if (restInput && restUnit) {
+                const restValue = restInput.value;
+                const restUnitValue = restUnit.value;
+                
+                // Update all template forms in this block with block rest values
+                const formsInBlock = document.querySelectorAll(`.template-form[data-block="${blockNum}"]`);
+                formsInBlock.forEach(form => {
+                    setFormValue(form, 'block_rest_time_value', restValue);
+                    setFormValue(form, 'block_rest_time_unit', restUnitValue);
+                });
+                
+                console.log(`✅ Block ${blockNum} rest synced: ${restValue} ${restUnitValue}`);
+            }
+        }
+        
+        // Repetition count handling
+        if (e.target.classList.contains('rep-count-input')) {
+            const newCount = parseInt(e.target.value) || 1;
+            const badge = e.target.parentElement.querySelector('.rep-count-badge');
+            if (newCount > 1) {
+                badge.style.display = 'inline';
+                badge.textContent = `${newCount}x`;
+            } else {
+                badge.style.display = 'none';
+            }
+            
+            // Use direct approach like block_repeat_count
+            const formIndex = e.target.dataset.formIndex;
+            if (formIndex) {
+                const templateForm = document.querySelector(`.template-form[data-form-index="${formIndex}"]`);
+                if (templateForm) {
+                    setFormValue(templateForm, 'repetition_count', newCount);
+                    console.log(`✅ Directly set repetition_count to ${newCount} for form ${formIndex}`);
+                }
+            }
+        }
+        
+        // General form field changes
+        if (e.target.name && e.target.name.includes('repetitions-')) {
+            console.log('📝 User typed in:', e.target.name, '=', e.target.value);
+            // Sync immediately when user types
+            setTimeout(syncValuesToTemplates, 100);
+        }
+    });
+
+    // Initialize the repetitions section when page loads
+    initializeRepetitionsSection();
+    
+    // ADDED: Backup initialization to catch edge cases
+    setTimeout(() => {
+        console.log('🔄 Running backup initialization check...');
+        
+        const templateForms = document.querySelectorAll('.template-form');
+        const isCurrentlyVisible = repetitionsSection.classList.contains('show');
+        const shouldBeVisible = templateForms.length > 0 || shouldAutoShowRepetitions();
+        
+        if (shouldBeVisible && !isCurrentlyVisible) {
+            console.log('🚨 Backup initialization: Forcing section to show');
+            repetitionsSection.classList.add('show');
+            repetitionsSection.style.display = 'block';
+            
+            toggleBtn.innerHTML = '<i class="fas fa-minus mr-1"></i>Hide Repetitions';
+            toggleBtn.classList.remove('btn-outline-primary');
+            toggleBtn.classList.add('btn-outline-secondary');
+            
+            organizeBlocksDisplay();
+        }
+        
+        console.log('✅ Backup initialization complete');
+    }, 500); // Run 500ms after page load
+    
+}); // End of DOMContentLoaded
 </script>
 {% endblock %}
